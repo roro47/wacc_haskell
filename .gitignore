@@ -1,0 +1,6 @@
+#ignore generated binary files and auto-generated ANTLR code
+bin
+src/antlr
+
+#ignore Java class files
+*.class
