@@ -88,7 +88,7 @@ data Ident a = Ident String deriving (Eq, Show)
 
 data ArrayElem a = ArrayElem (IdentF a) [ExprF a] deriving (Eq, Show)
 
-data Ann f = Ann f (SourcePos, Type ()) deriving (Eq, Show)
+data Ann f = Ann f (SourcePos, Type ()) deriving Show
 
 data Parse = Parse deriving (Show, Eq)
 data Semantic = Semantic deriving (Show, Eq)
@@ -106,3 +106,8 @@ type ArrayElemF a = Ann  (ArrayElem a)
 type PairElemF a = Ann  (PairElem a)
 type LiterF a = Ann  (Liter a)
 type StatListF a = Ann (StatList a)
+
+instance (Eq f) => Eq (Ann f) where
+  (Ann f1 _) == (Ann f2 _) = f1 == f2
+
+
