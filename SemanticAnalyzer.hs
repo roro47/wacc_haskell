@@ -110,7 +110,58 @@ analyzeStatF (Ann (Assign lhs rhs) (pos, none)) =
   then return $ Ann (Assign lhs' rhs') (pos, none)
   else throwError "mismatched type" 
   
+analyzeStatF (Ann (Read lhs) (pos, _)) =
+  analyzeAssignLHSF lhs >>= \lhs'@(Ann _ (_, tl)) ->
+  if tl /= TInt && tr /= TChar
+  then throwError "cannot read type other than TInt and TChar"
+  else return $ Ann (Read lhs') (pos, tl)
 
+
+analyzeStatF (Ann (Free expr) ann@(pos, none)) =
+  analyzeExprF expr >>= \expr'@(Ann _ (_, t)) ->
+  case t of
+    TArray _ -> return $ Ann (Free expr') ann
+    TPair _ _ -> return $ Ann (Free expr') ann
+    otherwise -> throwError $ "cannot free type other than TArray, TPair"
+
+
+analyzeStatF (Ann (Return expr) ann@(pos, none)) =
+  analyzeExprF expr >>= \expr'@(Ann _ (_, t)) ->
+  return $ Ann expr' ann
+
+
+analyzeStatF (Ann (Exit expr) ann@(pos, none)) =
+  analyzeExprF expr >>= \expr'@(Ann _ (_, t)) ->
+  if t /= TInt
+  then throwError "exit value not of type int"
+  else return $ Ann (Exit expr') ann
+
+analyzeStatF (Ann (Print expr) ann@(pos, none)) =
+  analyzeExprF expr >>= \expr' ->
+  return $ Ann (Print expr') ann
+
+analyzeStatF (Ann (Println expr) ann@(pos, none)) =
+  analyzeExprF expr >>= \expr' ->
+  return $ Ann (Println expr') ann
+
+analyzeStatF (Ann (If expr stat1 stat2) ann@(pos, none)) =
+  analyzeExprF expr >>= \expr'@(Ann _ (_, t)) ->
+  if t /= TBool
+  then throwError "condition type not bool"
+  else analyzeStatListF stat1 >>= \stat1' ->
+       analyzeStatListF stat2 >>= \stat2' ->
+       return $ Ann (If expr' stat1' stat2') ann
+
+analyzeStatF (Ann (While expr stat) ann@(pos, none)) =
+  analyzeExprF expr >>= \expr'(Ann _ (_, t)) ->
+  if t /= TBool
+  then throwError "condition type not bool"
+  else analyzeStatList stat >>= \stat' ->
+       return $ Ann (While expr' stat') ann
+
+analyzeStatF (Ann (Subroutine program) ann) =
+  analyzeProgramF program >>= \program' ->
+  return $ Ann (Subroutine program') ann 
 
 analyzeAssignLHSF :: AssignLHSF () -> Analyzer (AssignLHSF ())
 analyzeAssignLHSF (Ann lhs@(IdentLHS symbol) (pos, _)) =
