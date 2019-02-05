@@ -5,3 +5,5 @@ src/antlr
 #ignore Java class files
 *.class
 *~
+*o
+*i

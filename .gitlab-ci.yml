@@ -1,0 +1,13 @@
+stages:
+  - build
+  - test
+
+job1:
+  stage: build
+  script: ghc -o compile Compiler.hs
+
+job2:
+  stage: test
+  script: 
+    ghc -o test Test/Test.hs
+    ./test

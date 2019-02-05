@@ -1,4 +1,4 @@
-module SemanticAnalyzer where
+module FrontEnd.SemanticAnalyzer where
 
 import Prelude
 
@@ -9,8 +9,8 @@ import Control.Monad.Except
 import Data.HashMap as HashMap hiding (map)
 import Text.ParserCombinators.Parsec.Pos
 
-import AST
-import Parser
+import FrontEnd.AST
+import FrontEnd.Parser
 
 data SemanticError = SemanticError String deriving (Show, Eq)
 
