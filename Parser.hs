@@ -388,7 +388,7 @@ parseIntLiterF = getPosition >>= (\pos ->
 
                   where
                     invalidInt :: Integer -> Bool
-                    invalidInt i = i > (2 ^ 31) - 1 || i < 2 ^ 31
+                    invalidInt i = i > (2 ^ 31) - 1 || i < - 2 ^ 31
 
 
 parseBoolLiterF :: Parser (LiterF ())
