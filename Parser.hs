@@ -2,6 +2,7 @@ module Parser where
 
 import System.IO
 import Control.Monad
+import Control.Monad.Except
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
@@ -19,6 +20,7 @@ parseProgramF = do
               fs <- many (try parseFuncF)
               stat <- parseStatListF
               reserved "end"
+              eof
               return $ Ann (Program fs stat) (pos, None) 
 
 parseFuncF :: Parser (FuncF ())
@@ -29,9 +31,21 @@ parseFuncF = whiteSpace >>= \_ ->
              parens (commaSep parseParamF) >>= \ps ->
              reserved "is" >>= \_ ->
              parseStatListF >>= \stat ->
+             checkReturnExit stat >>= \_ ->
              reserved "end" >>= \_ ->
-             return $ Ann (Func t ident ps stat) (pos, None) 
-
+             return $ Ann (Func t ident ps stat) (pos, None)
+    where checkReturnExit (Ann (StatList stats) (pos, None))
+            = case lastStat of
+                Return _ -> return ()
+                Exit _ -> return ()
+                If _ stat1 stat2 ->
+                      checkReturnExit stat1 >>= \_ ->
+                      checkReturnExit stat2
+                While _ stat -> checkReturnExit stat
+                Subroutine stat -> checkReturnExit stat
+                otherwise -> fail "Expected return"
+           where Ann lastStat _ = last stats 
+                
 
 parseParamF :: Parser (ParamF ())
 parseParamF = whiteSpace >>= \_ ->
@@ -82,7 +96,7 @@ parseStatListF :: Parser (StatListF ())
 parseStatListF = whiteSpace >>= \_ ->
                  getPosition >>= \pos ->
                  parseStatF >>= \stat ->
-                   (try semi >>= \_ ->
+                   try (semi >>= \_ ->
                     parseStatListF >>= \(Ann (StatList rest) _) ->
                     return $ Ann (StatList (stat:rest)) (pos, None))
                 <|> (return $ Ann (StatList [stat]) (pos, None))
@@ -202,8 +216,10 @@ parseSubroutineStatF :: Parser (StatF ())
 parseSubroutineStatF = do
                        whiteSpace
                        pos <- getPosition
-                       program <- parseProgramF
-                       return $ Ann (Subroutine program) (pos, None)
+                       reserved "begin"
+                       stat <- parseStatListF
+                       reserved "end"
+                       return $ Ann (Subroutine stat) (pos, None)
 
 
 parseAssignLHSF :: Parser (AssignLHSF ())
@@ -261,10 +277,34 @@ parsePairElemF = getPosition >>= \pos ->
          <|> ( reserved "snd" >>= \_ ->
                parseExprF >>= \expr->
                return $ Ann (PairElemSnd expr) (pos, None))
-  
+
+ 
 parseExprF :: Parser (ExprF ())
 parseExprF = whiteSpace >>= \_ ->
-             buildExpressionParser table term
+             buildExpressionParser table term >>= \expr ->
+             checkPrefix expr >>= \_ ->
+             return $ expr 
+     where checkPrefix (Ann (UExpr uop ef@(Ann e _)) _)
+            = case e of
+                LiterExpr liter ->
+                  if (uop == Pos || uop == Neg) && not (isIntLiter liter)
+                  then fail "syntatic error"
+                  else return ()
+                otherwise -> checkPrefix ef
+           checkPrefix (Ann (BExpr _ e1 e2) _)
+            = checkPrefix e1 >>= \_ ->
+              checkPrefix e2
+           checkPrefix (Ann (BracketExpr e) _) = checkPrefix e
+           checkPrefix (Ann (ArrayExpr (Ann (ArrayElem _ es) _)) _)
+             = mapM_ checkPrefix es
+           checkPrefix _ = return ()
+
+
+           isIntLiter (Ann (IntLiter _) _) = True
+           isIntLiter liter = False
+
+           
+           
              
 table = [ [unary "+" (UExpr Pos),
            unary "-" (UExpr Neg),
@@ -355,9 +395,18 @@ parseBoolLiterF = getPosition >>= (\pos ->
           )
 
 parseCharLiterF :: Parser (LiterF ())
-parseCharLiterF = getPosition >>= (\pos ->
-              charLiteral >>= (\c -> 
-              return $ Ann (CharLiter c) (pos, None)))
+parseCharLiterF = getPosition >>= \pos ->
+              (try catchWrongEscape >>= \_ ->
+                  fail "wrong escape")              
+          <|> (charLiteral >>= \c ->
+              return $ Ann (CharLiter c) (pos, None))
+     where catchWrongEscape =
+             do
+               char '\''
+               char '\"'
+               char '\''
+               return '\"'
+               
 
 parseStringLiterF :: Parser (LiterF ())
 parseStringLiterF = getPosition >>= (\pos ->

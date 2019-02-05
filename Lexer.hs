@@ -5,7 +5,11 @@ import Control.Monad
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
-import qualified Text.ParserCombinators.Parsec.Token as Token
+import qualified Text.Parsec.Combinator as Combinator
+import qualified Text.ParserCombinators.Parsec.Token as CToken
+import Text.Parsec.Token as Token
+import qualified Text.Parsec.Char as CharToken
+
 
 keyNames :: [String]
 keyNames = [ "begin",
@@ -64,31 +68,33 @@ keyOps = ["!",
           ")",
           "[]"]
 languageDef = 
-  emptyDef { Token.commentLine = "#"
-           , Token.identStart = letter <|> char '_'
-           , Token.identLetter = alphaNum <|> char '_'
-           , Token.reservedNames = keyNames
+  emptyDef { CToken.commentLine = "#"
+           , CToken.identStart = letter <|> char '_'
+           , CToken.identLetter = alphaNum <|> char '_'
+           , CToken.reservedNames = keyNames
            }
 
  --, Token.reservedOpNames = keyOps
-lexer = Token.makeTokenParser languageDef
 
-ident = Token.identifier lexer
-reserved = Token.reserved lexer
-parens = Token.parens lexer
-integer = Token.integer lexer
-charLiteral = Token.charLiteral lexer
-stringLiteral = Token.stringLiteral lexer
-whiteSpace = Token.whiteSpace lexer
-semi = Token.semi lexer
-reservedOp = Token.reservedOp lexer
-comma = Token.comma lexer
-leftSqB = Token.reservedOp lexer "["
-rightSqB = Token.reservedOp lexer "]"
-leftRB = Token.reservedOp lexer "("
-rightRB = Token.reservedOp lexer ")"
 
-semiSep = Token.semiSep lexer
-commaSep = Token.commaSep lexer
-symbol = Token.symbol lexer
-brackets = Token.brackets lexer
+lexer = CToken.makeTokenParser languageDef
+
+ident = CToken.identifier lexer
+reserved = CToken.reserved lexer
+parens = CToken.parens lexer
+integer = CToken.integer lexer
+charLiteral = CToken.charLiteral lexer
+stringLiteral = CToken.stringLiteral lexer
+whiteSpace = CToken.whiteSpace lexer
+semi = CToken.semi lexer
+reservedOp = CToken.reservedOp lexer
+comma = CToken.comma lexer
+leftSqB = CToken.reservedOp lexer "["
+rightSqB = CToken.reservedOp lexer "]"
+leftRB = CToken.reservedOp lexer "("
+rightRB = CToken.reservedOp lexer ")"
+
+semiSep = CToken.semiSep lexer
+commaSep = CToken.commaSep lexer
+symbol = CToken.symbol lexer
+brackets = CToken.brackets lexer
