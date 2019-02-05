@@ -395,9 +395,18 @@ parseBoolLiterF = getPosition >>= (\pos ->
           )
 
 parseCharLiterF :: Parser (LiterF ())
-parseCharLiterF = getPosition >>= (\pos ->
-              charLiteral >>= \c ->
+parseCharLiterF = getPosition >>= \pos ->
+              (try catchWrongEscape >>= \_ ->
+                  fail "wrong escape")              
+          <|> (charLiteral >>= \c ->
               return $ Ann (CharLiter c) (pos, None))
+     where catchWrongEscape =
+             do
+               char '\''
+               char '\"'
+               char '\''
+               return '\"'
+               
 
 parseStringLiterF :: Parser (LiterF ())
 parseStringLiterF = getPosition >>= (\pos ->

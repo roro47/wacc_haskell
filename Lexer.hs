@@ -77,20 +77,6 @@ languageDef =
  --, Token.reservedOpNames = keyOps
 
 
-
-{-
-charLiteral' = CToken.lexeme (Combinator.between (CharToken.char '\'')
-                                          (CharToken.char '\'' <?> "end of character")
-                                          characterChar )
-              <?> "character"
-
-              
-characterChar = charLetter <|> charEscape <?> "literal character"
-charEscape = do { char '\\'; escapeCode }
-charLetter = CharToken.satisfy (\c -> (c /= '\'' ) && (c /= '\"') && (c > '\026'))
-escapeCode = Token.charEsc <|> Token.charNum <|> Token.charControl
--}
-
 lexer = CToken.makeTokenParser languageDef
 
 ident = CToken.identifier lexer
