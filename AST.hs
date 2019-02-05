@@ -33,7 +33,7 @@ data Stat a = Skip
             | Println (ExprF a)
             | If (ExprF a) (StatListF a) (StatListF a)
             | While (ExprF a) (StatListF a)
-            | Subroutine (ProgramF a)
+            | Subroutine (StatListF a)
             deriving (Eq, Show)
             
 data AssignLHS a = IdentLHS (IdentF a)

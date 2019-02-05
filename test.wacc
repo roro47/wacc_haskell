@@ -1,3 +1,6 @@
 begin
-  print (1+2)
+  char a = '''
 end
+
+
+
