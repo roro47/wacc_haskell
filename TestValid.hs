@@ -12,7 +12,7 @@ testValidParse file = do
                    Left e -> print e >> expectationFailure ("parse error: at line " ++ line e ++ " with file " ++ file) 
                    Right _ -> return ()
 
-main = hspec $ do
+test = hspec $ do
        describe "test valid : check that all wacc program " $ do
          waccs <- runIO (getWacc "valid")
          mapM_ (\wacc -> it ("file: " ++ wacc) (testValidParse wacc)) waccs

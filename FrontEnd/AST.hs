@@ -1,6 +1,7 @@
 module FrontEnd.AST where
 
 import System.IO
+import Data.List
 import Control.Monad
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
@@ -61,7 +62,7 @@ data Type a = TInt
             | Any
             | None
             | TFunc (TypeF a) [TypeF a] -- return type, param type
-            deriving (Eq, Show)
+            
 
 data Expr a = LiterExpr (LiterF a)
             | IdentExpr (IdentF a)
@@ -84,11 +85,11 @@ data UnaryOp = Pos | Not | Neg | Len | Ord | Chr deriving (Eq, Show)
 data BinaryOp = Mul | Div | Mod | Plus | Minus | G | GEq | L | LEq | Eq | NEq | And | Or deriving (Eq, Show)
 
 
-data Ident a = Ident String deriving (Eq, Show)
+data Ident a = Ident String deriving (Eq)
 
 data ArrayElem a = ArrayElem (IdentF a) [ExprF a] deriving (Eq, Show)
 
-data Ann f = Ann f (SourcePos, Type ()) deriving Show
+data Ann f = Ann f (SourcePos, Type ())
 
 data Parse = Parse deriving (Show, Eq)
 data Semantic = Semantic deriving (Show, Eq)
@@ -107,7 +108,38 @@ type PairElemF a = Ann  (PairElem a)
 type LiterF a = Ann  (Liter a)
 type StatListF a = Ann (StatList a)
 
+instance (Show f) => Show (Ann f) where
+  show (Ann f (_, t)) = show f
+
 instance (Eq f) => Eq (Ann f) where
   (Ann f1 _) == (Ann f2 _) = f1 == f2
 
+instance Eq (Type a) where
+  TInt == TInt = True
+  TBool == TBool = True
+  TChar == TChar = True
+  TStr == TStr = True
+  (TArray t1) == (TArray t2) = t1 == t2
+  (TPair ft1 st1) == (TPair ft2 st2) = (ft1 == ft1) &&
+                                       (ft2 == st2)
+  Any == _ = True
+  None == None = True
+  (TFunc t1 ts1) == (TFunc t2 ts2) = (t1 == t2) &&
+                                     (ts1 == ts2)
+  a == b = False
+  
+instance Show (Type a) where
+  show TInt = "TInt"
+  show TBool = "TBool"
+  show TChar = "TChar"
+  show TStr = "TStr"
+  show (TArray t) = "TArray [" ++ show t ++ "]"
+  show (TPair t1 t2) = "TPair (" ++ show t1 ++ ", " ++ show t2
+                       ++ ")"
+  show Any = "Any"
+  show None = "None"
+  show (TFunc t ts) = "TFunc (" ++ show t ++ ") " ++
+    "(" ++ intersperse ',' (concat $ map show ts) ++ ")"
 
+instance Show (Ident a) where
+  show (Ident s) = show s

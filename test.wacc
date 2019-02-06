@@ -1,6 +1,7 @@
 begin
-  char a = '''
+  int f(int a, int b) is
+    skip;
+    return a
+  end
+  bool a = 1 + 'a'
 end
-
-
-
