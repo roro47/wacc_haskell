@@ -412,7 +412,6 @@ parseCharLiterF = getPosition >>= \pos ->
                char '\''
                return '\"'
 
-
 parseStringLiterF :: Parser (LiterF ())
 parseStringLiterF = getPosition >>= (\pos ->
                stringLiteral >>= (\s ->

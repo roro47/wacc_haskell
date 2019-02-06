@@ -3,5 +3,5 @@ begin
     skip;
     return a
   end
-  bool a = 1 + 'a'
+  pair(int, int) [] a = []
 end

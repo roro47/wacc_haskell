@@ -19,9 +19,6 @@ testSemanticErr file =
  where err1 =  "the wacc program should be syntactically correct"
        err2 = "pass semantic check, but should be semantically incorrect"
 
-
-
-
 test = hspec $ do
        describe "test invalid (semantic): " $ do
          waccs <- runIO (getWacc "Test/invalid/semanticErr")
