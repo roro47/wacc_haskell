@@ -305,12 +305,12 @@ parseExprF = whiteSpace >>= \_ ->
 
 
 
-table = [ [unary "+" (UExpr Pos),
-           unary "-" (UExpr Neg),
-           unary "!" (UExpr Not),
-           unary "len" (UExpr Len),
-           unary "ord" (UExpr Ord),
-           unary "chr" (UExpr Chr)],
+table = [ [unary symbol "+" (UExpr Pos),
+           unary symbol "-" (UExpr Neg),
+           unary symbol"!" (UExpr Not),
+           unary reserved "len" (UExpr Len),
+           unary reserved "ord" (UExpr Ord),
+           unary reserved "chr" (UExpr Chr)],
           [binary "*" (BExpr Mul) AssocLeft,
            binary "/" (BExpr Div) AssocLeft,
            binary "%" (BExpr Mod) AssocLeft],
@@ -327,10 +327,10 @@ table = [ [unary "+" (UExpr Pos),
         ]
 
 
-unary n f =
+unary operation n f =
   Prefix . chainl1 (try (whiteSpace >>= \_ ->
                     getPosition >>= \pos ->
-                    symbol n >>= \_ ->
+                    operation n >>= \_ ->
                     return $ \e -> Ann (f e) (pos, None))) $ return (.)
 
 binary n f assoc =
