@@ -29,6 +29,8 @@ pairType = TPair anyType anyType
 arrayType = TArray anyType
 
 
+getStats (Ann (StatList stats) _) = stats
+
 line = \e -> show $ sourceLine $ errorPos e
 col = \e -> show $ sourceLine $ errorPos e
 name = \e -> show $ sourceName $ errorPos e
@@ -91,8 +93,26 @@ analyzeProgramF p@(Ann (Program fs stat) ann@(pos, none)) =
     pushScope
     fs' <- mapM analyzeFuncF fs
     stat' <- analyzeStatListF stat
+    mapM checkReturn (getStats stat')
     popScope
     return $ Ann (Program fs' stat') ann 
+  where checkReturn :: StatF () -> Analyzer (StatF ())
+        checkReturn (Ann (Return _) (pos, _)) =
+          throwError ("Attempt to return from main scope at " ++ show pos ++ "\n")
+        checkReturn s@(Ann (If _ stat1 stat2) _) =
+          mapM checkReturn (getStats stat1) >>= \_ ->
+          mapM checkReturn (getStats stat2) >>= \_ ->
+          return s
+        checkReturn s@(Ann (While _ stat) _) =
+          mapM checkReturn (getStats stat) >>= \_ ->
+          return s
+        checkReturn s@(Ann (Subroutine stat) _) =
+          mapM checkReturn (getStats stat) >>= \_ ->
+          return s
+        checkReturn s = return s
+
+
+
 
 analyzeFuncF :: FuncF () -> Analyzer (FuncF ())
 analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
@@ -103,10 +123,28 @@ analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
           pushScope >>= \_ ->
           mapM (\(Ann (Param t pName) _) -> addSymbol pName t) ps >>= \_ ->
           analyzeStatListF stats >>= \stats' ->
+          checkReturnT (last $ getStats stats') >>= \_ ->
           popScope >>= \_ ->
           addSymbol symbol (Ann (TFunc t paramTs) (pos, none)) >>= \_ ->
           return f
    where paramTs = map (\(Ann (Param t _) _) -> t) ps
+         (Ann returnT _) = t
+         checkReturnT :: StatF () -> Analyzer (StatF ())
+         checkReturnT s@(Ann (Return _) (pos, t)) =
+           if returnT /= t
+           then throwError $ typeErr "Function return type not matched" pos [returnT] [t]
+           else return s
+         checkReturnT s@(Ann (If _ stat1 stat2) _) =
+          checkReturnT (last $ getStats stat1) >>= \_ ->
+          checkReturnT (last $ getStats stat2) >>= \_ ->
+          return s
+         checkReturnT s@(Ann (While _ stat) _) =
+          checkReturnT (last $ getStats stat) >>= \_ ->
+          return s
+         checkReturnT s@(Ann (Subroutine stat) _) =
+          checkReturnT (last $ getStats stat) >>= \_ ->
+          return s
+         checkReturnT s = throwError "impossible situation"
 
                    
 analyzeStatListF :: StatListF () -> Analyzer (StatListF ())
@@ -222,7 +260,9 @@ analyzeStatF (Ann (While expr stat) ann@(pos, none)) =
   where err = "Condition must be of type bool"
   
 analyzeStatF (Ann (Subroutine stat) ann) =
+  pushScope >>= \_ ->
   analyzeStatListF stat >>= \stat' ->
+  popScope >>= \_ ->
   return $ Ann (Subroutine stat') ann 
 
 analyzeAssignLHSF :: AssignLHSF () -> Analyzer (AssignLHSF ())
