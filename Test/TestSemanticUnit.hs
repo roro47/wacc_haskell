@@ -1,4 +1,4 @@
-module Test.TestSyntaxUnit where
+module Test.TestSemanticUnit where
 
 import Text.ParserCombinators.Parsec
 import Test.Hspec
