@@ -24,16 +24,16 @@ parseProgramF = do
               return $ Ann (Program fs stat) (pos, None)
 
 parseFuncF :: Parser (FuncF ())
-parseFuncF = whiteSpace >>= \_ ->
+parseFuncF = whiteSpace >>
              getPosition >>= \pos ->
              parseTypeF >>= \t ->
              parseIdentF >>= \ident ->
              parens (commaSep parseParamF) >>= \ps ->
-             reserved "is" >>= \_ ->
+             reserved "is" >>
              parseStatListF >>= \stat ->
-             checkReturnExit stat >>= \_ ->
-             reserved "end" >>= \_ ->
-             return $ Ann (Func t ident ps stat) (pos, None)
+             checkReturnExit stat >>
+             reserved "end" >>(
+             return $ Ann (Func t ident ps stat) (pos, None))
     where checkReturnExit (Ann (StatList stats) (pos, None))
             = case lastStat of
                 Return _ -> return ()
@@ -48,7 +48,7 @@ parseFuncF = whiteSpace >>= \_ ->
 
 
 parseParamF :: Parser (ParamF ())
-parseParamF = whiteSpace >>= \_ ->
+parseParamF = whiteSpace >>
               getPosition >>= \pos ->
               parseTypeF >>= \t ->
               parseIdentF >>= \ident ->
@@ -60,7 +60,7 @@ parseTypeF = try parseArrayTypeF
          <|> parsePairTypeF
 
 parseArrayTypeF :: Parser (TypeF ())
-parseArrayTypeF = whiteSpace >>= \_ ->
+parseArrayTypeF = whiteSpace >>
              getPosition >>= \pos ->
             (parseBaseTypeF
          <|> parsePairTypeF) >>= \t ->
@@ -68,42 +68,42 @@ parseArrayTypeF = whiteSpace >>= \_ ->
              return $ foldl (\acc x -> Ann (TArray acc) (pos, None)) t rs
 
 parseBaseTypeF :: Parser (TypeF ())
-parseBaseTypeF = whiteSpace >>= \_ ->
+parseBaseTypeF = whiteSpace >>
                  getPosition >>= \pos ->
-                (reserved "int" >>= \_ -> return $ Ann TInt (pos, None))
-            <|> (reserved "bool" >>= \_ -> return $ Ann TBool (pos, None))
-            <|> (reserved "char" >>= \_ -> return $ Ann TChar (pos, None))
-            <|> (reserved "string" >>= \_ -> return $ Ann TStr (pos, None))
+                (reserved "int" >> (return $ Ann TInt (pos, None)))
+            <|> (reserved "bool" >> (return $ Ann TBool (pos, None)))
+            <|> (reserved "char" >> (return $ Ann TChar (pos, None)))
+            <|> (reserved "string" >> (return $ Ann TStr (pos, None)))
 
 parsePairTypeF :: Parser (TypeF ())
-parsePairTypeF = whiteSpace >>= \_ ->
+parsePairTypeF = whiteSpace >>
                  getPosition >>= \pos ->
-                 string "pair" >>= \_ ->
-                 reservedOp "(" >>= \_ ->
+                 string "pair" >>
+                 reservedOp "(" >>
                  parsePairElemTypeF >>= \t1 ->
-                 comma >>= \_ ->
+                 comma >>
                  parsePairElemTypeF >>= \t2 ->
-                 reservedOp ")" >>= \_ ->
-                 return $ Ann (TPair t1 t2) (pos, None)
+                 reservedOp ")" >>
+                 (return $ Ann (TPair t1 t2) (pos, None))
         where parsePairElemTypeF :: Parser (TypeF ())
               parsePairElemTypeF = try parseArrayTypeF
                                <|> try parseBaseTypeF
                                <|> (getPosition >>= \pos ->
-                                    string "pair" >>= \_ ->
-                                    return $ (Ann Any (pos, None)))
+                                    string "pair" >>
+                                    (return $ (Ann Any (pos, None))))
 
 parseStatListF :: Parser (StatListF ())
-parseStatListF = whiteSpace >>= \_ ->
+parseStatListF = whiteSpace >>
                  getPosition >>= \pos ->
                  parseStatF >>= \stat ->
-                   try (semi >>= \_ ->
+                   try (semi >>
                     parseStatListF >>= \(Ann (StatList rest) _) ->
                     return $ Ann (StatList (stat:rest)) (pos, None))
                 <|> (return $ Ann (StatList [stat]) (pos, None))
 
 
 parseStatF :: Parser (StatF ())
-parseStatF = whiteSpace >>= \_ ->
+parseStatF = whiteSpace >>
            ( parseSkipStatF
          <|> try parseDeclareStatF
          <|> try parseAssignStatF
@@ -243,12 +243,12 @@ parseAssignRHSF = (getPosition >>= \pos ->
              <|> parseArrayLiterRHSF
 
 parseArrayLiterRHSF :: Parser (AssignRHSF ())
-parseArrayLiterRHSF = whiteSpace >>= \_ ->
+parseArrayLiterRHSF = whiteSpace >>
                       getPosition >>= \pos ->
-                      reservedOp "[" >>= \_ ->
+                      reservedOp "[" >>
                       commaSep parseExprF >>= \es ->
-                      reservedOp "]" >>= \_ ->
-                      return $ Ann (ArrayLiter es) (pos, None)
+                      reservedOp "]" >>
+                      (return $ Ann (ArrayLiter es) (pos, None))
 
 parseNewPairRHSF :: Parser (AssignRHSF ())
 parseNewPairRHSF = do
@@ -271,19 +271,19 @@ parseCallRHSF = do
 
 parsePairElemF :: Parser (PairElemF ())
 parsePairElemF = getPosition >>= \pos ->
-             ( reserved "fst" >>= \_ ->
+             ( reserved "fst" >>
                parseExprF >>= \expr ->
                return $ Ann (PairElemFst expr) (pos, None))
-         <|> ( reserved "snd" >>= \_ ->
+         <|> ( reserved "snd" >>
                parseExprF >>= \expr->
                return $ Ann (PairElemSnd expr) (pos, None))
 
 
 parseExprF :: Parser (ExprF ())
-parseExprF = whiteSpace >>= \_ ->
+parseExprF = whiteSpace >>
              buildExpressionParser table term >>= \expr ->
              checkOverFlow expr >>
-             checkPrefix expr >>= \_ ->
+             checkPrefix expr >>= \_ -> --do not remove this one or overflow will fail!!
              return $ expr
      where checkPrefix (Ann (UExpr uop ef@(Ann e _)) _)
             = case e of
@@ -293,8 +293,7 @@ parseExprF = whiteSpace >>= \_ ->
                   else  return ()
                 otherwise -> checkPrefix ef
            checkPrefix (Ann (BExpr _ e1 e2) _)
-            = checkPrefix e1 >>= \_ ->
-              checkPrefix e2
+            = checkPrefix e1 >> checkPrefix e2
            checkPrefix (Ann (BracketExpr e) _) = checkPrefix e
            checkPrefix (Ann (ArrayExpr (Ann (ArrayElem _ es) _)) _)
              = mapM_ checkPrefix es
@@ -335,16 +334,16 @@ table = [ [unary symbol "+" (UExpr Pos),
 
 
 unary operation n f =
-  Prefix . chainl1 (try (whiteSpace >>= \_ ->
+  Prefix . chainl1 (try (whiteSpace >>
                     getPosition >>= \pos ->
-                    operation n >>= \_ ->
-                    return $ \e -> Ann (f e) (pos, None))) $ return (.)
+                    operation n >>
+                    (return $ \e -> Ann (f e) (pos, None)))) $ return (.)
 
 binary n f assoc =
-  Infix (try (whiteSpace >>= \_ ->
+  Infix (try (whiteSpace >>
          getPosition >>= \pos ->
-         symbol n >>= \_ ->
-         return $ (\e1 e2 -> Ann (f e1 e2) (pos, None)))) assoc
+         symbol n >>
+         (return $ (\e1 e2 -> Ann (f e1 e2) (pos, None))))) assoc
 
 term :: Parser (ExprF ())
 term =  try parseLiterExprF
@@ -373,7 +372,7 @@ parseLiterExprF = getPosition >>= \pos ->
                   return $ Ann (LiterExpr l) (pos, None)
 
 parseIdentExprF :: Parser (ExprF ())
-parseIdentExprF = whiteSpace >>= \_ ->
+parseIdentExprF = whiteSpace >>
                   getPosition >>= (\pos ->
                   parseIdentF >>= (\i ->
                   return $ Ann (IdentExpr i) (pos, None)))
@@ -392,19 +391,17 @@ parseIntLiterF = getPosition >>= (\pos ->
                     return $ Ann (IntLiter x) (pos, None)))
 
 
-
-
 parseBoolLiterF :: Parser (LiterF ())
 parseBoolLiterF = getPosition >>= (\pos ->
-              (reserved "true" >>= (\_ ->
+              (reserved "true" >> (
                 return $ Ann (BoolLiter True) (pos, None)))
-          <|> (reserved "false" >>= (\_ ->
+          <|> (reserved "false" >> (
                 return $ Ann (BoolLiter False) (pos, None)))
           )
 
 parseCharLiterF :: Parser (LiterF ())
 parseCharLiterF = getPosition >>= \pos ->
-              (try catchWrongEscape >>= \_ ->
+              (try catchWrongEscape >>
                   fail "wrong escape")
           <|> (charLiteral >>= \c ->
               return $ Ann (CharLiter c) (pos, None))
@@ -422,8 +419,8 @@ parseStringLiterF = getPosition >>= (\pos ->
 
 parsePairLiterF :: Parser (LiterF ())
 parsePairLiterF = getPosition >>= \pos ->
-                  reserved "null" >>= \_ ->
-                  return $ Ann Null (pos, None)
+                  reserved "null" >>
+                  (return $ Ann Null (pos, None))
 
 
 parseIdentF :: Parser (IdentF ())
