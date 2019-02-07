@@ -282,6 +282,7 @@ parsePairElemF = getPosition >>= \pos ->
 parseExprF :: Parser (ExprF ())
 parseExprF = whiteSpace >>= \_ ->
              buildExpressionParser table term >>= \expr ->
+             checkOverFlow expr >>
              checkPrefix expr >>= \_ ->
              return $ expr
      where checkPrefix (Ann (UExpr uop ef@(Ann e _)) _)
@@ -289,7 +290,7 @@ parseExprF = whiteSpace >>= \_ ->
                 LiterExpr liter ->
                   if (uop == Pos || uop == Neg) && not (isIntLiter liter)
                   then fail "syntatic error"
-                  else return ()
+                  else  return ()
                 otherwise -> checkPrefix ef
            checkPrefix (Ann (BExpr _ e1 e2) _)
             = checkPrefix e1 >>= \_ ->
@@ -303,6 +304,12 @@ parseExprF = whiteSpace >>= \_ ->
            isIntLiter (Ann (IntLiter _) _) = True
            isIntLiter liter = False
 
+           checkOverFlow intexpr = if invalid intexpr then fail("Int Overflow")
+            else return ()
+              where
+                invalid (Ann (UExpr Neg(Ann (LiterExpr(Ann (IntLiter i)_))_))_) = i > 2^31
+                invalid (Ann (LiterExpr(Ann (IntLiter i)_))_) = i > 2^31 -1
+                invalid _ = False
 
 
 table = [ [unary symbol "+" (UExpr Pos),
@@ -382,13 +389,9 @@ parseLiterF = try parseIntLiterF
 parseIntLiterF :: Parser (LiterF ())
 parseIntLiterF = getPosition >>= (\pos ->
                 integer >>= (\x ->
-                (if (invalidInt x)
-                  then fail "integer overflow"
-                  else return $ Ann (IntLiter x) (pos, None))))
+                    return $ Ann (IntLiter x) (pos, None)))
 
-                  where
-                    invalidInt :: Integer -> Bool
-                    invalidInt i = i > (2 ^ 31) - 1 || i < - 2 ^ 31
+
 
 
 parseBoolLiterF :: Parser (LiterF ())

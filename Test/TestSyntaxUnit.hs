@@ -33,7 +33,7 @@ integerTest = hspec $ do
          it "☑️ can parse positive integer with sign" $ do
               parseUsing "+123" parseIntLiterF `shouldReturn` (Just "IntLiter 123")
          it "✖️ cannot parse overflow numbers" $ do
-              parseUsing "9999999999999999" parseIntLiterF `shouldReturn` Nothing
+              parseUsing "9999999999999999999999" parseExprF `shouldReturn` Nothing
 
 charTest = hspec $ do
       describe "parse Char:" $ do
@@ -179,7 +179,8 @@ bracketTest = hspec $ do
           it "✖️ cannot parse empty bracket" $ do
               parseUsing "()" parseBracketExprF `shouldReturn` Nothing
           it "☑️ can parse some normal bracket" $ do
-              parseUsing "(a)" parseBracketExprF `shouldReturn` (
+              parseUsing
+               "(a)" parseBracketExprF `shouldReturn` (
                 Just "BracketExpr IdentExpr \"a\"")
           it "☑️ can parse bracket in bracket" $ do
               parseUsing "((a))" parseBracketExprF `shouldReturn` (
