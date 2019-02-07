@@ -3,5 +3,6 @@ begin
     skip;
     return a
   end
-  pair(int, int) [] a = []
+  char a = chr 907;
+  println a
 end

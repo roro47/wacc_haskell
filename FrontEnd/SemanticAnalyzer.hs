@@ -9,7 +9,6 @@ import Control.Monad.Except
 import Data.HashMap as HashMap hiding (map)
 import Text.ParserCombinators.Parsec hiding ((<|>))
 import Text.ParserCombinators.Parsec.Pos
-
 import FrontEnd.AST
 import FrontEnd.Parser
 
@@ -71,14 +70,14 @@ popScope :: Analyzer ()
 popScope = do
            tables <- get
            put $ tail tables
-           
+
 
 addSymbol :: IdentF () -> TypeF () -> Analyzer ()
 addSymbol id t = do
                      (table:tables) <- get
                      put ((insert symbol t table):tables)
   where Ann (Ident symbol) _ = id
-                     
+
 lookUpSymbol :: IdentF () -> Analyzer (Maybe (TypeF ()))
 lookUpSymbol id =
   do
@@ -95,7 +94,7 @@ analyzeProgramF p@(Ann (Program fs stat) ann@(pos, none)) =
     stat' <- analyzeStatListF stat
     mapM checkReturn (getStats stat')
     popScope
-    return $ Ann (Program fs' stat') ann 
+    return $ Ann (Program fs' stat') ann
   where checkReturn :: StatF () -> Analyzer (StatF ())
         checkReturn (Ann (Return _) (pos, _)) =
           throwError ("Attempt to return from main scope at " ++ show pos ++ "\n")
@@ -118,7 +117,7 @@ analyzeFuncF :: FuncF () -> Analyzer (FuncF ())
 analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
     lookUpSymbol symbol >>= \maybeT ->
       case maybeT of
-        Just (Ann _ (pos', _)) -> throwError $ "already declared" 
+        Just (Ann _ (pos', _)) -> throwError $ "already declared"
         otherwise ->
           pushScope >>= \_ ->
           mapM (\(Ann (Param t pName) _) -> addSymbol pName t) ps >>= \_ ->
@@ -146,7 +145,7 @@ analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
           return s
          checkReturnT s = throwError "impossible situation"
 
-                   
+
 analyzeStatListF :: StatListF () -> Analyzer (StatListF ())
 analyzeStatListF (Ann (StatList stats) ann) =
   mapM analyzeStatF stats >>= \stats' ->
@@ -163,7 +162,7 @@ typeCheckArray :: String -> TypeF () -> AssignRHSF () -> Analyzer (AssignRHSF ()
 typeCheckArray msg (Ann t _) rhs@(Ann (ExprRHS expr) _) =
   typeCheckExpr msg t expr >>= \_ ->
   return rhs
-  
+
 typeCheckArray msg (Ann t _) rhs@(Ann (ArrayLiter exprs) _) =
   mapM (typeCheckExpr msg arrayT) exprs >>= \_ ->
   return rhs
@@ -197,14 +196,14 @@ analyzeStatF (Ann (Assign lhs rhs) ann@(pos, none)) =
       TArray (Ann t _) -> case rT of
                     TArray _ -> mapM_ (typeCheckExpr errArray t) (getExprs expr) >>= \_ ->
                                 return $ Ann (Assign lhs' (Ann expr (pos2, lT))) ann
-                    otherwise -> throwError $ typeErr err pos2 [lT] [rT] 
+                    otherwise -> throwError $ typeErr err pos2 [lT] [rT]
       otherwise -> if lT == rT
                    then return $ Ann (Assign lhs' rhs') (pos, none)
                    else throwError $ typeErr err pos2 [lT] [rT]
   where err = "Assign wrong type of value"
         errArray = "Wrong type of value in array"
         getExprs (ArrayLiter exprs) = exprs
-        
+
 
 analyzeStatF (Ann (Read lhs) (pos, _)) =
     analyzeAssignLHSF lhs >>= \lhs'@(Ann _ (posLHS, tl)) ->
@@ -218,7 +217,7 @@ analyzeStatF (Ann (Free expr) ann@(pos, none)) =
   case t of
     TArray _ -> return $ Ann (Free expr') ann
     TPair _ _ -> return $ Ann (Free expr') ann
-    otherwise -> throwError $ typeErr err posExpr [TArray any, TPair any any] [t] 
+    otherwise -> throwError $ typeErr err posExpr [TArray any, TPair any any] [t]
   where any = Ann Any ann
         err = "Support freeing array and pair only"
 
@@ -258,12 +257,12 @@ analyzeStatF (Ann (While expr stat) ann@(pos, none)) =
   else analyzeStatListF stat >>= \stat' ->
        return $ Ann (While expr' stat') ann
   where err = "Condition must be of type bool"
-  
+
 analyzeStatF (Ann (Subroutine stat) ann) =
   pushScope >>= \_ ->
   analyzeStatListF stat >>= \stat' ->
   popScope >>= \_ ->
-  return $ Ann (Subroutine stat') ann 
+  return $ Ann (Subroutine stat') ann
 
 analyzeAssignLHSF :: AssignLHSF () -> Analyzer (AssignLHSF ())
 analyzeAssignLHSF (Ann lhs@(IdentLHS symbol) (pos, _)) =
@@ -294,7 +293,7 @@ analyzePairElemF (Ann (PairElemSnd expr) (pos, _)) =
   case t of
     TPair _ t2 -> return $ Ann (PairElemSnd expr') (pos, unwrap t2)
     otherwise -> throwError $ "expected pair"
-  
+
 analyzeArrayElemF :: ArrayElemF () -> Analyzer (ArrayElemF ())
 analyzeArrayElemF (Ann e@(ArrayElem symbol exprs) (pos, _)) =
   lookUpSymbol symbol >>= \maybeT ->
@@ -328,7 +327,7 @@ analyzeAssignRHSF (Ann (Call symbol exprs) (pos, _)) =
   case maybeT of
     Nothing -> throwError $ "Function symbol " ++ show symbol ++ " at " ++ show pos
                             ++ " not found"
-    Just (Ann t _) -> 
+    Just (Ann t _) ->
       case t of
         TFunc (Ann tOut _) tIns ->
           mapM analyzeExprF exprs >>= \exprs' ->
@@ -350,7 +349,7 @@ analyzeAssignRHSF (Ann (ArrayLiter []) (pos, _)) =
   return $ Ann (ArrayLiter []) (pos, TArray (Ann Any (pos, None)))
 
 -- won't check that all the expressions in the array would have the same type
-analyzeAssignRHSF (Ann (ArrayLiter exprs) (pos, _)) = 
+analyzeAssignRHSF (Ann (ArrayLiter exprs) (pos, _)) =
   mapM analyzeExprF exprs >>= \exprs' ->
   return $ Ann (ArrayLiter exprs') (pos, TArray (Ann Any (pos, None)))
 
@@ -358,7 +357,7 @@ analyzeExprF :: ExprF () -> Analyzer (ExprF ())
 analyzeExprF (Ann (LiterExpr i) (pos, _)) =
   do
     liter <- analyzeLiterF i
-    return $ Ann (LiterExpr liter) (pos, getT liter) 
+    return $ Ann (LiterExpr liter) (pos, getT liter)
 
 analyzeExprF (Ann e@(IdentExpr symbol) (pos, _)) =
   lookUpSymbol symbol >>= \maybeT ->
@@ -369,10 +368,23 @@ analyzeExprF (Ann e@(IdentExpr symbol) (pos, _)) =
 analyzeExprF (Ann (ArrayExpr a) (pos, _)) =
   analyzeArrayElemF a >>= \a'@(Ann _ (_, t)) ->
   return $ Ann (ArrayExpr a') (pos, t)
-        
-analyzeExprF (Ann (UExpr op e) (pos, _)) =
-  analyzeExprF e >>= \e'@(Ann _ (_, t)) ->
-  return $ Ann (UExpr op e') (pos, t)
+
+analyzeExprF (Ann (UExpr uop e) (pos, _)) =
+  analyzeExprF e >>= \e'->
+  case uop of
+        --  uop            return input
+            Not -> match e' TBool TBool
+            Len -> match e' TInt arrayType
+            Ord -> match e' TInt TChar
+            Neg -> match e' TInt TInt
+            Pos -> match e' TInt TInt
+            Chr -> match e' TChar TInt
+          where
+            match :: ExprF () -> Type() -> Type() -> Analyzer(ExprF())
+            match e'@(Ann _ (_, exprT)) returnT inputT
+              = if exprT /= inputT
+                then throwError $ typeErr "" pos [inputT] [exprT]
+                else return $ Ann (UExpr uop e') (pos, returnT)
 
 analyzeExprF (Ann (BExpr bop e1 e2) (pos, _)) =
   analyzeExprF e1 >>= \e1'@(Ann _ (_, t1)) ->
@@ -406,7 +418,6 @@ analyzeExprF (Ann (BExpr bop e1 e2) (pos, _)) =
         then throwError $ typeErr "" pos2 [expr1T] [expr2T]
         else return $ Ann (BExpr bop e1 e2) (pos1, returnT)
 
-
 analyzeExprF (Ann (BracketExpr expr) (pos, _)) =
   analyzeExprF expr >>= \expr'@(Ann _ (_, t)) ->
   return $ Ann (BracketExpr expr') (pos, t)
@@ -415,7 +426,7 @@ analyzeLiterF :: LiterF () -> Analyzer (LiterF ())
 analyzeLiterF (Ann liter (pos, _)) =
   do case liter of
        IntLiter _ -> return $ Ann liter (pos, TInt)
-       BoolLiter _ -> return $ Ann liter (pos, TBool) 
+       BoolLiter _ -> return $ Ann liter (pos, TBool)
        CharLiter _ -> return $ Ann liter (pos, TChar)
        StringLiter _ -> return $ Ann liter (pos, TStr)
        otherwise -> return $ Ann liter (pos, Any)
@@ -433,5 +444,3 @@ analyzeFile file =
   where line = \e -> show $ sourceLine $ errorPos e
         col = \e -> show $ sourceLine $ errorPos e
         name = \e -> show $ sourceName $ errorPos e
-
-

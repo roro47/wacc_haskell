@@ -67,7 +67,7 @@ keyOps = ["!",
           "(",
           ")",
           "[]"]
-languageDef = 
+languageDef =
   emptyDef { CToken.commentLine = "#"
            , CToken.identStart = letter <|> char '_'
            , CToken.identLetter = alphaNum <|> char '_'

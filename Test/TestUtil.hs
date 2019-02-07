@@ -2,10 +2,15 @@ module Test.TestUtil where
 
 import qualified System.Directory as SysDir
 import Control.Monad
-import Data.List
+import Data.List hiding (insert)
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Prim
-
+import FrontEnd.SemanticAnalyzer
+import Control.Applicative
+import Control.Monad.State
+import Control.Monad.Except
+import Data.HashMap as HashMap hiding (map, filter)
+import FrontEnd.AST
 
 removeDot = filter (\s -> s /= "." && s /= "..")
 
@@ -41,3 +46,24 @@ parseUsing str par =
 
 toIO :: a -> IO a
 toIO = return
+
+-- fake a analyzer with stack
+analyzedummy :: a ->(a -> Analyzer (a))-> Analyzer (a)
+analyzedummy p a =
+  do
+    pushScope
+    a' <- a p
+    popScope
+    return a'
+
+-- analyze a string using a suitable parser and a suitable analyzer
+analyzeUsing :: Show a => String -> Parser(a) -> (a -> Analyzer(a)) -> IO (Maybe String)
+analyzeUsing str par ana =
+   do text  <- toIO str
+      case parse par "" text of
+        Left e  -> return Nothing
+        Right r -> (
+            case evalStateT (analyzedummy r ana) [] of
+              Left e' -> return Nothing
+              Right r' -> return (Just (show r'))
+              )
