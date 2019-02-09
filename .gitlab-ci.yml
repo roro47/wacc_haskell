@@ -1,4 +1,5 @@
 before_script:
+  - source ~/.bashrc
   - cabal install Parsec hspec hashmap
 stages:
   - build
