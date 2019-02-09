@@ -74,16 +74,16 @@ popScope = do
 
 addSymbol :: IdentF () -> TypeF () -> Analyzer ()
 addSymbol id t = do
-                     (table:tables) <- get
-                     put ((insert symbol t table):tables)
-  where Ann (Ident symbol) _ = id
+                 (table:tables) <- get
+                 put ((insert symbol t table):tables)
+                    where Ann (Ident symbol) _ = id
 
 lookUpSymbol :: IdentF () -> Analyzer (Maybe (TypeF ()))
 lookUpSymbol id =
   do
     tables <- get
     return $ foldl (<|>) Nothing $ map (HashMap.lookup symbol) tables
-  where Ann (Ident symbol) _ = id
+      where Ann (Ident symbol) _ = id
 
 
 analyzeProgramF :: ProgramF () -> Analyzer (ProgramF ())
@@ -109,9 +109,6 @@ analyzeProgramF p@(Ann (Program fs stat) ann@(pos, none)) =
           mapM checkReturn (getStats stat) >>
           return s
         checkReturn s = return s
-
-
-
 
 analyzeFuncF :: FuncF () -> Analyzer (FuncF ())
 analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
@@ -364,7 +361,7 @@ analyzeExprF (Ann (LiterExpr i) (pos, _)) =
 analyzeExprF (Ann e@(IdentExpr symbol) (pos, _)) =
   lookUpSymbol symbol >>= \maybeT ->
     case maybeT of
-      Nothing -> throwError ("symbol " ++ show symbol ++ " at " ++ show pos ++  "n")
+      Nothing -> throwError ("symbol " ++ show symbol ++ " at " ++ show pos ++  "\n")
       Just (Ann t _) -> return $ Ann e (pos, t)
   where (Ann (Ident name) _) = symbol
 

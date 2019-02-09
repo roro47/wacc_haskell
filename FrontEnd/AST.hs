@@ -123,10 +123,11 @@ instance Eq (Type a) where
   (TPair ft1 st1) == (TPair ft2 st2) = (ft1 == ft2) &&
                                        (st1 == st2)
   Any == _ = True
+  _ == Any = True
   None == None = True
   (TFunc t1 ts1) == (TFunc t2 ts2) = (t1 == t2) &&
                                      (ts1 == ts2)
-  a == b = False
+  _ == _ = False
 
 instance Show (Type a) where
   show TInt = "TInt"
