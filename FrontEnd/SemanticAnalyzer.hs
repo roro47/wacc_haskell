@@ -99,14 +99,14 @@ analyzeProgramF p@(Ann (Program fs stat) ann@(pos, none)) =
         checkReturn (Ann (Return _) (pos, _)) =
           throwError ("Attempt to return from main scope at " ++ show pos ++ "\n")
         checkReturn s@(Ann (If _ stat1 stat2) _) =
-          mapM checkReturn (getStats stat1) >>= \_ ->
-          mapM checkReturn (getStats stat2) >>= \_ ->
+          mapM checkReturn (getStats stat1) >>
+          mapM checkReturn (getStats stat2) >>
           return s
         checkReturn s@(Ann (While _ stat) _) =
-          mapM checkReturn (getStats stat) >>= \_ ->
+          mapM checkReturn (getStats stat) >>
           return s
         checkReturn s@(Ann (Subroutine stat) _) =
-          mapM checkReturn (getStats stat) >>= \_ ->
+          mapM checkReturn (getStats stat) >>
           return s
         checkReturn s = return s
 
@@ -119,12 +119,12 @@ analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
       case maybeT of
         Just (Ann _ (pos', _)) -> throwError $ "already declared"
         otherwise ->
-          pushScope >>= \_ ->
-          mapM (\(Ann (Param t pName) _) -> addSymbol pName t) ps >>= \_ ->
+          pushScope >>
+          mapM (\(Ann (Param t pName) _) -> addSymbol pName t) ps >>
           analyzeStatListF stats >>= \stats' ->
-          checkReturnT (last $ getStats stats') >>= \_ ->
-          popScope >>= \_ ->
-          addSymbol symbol (Ann (TFunc t paramTs) (pos, none)) >>= \_ ->
+          checkReturnT (last $ getStats stats') >>
+          popScope >>
+          addSymbol symbol (Ann (TFunc t paramTs) (pos, none)) >>
           return f
    where paramTs = map (\(Ann (Param t _) _) -> t) ps
          (Ann returnT _) = t
@@ -134,14 +134,14 @@ analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
            then throwError $ typeErr "Function return type not matched" pos [returnT] [t]
            else return s
          checkReturnT s@(Ann (If _ stat1 stat2) _) =
-          checkReturnT (last $ getStats stat1) >>= \_ ->
-          checkReturnT (last $ getStats stat2) >>= \_ ->
+          checkReturnT (last $ getStats stat1) >>
+          checkReturnT (last $ getStats stat2) >>
           return s
          checkReturnT s@(Ann (While _ stat) _) =
-          checkReturnT (last $ getStats stat) >>= \_ ->
+          checkReturnT (last $ getStats stat) >>
           return s
          checkReturnT s@(Ann (Subroutine stat) _) =
-          checkReturnT (last $ getStats stat) >>= \_ ->
+          checkReturnT (last $ getStats stat) >>
           return s
          checkReturnT s = throwError "impossible situation"
 
@@ -160,11 +160,11 @@ typeCheckExpr err t e@(Ann expr (posExpr, exprT))
 
 typeCheckArray :: String -> TypeF () -> AssignRHSF () -> Analyzer (AssignRHSF ())
 typeCheckArray msg (Ann t _) rhs@(Ann (ExprRHS expr) _) =
-  typeCheckExpr msg t expr >>= \_ ->
+  typeCheckExpr msg t expr >>
   return rhs
 
 typeCheckArray msg (Ann t _) rhs@(Ann (ArrayLiter exprs) _) =
-  mapM (typeCheckExpr msg arrayT) exprs >>= \_ ->
+  mapM (typeCheckExpr msg arrayT) exprs >>
   return rhs
   where (TArray (Ann arrayT _)) = t
 
@@ -178,13 +178,13 @@ analyzeStatF (Ann s@(Declare t symbol rhs) (pos, none)) =
       Just (Ann _ (pos', _)) -> throwError $ "symbol " ++ showId symbol ++ show pos ++  " already declared at " ++ show pos'
       otherwise -> analyzeAssignRHSF rhs >>= \rhs'@(Ann _ (pos, rhsT)) ->
                    if isArray declareT
-                   then typeCheckArray err t rhs' >>= \_ ->
-                        addSymbol symbol t >>= \_ ->
-                        return $ Ann (Declare t symbol rhs') (pos, none)
+                   then typeCheckArray err t rhs' >>
+                        addSymbol symbol t >>
+                        (return $ Ann (Declare t symbol rhs') (pos, none))
                    else  if rhsT /= declareT
                          then throwError $ typeErr err pos [declareT] [rhsT]
-                         else addSymbol symbol t >>= \_ ->
-                              return $ Ann (Declare t symbol rhs') (pos, none)
+                         else addSymbol symbol t >>
+                              (return $ Ann (Declare t symbol rhs') (pos, none))
    where (Ann declareT _ ) = t
          err = "Assign wrong type of value in declaration"
          getExprs (ArrayLiter exprs) = exprs
@@ -194,8 +194,8 @@ analyzeStatF (Ann (Assign lhs rhs) ann@(pos, none)) =
     analyzeAssignRHSF rhs >>= \ rhs'@(Ann expr (pos2, rT)) ->
     case lT of
       TArray (Ann t _) -> case rT of
-                    TArray _ -> mapM_ (typeCheckExpr errArray t) (getExprs expr) >>= \_ ->
-                                return $ Ann (Assign lhs' (Ann expr (pos2, lT))) ann
+                    TArray _ -> mapM_ (typeCheckExpr errArray t) (getExprs expr) >>
+                                (return $ Ann (Assign lhs' (Ann expr (pos2, lT))) ann)
                     otherwise -> throwError $ typeErr err pos2 [lT] [rT]
       otherwise -> if lT == rT
                    then return $ Ann (Assign lhs' rhs') (pos, none)
@@ -259,10 +259,10 @@ analyzeStatF (Ann (While expr stat) ann@(pos, none)) =
   where err = "Condition must be of type bool"
 
 analyzeStatF (Ann (Subroutine stat) ann) =
-  pushScope >>= \_ ->
+  pushScope >>
   analyzeStatListF stat >>= \stat' ->
-  popScope >>= \_ ->
-  return $ Ann (Subroutine stat') ann
+  popScope >>
+  (return $ Ann (Subroutine stat') ann)
 
 analyzeAssignLHSF :: AssignLHSF () -> Analyzer (AssignLHSF ())
 analyzeAssignLHSF (Ann lhs@(IdentLHS symbol) (pos, _)) =
@@ -299,11 +299,13 @@ analyzeArrayElemF (Ann e@(ArrayElem symbol exprs) (pos, _)) =
   lookUpSymbol symbol >>= \maybeT ->
     case maybeT of
       Nothing -> throwError "array not declared"
-      Just (Ann t _) ->
-        mapM analyzeExprF exprs >>= \exprs' ->
-        case findIndex (t /=) (map getT exprs') of
-          Just i -> throwError "some expr has incorrect type"
-          Nothing -> return $ Ann (ArrayElem symbol exprs') (pos, t)
+      Just (Ann (TArray (Ann t _)) _) ->
+        (mapM analyzeExprF exprs >>= \exprs' ->
+         case findIndex (t /=) (map getT exprs') of
+            Just i -> throwError "some expr has incorrect type"
+            Nothing -> return $ Ann (ArrayElem symbol exprs') (pos, t)
+        )
+      otherwise -> throwError "type is not array"
 
 analyzeAssignRHSF :: AssignRHSF () -> Analyzer (AssignRHSF ())
 analyzeAssignRHSF (Ann (ExprRHS expr) (pos, _)) =
@@ -412,8 +414,8 @@ analyzeExprF (Ann (BExpr bop e1 e2) (pos, _)) =
     match2 :: BinaryOp -> Type () -> [Type ()] -> ExprF () ->
               ExprF () -> Analyzer (ExprF ())
     match2 bop returnT ts e1@(Ann expr1 (pos1, expr1T)) e2@(Ann expr2 (pos2, expr2T))
-      = match1 ts e1 >>= \_ ->
-        match1 ts e2 >>= \_ ->
+      = match1 ts e1 >>
+        match1 ts e2 >>
         if expr1T /= expr2T
         then throwError $ typeErr "" pos2 [expr1T] [expr2T]
         else return $ Ann (BExpr bop e1 e2) (pos1, returnT)

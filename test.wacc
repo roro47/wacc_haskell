@@ -3,6 +3,8 @@ begin
     skip;
     return a
   end
-  char a = chr 907;
+  pair (int, char) a = newpair (1, 'a');
+  pair (int, char) b = newpair (2, 'b');
+  bool eq = a == b;
   println a
 end

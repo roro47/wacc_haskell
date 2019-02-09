@@ -24,22 +24,23 @@ parseProgramF = do
               return $ Ann (Program fs stat) (pos, None)
 
 parseFuncF :: Parser (FuncF ())
-parseFuncF = whiteSpace >>
-             getPosition >>= \pos ->
-             parseTypeF >>= \t ->
-             parseIdentF >>= \ident ->
-             parens (commaSep parseParamF) >>= \ps ->
-             reserved "is" >>
-             parseStatListF >>= \stat ->
-             checkReturnExit stat >>
-             reserved "end" >>(
-             return $ Ann (Func t ident ps stat) (pos, None))
+parseFuncF = do
+             whiteSpace
+             pos <- getPosition
+             t <- parseTypeF
+             ident <- parseIdentF
+             ps <- parens (commaSep parseParamF)
+             reserved "is"
+             stat <- parseStatListF
+             checkReturnExit stat
+             reserved "end"
+             return $ Ann (Func t ident ps stat) (pos, None)
     where checkReturnExit (Ann (StatList stats) (pos, None))
             = case lastStat of
                 Return _ -> return ()
                 Exit _ -> return ()
                 If _ stat1 stat2 ->
-                      checkReturnExit stat1 >>= \_ ->
+                      checkReturnExit stat1 >>
                       checkReturnExit stat2
                 While _ stat -> checkReturnExit stat
                 Subroutine stat -> checkReturnExit stat
@@ -48,10 +49,11 @@ parseFuncF = whiteSpace >>
 
 
 parseParamF :: Parser (ParamF ())
-parseParamF = whiteSpace >>
-              getPosition >>= \pos ->
-              parseTypeF >>= \t ->
-              parseIdentF >>= \ident ->
+parseParamF = do
+              whiteSpace
+              pos <- getPosition
+              t <- parseTypeF
+              ident <- parseIdentF
               return $ Ann (Param t ident) (pos, None)
 
 parseTypeF :: Parser (TypeF ())
@@ -60,31 +62,33 @@ parseTypeF = try parseArrayTypeF
          <|> parsePairTypeF
 
 parseArrayTypeF :: Parser (TypeF ())
-parseArrayTypeF = whiteSpace >>
-             getPosition >>= \pos ->
-            (parseBaseTypeF
-         <|> parsePairTypeF) >>= \t ->
-             many (try $ reserved "[]") >>= \rs ->
-             return $ foldl (\acc x -> Ann (TArray acc) (pos, None)) t rs
+parseArrayTypeF = do
+                  whiteSpace
+                  pos <- getPosition
+                  t <- (parseBaseTypeF <|> parsePairTypeF)
+                  rs <- many (try $ reserved "[]")
+                  return $ foldl (\acc x -> Ann (TArray acc) (pos, None)) t rs
 
 parseBaseTypeF :: Parser (TypeF ())
-parseBaseTypeF = whiteSpace >>
-                 getPosition >>= \pos ->
-                (reserved "int" >> (return $ Ann TInt (pos, None)))
-            <|> (reserved "bool" >> (return $ Ann TBool (pos, None)))
-            <|> (reserved "char" >> (return $ Ann TChar (pos, None)))
-            <|> (reserved "string" >> (return $ Ann TStr (pos, None)))
+parseBaseTypeF = do
+                 whiteSpace
+                 pos <- getPosition
+                 ((reserved "int" >> (return $ Ann TInt (pos, None)))
+                  <|> (reserved "bool" >> (return $ Ann TBool (pos, None)))
+                  <|> (reserved "char" >> (return $ Ann TChar (pos, None)))
+                  <|> (reserved "string" >> (return $ Ann TStr (pos, None))))
 
 parsePairTypeF :: Parser (TypeF ())
-parsePairTypeF = whiteSpace >>
-                 getPosition >>= \pos ->
-                 string "pair" >>
-                 reservedOp "(" >>
-                 parsePairElemTypeF >>= \t1 ->
-                 comma >>
-                 parsePairElemTypeF >>= \t2 ->
-                 reservedOp ")" >>
-                 (return $ Ann (TPair t1 t2) (pos, None))
+parsePairTypeF = do
+                 whiteSpace
+                 pos <- getPosition
+                 string "pair"
+                 reservedOp "("
+                 t1 <- parsePairElemTypeF
+                 comma
+                 t2 <- parsePairElemTypeF
+                 reservedOp ")"
+                 return $ Ann (TPair t1 t2) (pos, None)
         where parsePairElemTypeF :: Parser (TypeF ())
               parsePairElemTypeF = try parseArrayTypeF
                                <|> try parseBaseTypeF
@@ -93,13 +97,14 @@ parsePairTypeF = whiteSpace >>
                                     (return $ (Ann Any (pos, None))))
 
 parseStatListF :: Parser (StatListF ())
-parseStatListF = whiteSpace >>
-                 getPosition >>= \pos ->
-                 parseStatF >>= \stat ->
-                   try (semi >>
+parseStatListF = do
+                 whiteSpace
+                 pos <- getPosition
+                 stat <- parseStatF
+                 (try (semi >>
                     parseStatListF >>= \(Ann (StatList rest) _) ->
                     return $ Ann (StatList (stat:rest)) (pos, None))
-                <|> (return $ Ann (StatList [stat]) (pos, None))
+                    <|> (return $ Ann (StatList [stat]) (pos, None)))
 
 
 parseStatF :: Parser (StatF ())
@@ -223,32 +228,34 @@ parseSubroutineStatF = do
 
 
 parseAssignLHSF :: Parser (AssignLHSF ())
-parseAssignLHSF = getPosition >>= \pos ->
-                  (try parsePairElemF >>= \elem ->
-                    return $ Ann (PairElemLHS elem) (pos, None))
-              <|> (try parseArrayElemF >>= \elem ->
-                    return $ Ann (ArrayElemLHS elem) (pos, None))
-              <|> (try parseIdentF >>= \ident ->
-                    return $ Ann (IdentLHS ident) (pos, None))
+parseAssignLHSF = do
+                  pos <- getPosition
+                  (do {elem <- try parsePairElemF;
+                    return $ Ann (PairElemLHS elem) (pos, None)}
+                      <|> do {elem <- try parseArrayElemF;
+                        return $ Ann (ArrayElemLHS elem) (pos, None)}
+                      <|> do {ident <- try parseIdentF;
+                        return $ Ann (IdentLHS ident) (pos, None)})
 
 parseAssignRHSF :: Parser (AssignRHSF ())
-parseAssignRHSF = (getPosition >>= \pos ->
-                    parseExprF >>= \expr ->
-                   return $ Ann (ExprRHS expr) (pos, None))
+parseAssignRHSF = (do {pos <- getPosition;
+                  expr <- parseExprF;
+                  return $ Ann (ExprRHS expr) (pos, None)}
              <|> parseNewPairRHSF
-             <|> (getPosition >>= \pos ->
-               parsePairElemF >>= \elem ->
-               return $ Ann (PairElemRHS elem) (pos, None))
+             <|> do {pos <- getPosition;
+                     elem <- parsePairElemF;
+                     return $ Ann (PairElemRHS elem) (pos, None)}
              <|> parseCallRHSF
-             <|> parseArrayLiterRHSF
+             <|> parseArrayLiterRHSF)
 
 parseArrayLiterRHSF :: Parser (AssignRHSF ())
-parseArrayLiterRHSF = whiteSpace >>
-                      getPosition >>= \pos ->
-                      reservedOp "[" >>
-                      commaSep parseExprF >>= \es ->
-                      reservedOp "]" >>
-                      (return $ Ann (ArrayLiter es) (pos, None))
+parseArrayLiterRHSF = do
+                      whiteSpace
+                      pos <- getPosition
+                      reservedOp "["
+                      es <- commaSep parseExprF
+                      reservedOp "]"
+                      return $ Ann (ArrayLiter es) (pos, None)
 
 parseNewPairRHSF :: Parser (AssignRHSF ())
 parseNewPairRHSF = do
@@ -270,20 +277,22 @@ parseCallRHSF = do
                 return $ Ann (Call ident args) (pos, None)
 
 parsePairElemF :: Parser (PairElemF ())
-parsePairElemF = getPosition >>= \pos ->
-             ( reserved "fst" >>
-               parseExprF >>= \expr ->
-               return $ Ann (PairElemFst expr) (pos, None))
-         <|> ( reserved "snd" >>
-               parseExprF >>= \expr->
-               return $ Ann (PairElemSnd expr) (pos, None))
+parsePairElemF = do
+                 pos <- getPosition
+                 ( do {reserved "fst";
+                   expr <- parseExprF;
+                   return $ Ann (PairElemFst expr) (pos, None)}
+                    <|> do {reserved "snd";
+                    expr <- parseExprF;
+                    return $ Ann (PairElemSnd expr) (pos, None)})
 
 
 parseExprF :: Parser (ExprF ())
-parseExprF = whiteSpace >>
-             buildExpressionParser table term >>= \expr ->
-             checkOverFlow expr >>
-             checkPrefix expr >>= \_ -> --do not remove this one or overflow will fail!!
+parseExprF = do
+             whiteSpace
+             expr <- buildExpressionParser table term
+             checkOverFlow expr
+             checkPrefix expr
              return $ expr
      where checkPrefix (Ann (UExpr uop ef@(Ann e _)) _)
             = case e of
@@ -298,7 +307,6 @@ parseExprF = whiteSpace >>
            checkPrefix (Ann (ArrayExpr (Ann (ArrayElem _ es) _)) _)
              = mapM_ checkPrefix es
            checkPrefix _ = return ()
-
 
            isIntLiter (Ann (IntLiter _) _) = True
            isIntLiter liter = False
@@ -367,15 +375,17 @@ parseBracketExprF = do
                     return $ Ann (BracketExpr exprF) (pos, None)
 
 parseLiterExprF :: Parser (ExprF ())
-parseLiterExprF = getPosition >>= \pos ->
-                  parseLiterF >>= \l ->
+parseLiterExprF = do
+                  pos <- getPosition
+                  l <- parseLiterF
                   return $ Ann (LiterExpr l) (pos, None)
 
 parseIdentExprF :: Parser (ExprF ())
-parseIdentExprF = whiteSpace >>
-                  getPosition >>= (\pos ->
-                  parseIdentF >>= (\i ->
-                  return $ Ann (IdentExpr i) (pos, None)))
+parseIdentExprF = do
+                  whiteSpace
+                  pos <- getPosition
+                  i <- parseIdentF
+                  return $ Ann (IdentExpr i) (pos, None)
 
 
 parseLiterF :: Parser (LiterF ())
@@ -386,25 +396,23 @@ parseLiterF = try parseIntLiterF
          <|> try parsePairLiterF
 
 parseIntLiterF :: Parser (LiterF ())
-parseIntLiterF = getPosition >>= (\pos ->
-                integer >>= (\x ->
-                    return $ Ann (IntLiter x) (pos, None)))
+parseIntLiterF = do
+                 pos <- getPosition
+                 x <- integer
+                 return $ Ann (IntLiter x) (pos, None)
 
 
 parseBoolLiterF :: Parser (LiterF ())
-parseBoolLiterF = getPosition >>= (\pos ->
-              (reserved "true" >> (
-                return $ Ann (BoolLiter True) (pos, None)))
-          <|> (reserved "false" >> (
-                return $ Ann (BoolLiter False) (pos, None)))
-          )
+parseBoolLiterF = do
+                  pos <- getPosition
+                  (do {reserved "true";return $ Ann (BoolLiter True) (pos, None)}
+                      <|> (do {reserved "false"; return $ Ann (BoolLiter False) (pos, None)}))
 
 parseCharLiterF :: Parser (LiterF ())
-parseCharLiterF = getPosition >>= \pos ->
-              (try catchWrongEscape >>
-                  fail "wrong escape")
-          <|> (charLiteral >>= \c ->
-              return $ Ann (CharLiter c) (pos, None))
+parseCharLiterF = do
+                  pos <- getPosition
+                  ((try catchWrongEscape >> fail "wrong escape")
+                    <|> (do {c <- charLiteral; return $ Ann (CharLiter c) (pos, None)}))
      where catchWrongEscape =
              do
                char '\''
@@ -412,21 +420,24 @@ parseCharLiterF = getPosition >>= \pos ->
                char '\''
                return '\"'
 
+
 parseStringLiterF :: Parser (LiterF ())
-parseStringLiterF = getPosition >>= (\pos ->
-               stringLiteral >>= (\s ->
-               return $ Ann (StringLiter s) (pos, None)))
+parseStringLiterF = do
+                    pos <- getPosition
+                    s <- stringLiteral
+                    return $ Ann (StringLiter s) (pos, None)
 
 parsePairLiterF :: Parser (LiterF ())
-parsePairLiterF = getPosition >>= \pos ->
-                  reserved "null" >>
-                  (return $ Ann Null (pos, None))
-
+parsePairLiterF = do
+                  pos <- getPosition
+                  reserved "null"
+                  return $ Ann Null (pos, None)
 
 parseIdentF :: Parser (IdentF ())
-parseIdentF = getPosition >>= (\pos ->
-               ident >>= (\i ->
-               return $ Ann (Ident i) (pos, None)))
+parseIdentF = do
+              pos <- getPosition
+              i <- ident
+              return $ Ann (Ident i) (pos, None)
 
 parseArrayElemF :: Parser (ArrayElemF ())
 parseArrayElemF = do
