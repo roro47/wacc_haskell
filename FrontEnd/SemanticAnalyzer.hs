@@ -50,7 +50,7 @@ showId (Ann (Ident id) _) = id
 
 
 declaredErr symbol pos1 pos2
- = "symbol " ++ symbol ++ show pos1 ++ " already declared at "  ++ show pos2
+ = "symbol " ++ symbol ++ " at " ++ show pos1 ++ " already declared at "  ++ show pos2
 
 
 typeErr msg pos expected actual =
@@ -85,6 +85,15 @@ lookUpSymbol id =
     return $ foldl (<|>) Nothing $ map (HashMap.lookup symbol) tables
       where Ann (Ident symbol) _ = id
 
+lookUpSymbolCurrScope :: IdentF () -> Analyzer (Maybe (TypeF ()))
+lookUpSymbolCurrScope id = 
+  do
+    tables <- get
+    case tables of
+      [] -> return Nothing
+      (t:ts) -> return $ HashMap.lookup symbol t
+  where Ann (Ident symbol) _ = id
+
 
 analyzeProgramF :: ProgramF () -> Analyzer (ProgramF ())
 analyzeProgramF p@(Ann (Program fs stat) ann@(pos, none)) =
@@ -114,7 +123,7 @@ analyzeFuncF :: FuncF () -> Analyzer (FuncF ())
 analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) =
     lookUpSymbol symbol >>= \maybeT ->
       case maybeT of
-        Just (Ann _ (pos', _)) -> throwError $ "already declared"
+        Just (Ann _ (pos', _)) -> throwError $ declaredErr (showId symbol) pos pos'
         otherwise ->
           pushScope >>
           mapM (\(Ann (Param t pName) _) -> addSymbol pName t) ps >>
@@ -170,9 +179,9 @@ analyzeStatF :: StatF () -> Analyzer (StatF ())
 analyzeStatF s@(Ann Skip _) = return $ s
 
 analyzeStatF (Ann s@(Declare t symbol rhs) (pos, none)) =
-  lookUpSymbol symbol >>= \maybeT ->
+  lookUpSymbolCurrScope symbol >>= \maybeT ->
     case maybeT of
-      Just (Ann _ (pos', _)) -> throwError $ "symbol " ++ showId symbol ++ show pos ++  " already declared at " ++ show pos'
+      Just (Ann _ (pos', _)) -> throwError $ (declaredErr (showId symbol) pos pos') 
       otherwise -> analyzeAssignRHSF rhs >>= \rhs'@(Ann _ (pos, rhsT)) ->
                    if isArray declareT
                    then typeCheckArray err t rhs' >>
