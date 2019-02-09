@@ -9,5 +9,5 @@ job1:
 job2:
   stage: test
   script: 
-    ghc -o test Test/Test.hs
-    ./test
+    - ghc -o test Test/Test.hs
+    - ./test
