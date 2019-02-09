@@ -44,7 +44,7 @@ parseFuncF = do
                       checkReturnExit stat2
                 While _ stat -> checkReturnExit stat
                 Subroutine stat -> checkReturnExit stat
-                otherwise -> fail "Expected return"
+                otherwise -> fail "Expected return or junk after return"
            where Ann lastStat _ = last stats
 
 
