@@ -9,7 +9,7 @@
 # Program:
 
 begin
-  if true 
+  if true
   then
     skip
   fi
