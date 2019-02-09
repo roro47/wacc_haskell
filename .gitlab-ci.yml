@@ -1,13 +1,17 @@
+before_script:
+  - source ~/.bashrc
+  - cabal install Parsec hspec hashmap
 stages:
   - build
   - test
 
 job1:
   stage: build
-  script: ghc -o compile Compiler.hs
+  script: 
+    - ghc -o compile Compiler.hs
 
 job2:
   stage: test
   script: 
-    ghc -o test Test/Test.hs
-    ./test
+    - ghc -o test Test/Test.hs
+    - ./test
