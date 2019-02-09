@@ -1,6 +1,6 @@
 before_script:
-  - apt-get install ghc
-  - apt-get install cabal
+  - sudo apt-get install ghc
+  - sudo apt-get install cabal
   - cabal update 
   - cabal install Parsec
   - cabal install hashmap
