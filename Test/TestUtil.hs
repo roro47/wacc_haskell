@@ -64,6 +64,6 @@ analyzeUsing str par ana =
         Left e  -> return Nothing
         Right r -> (
             case evalStateT (analyzedummy r ana) [] of
-              Left e' -> print e'>> return Nothing
+              Left e' -> return Nothing
               Right r' -> return (Just (show r'))
               )
