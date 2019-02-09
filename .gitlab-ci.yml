@@ -4,7 +4,8 @@ stages:
 
 job1:
   stage: build
-  script: ghc -o compile Compiler.hs
+  script: 
+    - ghc -o compile Compiler.hs
 
 job2:
   stage: test
