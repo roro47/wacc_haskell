@@ -1,3 +1,10 @@
+before_script:
+  - apt-get install ghc
+  - apt-get install cabal
+  - cabal update 
+  - cabal install Parsec
+  - cabal install hashmap
+  - cabal install hspec
 stages:
   - build
   - test
