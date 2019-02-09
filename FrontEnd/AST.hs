@@ -11,13 +11,13 @@ import Text.ParserCombinators.Parsec.Pos
 
 import FrontEnd.Lexer
 
-data Pass c = Pass 
+data Pass c = Pass
 
 data Program a = Program [FuncF a] (StatListF a) deriving (Eq, Show)
 
-data Func a = Func (TypeF a) (IdentF a) [ParamF a] (StatListF a) 
+data Func a = Func (TypeF a) (IdentF a) [ParamF a] (StatListF a)
                 deriving (Eq, Show)
-              
+
 
 data Param a = Param (TypeF a) (IdentF a) deriving (Eq, Show)
 
@@ -29,14 +29,14 @@ data Stat a = Skip
             | Read (AssignLHSF a)
             | Free (ExprF a)
             | Return (ExprF a)
-            | Exit (ExprF a) 
+            | Exit (ExprF a)
             | Print (ExprF a)
             | Println (ExprF a)
             | If (ExprF a) (StatListF a) (StatListF a)
             | While (ExprF a) (StatListF a)
             | Subroutine (StatListF a)
             deriving (Eq, Show)
-            
+
 data AssignLHS a = IdentLHS (IdentF a)
                  | ArrayElemLHS (ArrayElemF a)
                  | PairElemLHS (PairElemF a)
@@ -62,7 +62,7 @@ data Type a = TInt
             | Any
             | None
             | TFunc (TypeF a) [TypeF a] -- return type, param type
-            
+
 
 data Expr a = LiterExpr (LiterF a)
             | IdentExpr (IdentF a)
@@ -79,7 +79,7 @@ data Liter a = IntLiter Integer
              | Null
              | PairLiter
              deriving (Eq, Show)
-           
+
 data UnaryOp = Pos | Not | Neg | Len | Ord | Chr deriving (Eq, Show)
 
 data BinaryOp = Mul | Div | Mod | Plus | Minus | G | GEq | L | LEq | Eq | NEq | And | Or deriving (Eq, Show)
@@ -94,7 +94,7 @@ data Ann f = Ann f (SourcePos, Type ())
 data Parse = Parse deriving (Show, Eq)
 data Semantic = Semantic deriving (Show, Eq)
 
-type ProgramF a = Ann  (Program a) 
+type ProgramF a = Ann  (Program a)
 type FuncF a = Ann  (Func a)
 type ParamF a = Ann  (Param a)
 type StatF a = Ann  (Stat a)
@@ -120,14 +120,14 @@ instance Eq (Type a) where
   TChar == TChar = True
   TStr == TStr = True
   (TArray t1) == (TArray t2) = t1 == t2
-  (TPair ft1 st1) == (TPair ft2 st2) = (ft1 == ft1) &&
-                                       (ft2 == st2)
+  (TPair ft1 st1) == (TPair ft2 st2) = (ft1 == ft2) &&
+                                       (st1 == st2)
   Any == _ = True
   None == None = True
   (TFunc t1 ts1) == (TFunc t2 ts2) = (t1 == t2) &&
                                      (ts1 == ts2)
   a == b = False
-  
+
 instance Show (Type a) where
   show TInt = "TInt"
   show TBool = "TBool"

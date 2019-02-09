@@ -364,8 +364,9 @@ analyzeExprF (Ann (LiterExpr i) (pos, _)) =
 analyzeExprF (Ann e@(IdentExpr symbol) (pos, _)) =
   lookUpSymbol symbol >>= \maybeT ->
     case maybeT of
-      Nothing -> throwError "symbol not found"
+      Nothing -> throwError ("symbol " ++ show symbol ++ " at " ++ show pos ++  "n")
       Just (Ann t _) -> return $ Ann e (pos, t)
+  where (Ann (Ident name) _) = symbol
 
 analyzeExprF (Ann (ArrayExpr a) (pos, _)) =
   analyzeArrayElemF a >>= \a'@(Ann _ (_, t)) ->
