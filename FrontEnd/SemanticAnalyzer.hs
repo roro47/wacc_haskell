@@ -128,7 +128,6 @@ typeCheckExpr err t e@(Ann expr (posExpr, exprT))
      then throwError $ typeError err posExpr [t] exprT
      else return e
 
-
 typeCheckArray :: String -> TypeF () -> AssignRHSF () -> Analyzer (AssignRHSF ())
 typeCheckArray msg (Ann t _) rhs@(Ann (ExprRHS expr) _) =
   typeCheckExpr msg t expr >>
@@ -178,13 +177,13 @@ analyzeStatF (Ann (Assign lhs rhs) ann@(pos, none)) =
 
 analyzeStatF (Ann (Read lhs) (pos, _)) =
   analyzeAssignLHSF lhs >>= \lhs'@(Ann _ (_, tl)) ->
-  match err lhs' [TInt, TChar] >>= \_ ->
+  match err lhs' [TInt, TChar] >>
   return $ Ann (Read lhs') (pos, tl)
   where err = "Support reading int and char only"
 
 analyzeStatF (Ann (Free expr) ann) =
   analyzeExprF expr >>= \expr'@(Ann _ (posExpr, t)) ->
-  match err expr' [arrayType, pairType] >>= \_ ->
+  match err expr' [arrayType, pairType] >>
   return $ Ann (Free expr') ann
   where err = "Support freeing array and pair only"
 
@@ -200,7 +199,7 @@ analyzeStatF (Ann (Return expr) ann@(pos, none)) =
 
 analyzeStatF (Ann (Exit expr) ann) =
   analyzeExprF expr >>= \expr' ->
-  match err expr' [TInt] >>= \_ ->
+  match err expr' [TInt] >>
   return $ Ann (Exit expr') ann
   where err = "Exit value not of type int"
 
@@ -214,7 +213,7 @@ analyzeStatF (Ann (Println expr) ann) =
 
 analyzeStatF (Ann (If expr stat1 stat2) ann) =
   analyzeExprF expr >>= \expr' ->
-  match err expr' [TBool] >>= \_ ->
+  match err expr' [TBool] >>
   analyzeStatListF stat1 >>= \stat1' ->
   analyzeStatListF stat2 >>= \stat2' ->
   return $ Ann (If expr' stat1' stat2') ann
@@ -222,15 +221,15 @@ analyzeStatF (Ann (If expr stat1 stat2) ann) =
 
 analyzeStatF (Ann (While expr stat) ann) =
   analyzeExprF expr >>= \expr' ->
-  match err expr' [TBool] >>= \_ ->
+  match err expr' [TBool] >>
   analyzeStatListF stat >>= \stat' ->
   return $ Ann (While expr' stat') ann
   where err = "Condition must be of type bool"
 
 analyzeStatF (Ann (Subroutine stat) ann) =
-  pushScope >>= \_ ->
+  pushScope >>
   analyzeStatListF stat >>= \stat' ->
-  popScope >>= \_ ->
+  popScope >>
   return $ Ann (Subroutine stat') ann
 
 analyzeAssignLHSF :: AssignLHSF () -> Analyzer (AssignLHSF ())
@@ -302,7 +301,7 @@ analyzeAssignRHSF (Ann (Call symbol exprs) (pos, _)) =
       then throwError ("For function call " ++ show symbol ++ " at " ++ show pos
                         ++", require " ++ show (length tIns) ++ " parameters, " ++
                         show (length exprs') ++ " are given.\n")
-      else mapM (\((Ann t _), e) -> match "" e [t]) (zip tIns exprs') >>= \_ ->
+      else mapM (\((Ann t _), e) -> match "" e [t]) (zip tIns exprs') >>
            return $ Ann (Call symbol exprs') (pos, tOut)
     otherwise -> throwError $ "Symbol " ++ show symbol ++ " at " ++ show pos ++
                               " is not a function symbol"
@@ -365,8 +364,8 @@ analyzeExprF (Ann (BExpr bop e1 e2) (pos, _)) =
   analyzeExprF e1 >>= \e1'@(Ann _ (pos, t1)) ->
   analyzeExprF e2 >>= \e2'@(Ann _ (_, t2)) ->
   case List.lookup bop bopTypeTable  of
-   Just (inT, outT) -> match err e1' inT >>= \_ ->
-                       match err e2' [t1] >>= \_ ->
+   Just (inT, outT) -> match err e1' inT >>
+                       match err e2' [t1] >>
                        return $ Ann (BExpr bop e1' e2') (pos, outT)
    otherwise -> throwError "Binary operator not found"
  where err = "Type not matched between binary operator"
