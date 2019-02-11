@@ -213,7 +213,7 @@ analyzePairTest = hspec $ do
     it "☑️ can analyze pairs of same type" $ do
       analyzeUsing "pair(int, int) p = newpair(1, 1)" parseStatF analyzeStatF `shouldReturn`(
         Just "Declare TPair (TInt, TInt) \"p\" NewPair LiterExpr IntLiter 1 LiterExpr IntLiter 1")
-        
+
     it "☑️ can access pair elements" $ do
       analyzeUsing "pair(int, int) p = newpair(1, 1); int p1 = fst p" parseStatF analyzeStatF `shouldReturn`(
         Just "Declare TPair (TInt, TInt) \"p\" NewPair LiterExpr IntLiter 1 LiterExpr IntLiter 1")
@@ -233,11 +233,3 @@ analyzeFuncTest = hspec $ do
     it "☑️ can analyse valid fuctions" $ do
       analyzeUsing "int inc(int x) is return x + 1 end" parseFuncF analyzeFuncF `shouldReturn`
         (Just "Func TInt \"inc\" [Param TInt \"x\"] StatList [Return BExpr Plus IdentExpr \"x\" LiterExpr IntLiter 1]")
-
---TODO
---pair
---operators
--- analyzeFuncF
--- analyzeAssignLHSF
--- analyzePairElemF
--- analyzeAssignRHSF
