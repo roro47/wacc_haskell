@@ -1,16 +1,18 @@
 module FrontEnd.Parser where
 
 import System.IO
+import Data.List as List
 import Control.Monad
 import Control.Monad.Except
+import qualified Control.Applicative as App
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
-
 import Text.ParserCombinators.Parsec.Pos
 
 import FrontEnd.Lexer
 import FrontEnd.AST
+
 
 parseProgramF :: Parser (ProgramF ())
 parseProgramF = do
@@ -21,21 +23,21 @@ parseProgramF = do
               stat <- parseStatListF
               reserved "end"
               eof
-              return $ Ann (Program fs stat) (pos, None)
+              return $ Ann (Program fs stat) (pos, Void)
 
 parseFuncF :: Parser (FuncF ())
 parseFuncF = do
              whiteSpace
              pos <- getPosition
-             t <- parseTypeF
+             t <- parseType
              ident <- parseIdentF
              ps <- parens (commaSep parseParamF)
              reserved "is"
              stat <- parseStatListF
              checkReturnExit stat
              reserved "end"
-             return $ Ann (Func t ident ps stat) (pos, None)
-    where checkReturnExit (Ann (StatList stats) (pos, None))
+             return $ Ann (Func t ident ps stat) (pos, Void)
+    where checkReturnExit (Ann (StatList stats) (pos, Void))
             = case lastStat of
                 Return _ -> return ()
                 Exit _ -> return ()
@@ -52,49 +54,40 @@ parseParamF :: Parser (ParamF ())
 parseParamF = do
               whiteSpace
               pos <- getPosition
-              t <- parseTypeF
+              t <- parseType
               ident <- parseIdentF
               return $ Ann (Param t ident) (pos, None)
 
-parseTypeF :: Parser (TypeF ())
-parseTypeF = try parseArrayTypeF
-         <|> try parseBaseTypeF
-         <|> parsePairTypeF
+parseType :: Parser Type
+parseType =
+  foldl (<|>) App.empty $ map (\p -> try p) [parseArrayType, parseBaseType, parsePairType]
 
-parseArrayTypeF :: Parser (TypeF ())
-parseArrayTypeF = do
-                  whiteSpace
-                  pos <- getPosition
-                  t <- (parseBaseTypeF <|> parsePairTypeF)
+parseArrayType :: Parser Type
+parseArrayType = do
+                  t <- (parseBaseType <|> parsePairType)
                   rs <- many (try $ reserved "[]")
-                  return $ foldl (\acc x -> Ann (TArray acc) (pos, None)) t rs
+                  return $ foldl (\acc x -> TArray acc) t rs
 
-parseBaseTypeF :: Parser (TypeF ())
-parseBaseTypeF = do
-                 whiteSpace
-                 pos <- getPosition
-                 ((reserved "int" >> (return $ Ann TInt (pos, None)))
-                  <|> (reserved "bool" >> (return $ Ann TBool (pos, None)))
-                  <|> (reserved "char" >> (return $ Ann TChar (pos, None)))
-                  <|> (reserved "string" >> (return $ Ann TStr (pos, None))))
+parseBaseType :: Parser Type
+parseBaseType = do
+                 ((reserved "int" >> return TInt)
+                  <|> (reserved "bool" >> return TBool)
+                  <|> (reserved "char" >> return TChar)
+                  <|> (reserved "string" >> return TStr))
 
-parsePairTypeF :: Parser (TypeF ())
-parsePairTypeF = do
-                 whiteSpace
-                 pos <- getPosition
+parsePairType :: Parser Type
+parsePairType = do
                  string "pair"
-                 reservedOp "("
-                 t1 <- parsePairElemTypeF
-                 comma
-                 t2 <- parsePairElemTypeF
-                 reservedOp ")"
-                 return $ Ann (TPair t1 t2) (pos, None)
-        where parsePairElemTypeF :: Parser (TypeF ())
-              parsePairElemTypeF = try parseArrayTypeF
-                               <|> try parseBaseTypeF
-                               <|> (getPosition >>= \pos ->
-                                    string "pair" >>
-                                    (return $ (Ann Any (pos, None))))
+                 pair <- (parens $ parsePairElemTypeF >>= \t1 ->
+                                  comma >>= \_ ->
+                                  parsePairElemTypeF >>= \t2 ->
+                                  return $ TPair t1 t2)
+                 return $ pair
+        where parsePairElemTypeF :: Parser Type
+              parsePairElemTypeF = try parseArrayType
+                               <|> try parseBaseType
+                               <|> (string "pair" >>
+                                    return TAny)
 
 parseStatListF :: Parser (StatListF ())
 parseStatListF = do
@@ -103,100 +96,103 @@ parseStatListF = do
                  stat <- parseStatF
                  (try (semi >>
                     parseStatListF >>= \(Ann (StatList rest) _) ->
-                    return $ Ann (StatList (stat:rest)) (pos, None))
-                    <|> (return $ Ann (StatList [stat]) (pos, None)))
+                    return $ Ann (StatList (stat:rest)) (pos, Void))
+                    <|> (return $ Ann (StatList [stat]) (pos, Void)))
 
 
 parseStatF :: Parser (StatF ())
 parseStatF = whiteSpace >>
-           ( parseSkipStatF
-         <|> try parseDeclareStatF
-         <|> try parseAssignStatF
-         <|> parseReadStatF
-         <|> parseFreeStatF
-         <|> parseReturnStatF
-         <|> parseExitStatF
-         <|> parsePrintStatF
-         <|> parsePrintlnStatF
-         <|> parseIfStatF
-         <|> parseWhileStatF
-         <|> parseSubroutineStatF )
+             getPosition >>= \pos ->
+           ( try parseDeclareStat
+         <|> try parseAssignStat
+         <|> parseFuncAppStat
+         <|> parseReturnStat
+         <|> parseExitStat
+         <|> parseIfStat
+         <|> parseWhileStat
+         <|> parseSubroutineStat ) >>= \stat ->
+             return $ Ann stat (pos, Void)
 
-parseDeclareStatF :: Parser (StatF ())
-parseDeclareStatF = do
-                    pos <- getPosition
-                    t <- parseTypeF
+parseFuncAppStat :: Parser (Stat ())
+parseFuncAppStat =
+  do
+    pos <- getPosition
+    let { ann = (pos, None) }
+    (f, expr) <- foldl (<|>) App.empty $ map (\f -> try (parseFunc f)) builtInFunc
+    return $ FuncStat (Ann (FuncApp (Ann (Ident f) ann) expr) ann) 
+ where thrd (_,_,x) = x
+       parseFunc (f, ts) =
+         reserved f >>= \_ ->
+         if thrd ts /= Void
+         then fail "execute non void function in stat"
+         else case f of
+                "skip" -> return (f, [])
+                "read" -> parseAssignLHSF >>= \e -> return (f, [e])
+                otherwise -> parseExprF >>= \e -> return (f, [e])
+
+parseAssignLHSF :: Parser (ExprF ())
+parseAssignLHSF =
+  do
+    whiteSpace
+    pos <- getPosition
+    lhs <- foldl (<|>) App.empty $ map try lhsList
+    return $ Ann lhs (pos, None)
+  where lhsList = [parsePairElem, parseArrayElem,
+                  parseIdentF >>= \id -> return $ IdentExpr id]
+
+parsePairElem :: Parser (Expr ())
+parsePairElem = (reserved "fst" >>= \_ ->
+                 parseExprF >>= \expr -> 
+                 return $ PairElemFst expr)
+           <|>  (reserved "snd" >>= \_ ->
+                 parseExprF >>= \expr ->
+                 return $ PairElemSnd expr)
+
+parseArrayElem :: Parser (Expr ())
+parseArrayElem = do
+                  i <- parseIdentF
+                  exprs <- many1 (try parseIndex)
+                  return $ ArrayElem i exprs
+           where parseIndex :: Parser (ExprF ())
+                 parseIndex = do
+                              expr <- brackets parseExprF
+                              return expr
+  
+parseIdentF :: Parser (IdentF ())
+parseIdentF = do
+              pos <- getPosition
+              i <- ident
+              return $ Ann (Ident i) (pos, Void)
+
+parseDeclareStat :: Parser (Stat ())
+parseDeclareStat = do
+                    t <- parseType
                     ident <- parseIdentF
                     reservedOp "="
                     rhs <- parseAssignRHSF
-                    return $ Ann (Declare t ident rhs) (pos, None)
+                    return $ Declare t ident rhs
 
-parseAssignStatF :: Parser (StatF ())
-parseAssignStatF = do
-                   pos <- getPosition
+parseAssignStat :: Parser (Stat ())
+parseAssignStat = do
                    lhs <- parseAssignLHSF
                    reservedOp "="
                    rhs <- parseAssignRHSF
-                   return $ Ann (Assign lhs rhs) (pos, None)
+                   return $ Assign lhs rhs
 
-parseReadStatF :: Parser (StatF ())
-parseReadStatF = do
-                 pos <- getPosition
-                 reserved "read"
-                 lhs <- parseAssignLHSF
-                 return $ Ann (Read lhs) (pos, None)
-
-parseSkipStatF :: Parser (StatF ())
-parseSkipStatF = do
-                 whiteSpace
-                 pos <- getPosition
-                 reserved "skip"
-                 return $ Ann Skip (pos, None)
-
-parseFreeStatF :: Parser (StatF ())
-parseFreeStatF = do
-                 whiteSpace
-                 pos <- getPosition
-                 reserved "free"
-                 expr <- parseExprF
-                 return $ Ann (Free expr) (pos, None)
-
-parseReturnStatF :: Parser (StatF ())
-parseReturnStatF = do
-                   whiteSpace
-                   pos <- getPosition
+parseReturnStat :: Parser (Stat ())
+parseReturnStat = do
                    reserved "return"
                    expr <- parseExprF
-                   return $ Ann (Return expr) (pos, None)
+                   return $ Return expr
 
-parseExitStatF :: Parser (StatF ())
-parseExitStatF = do
-                 whiteSpace
-                 pos <- getPosition
+parseExitStat :: Parser (Stat ())
+parseExitStat = do
                  reserved "exit"
                  expr <- parseExprF
-                 return $ Ann (Exit expr) (pos, None)
+                 return $ Exit expr
 
-parsePrintStatF :: Parser (StatF ())
-parsePrintStatF = do
-                  whiteSpace
-                  pos <- getPosition
-                  reserved "print"
-                  expr <- parseExprF
-                  return $ Ann (Print expr) (pos, None)
-
-parsePrintlnStatF :: Parser (StatF ())
-parsePrintlnStatF = do
-                    whiteSpace
-                    pos <- getPosition
-                    reserved "println"
-                    expr <- parseExprF
-                    return $ Ann (Println expr) (pos, None)
-
-parseIfStatF :: Parser (StatF ())
-parseIfStatF = do
-               whiteSpace
-               pos <- getPosition
+parseIfStat :: Parser (Stat ())
+parseIfStat = do
                reserved "if"
                expr <- parseExprF
                reserved "then"
@@ -204,252 +200,157 @@ parseIfStatF = do
                reserved "else"
                stat2 <- parseStatListF
                reserved "fi"
-               return $ Ann (If expr stat1 stat2) (pos, None)
+               return $ If expr stat1 stat2
 
-parseWhileStatF :: Parser (StatF ())
-parseWhileStatF = do
-                  whiteSpace
-                  pos <- getPosition
+parseWhileStat :: Parser (Stat ())
+parseWhileStat = do
                   reserved "while"
                   expr <- parseExprF
                   reserved "do"
                   stat <- parseStatListF
                   reserved "done"
-                  return $ Ann (While expr stat) (pos, None)
+                  return $ While expr stat
 
-parseSubroutineStatF :: Parser (StatF ())
-parseSubroutineStatF = do
-                       whiteSpace
-                       pos <- getPosition
+parseSubroutineStat:: Parser (Stat ())
+parseSubroutineStat = do
                        reserved "begin"
                        stat <- parseStatListF
                        reserved "end"
-                       return $ Ann (Subroutine stat) (pos, None)
+                       return $ Subroutine stat
+
+parseAssignRHSF :: Parser (ExprF ())
+parseAssignRHSF =
+  do
+    pos <- getPosition
+    (foldl (<|>) App.empty rhsList >>= \expr ->
+     return $ Ann expr (pos, None))
+    <|> parseExprF
+    where rhsList = [parseArrayLiter, parseNewPair,
+                     parsePairElem,
+                     parseCallF >>= \expr -> return $ FuncExpr expr]
 
 
-parseAssignLHSF :: Parser (AssignLHSF ())
-parseAssignLHSF = do
-                  pos <- getPosition
-                  (do {elem <- try parsePairElemF;
-                    return $ Ann (PairElemLHS elem) (pos, None)}
-                      <|> do {elem <- try parseArrayElemF;
-                        return $ Ann (ArrayElemLHS elem) (pos, None)}
-                      <|> do {ident <- try parseIdentF;
-                        return $ Ann (IdentLHS ident) (pos, None)})
+parseArrayLiter :: Parser (Expr ())
+parseArrayLiter = do { es <- brackets (commaSep parseExprF); return $ ArrayLiter es}
 
-parseAssignRHSF :: Parser (AssignRHSF ())
-parseAssignRHSF = (do {pos <- getPosition;
-                  expr <- parseExprF;
-                  return $ Ann (ExprRHS expr) (pos, None)}
-             <|> parseNewPairRHSF
-             <|> do {pos <- getPosition;
-                     elem <- parsePairElemF;
-                     return $ Ann (PairElemRHS elem) (pos, None)}
-             <|> parseCallRHSF
-             <|> parseArrayLiterRHSF)
+parseNewPair :: Parser (Expr ())
+parseNewPair = do reserved "newpair"
+                  newpair <- parens (parseExprF >>= \expr1 ->
+                             comma >>= \_ ->
+                             parseExprF >>= \expr2 ->
+                             return $ NewPair expr1 expr2)
+                  return $ newpair
 
-parseArrayLiterRHSF :: Parser (AssignRHSF ())
-parseArrayLiterRHSF = do
-                      whiteSpace
-                      pos <- getPosition
-                      reservedOp "["
-                      es <- commaSep parseExprF
-                      reservedOp "]"
-                      return $ Ann (ArrayLiter es) (pos, None)
-
-parseNewPairRHSF :: Parser (AssignRHSF ())
-parseNewPairRHSF = do
-                  pos <- getPosition
-                  reserved "newpair"
-                  reservedOp "("
-                  expr1 <- parseExprF
-                  reservedOp ","
-                  expr2 <- parseExprF
-                  reservedOp ")"
-                  return $ Ann (NewPair expr1 expr2) (pos, None)
-
-parseCallRHSF :: Parser (AssignRHSF ())
-parseCallRHSF = do
-                pos <- getPosition
+parseCallF :: Parser (FuncAppF ())
+parseCallF = do pos <- getPosition
                 reserved "call"
                 ident <- parseIdentF
                 args <- parens (commaSep parseExprF)
-                return $ Ann (Call ident args) (pos, None)
-
-parsePairElemF :: Parser (PairElemF ())
-parsePairElemF = do
-                 pos <- getPosition
-                 ( do {reserved "fst";
-                   expr <- parseExprF;
-                   return $ Ann (PairElemFst expr) (pos, None)}
-                    <|> do {reserved "snd";
-                    expr <- parseExprF;
-                    return $ Ann (PairElemSnd expr) (pos, None)})
-
+                return $ Ann (FuncApp ident args) (pos, None)
 
 parseExprF :: Parser (ExprF ())
-parseExprF = do
-             whiteSpace
-             expr <- buildExpressionParser table term
-             checkOverFlow expr
-             checkPrefix expr
-             return $ expr
-     where checkPrefix (Ann (UExpr uop ef@(Ann e _)) _)
-            = case e of
-                LiterExpr liter ->
-                  if (uop == Pos || uop == Neg) && not (isIntLiter liter)
-                  then fail "syntatic error"
-                  else  return ()
-                otherwise -> checkPrefix ef
-           checkPrefix (Ann (BExpr _ e1 e2) _)
-            = checkPrefix e1 >> checkPrefix e2
-           checkPrefix (Ann (BracketExpr e) _) = checkPrefix e
-           checkPrefix (Ann (ArrayExpr (Ann (ArrayElem _ es) _)) _)
-             = mapM_ checkPrefix es
-           checkPrefix _ = return ()
+parseExprF = do whiteSpace
+                expr <- buildExpressionParser table term
+                check expr
+                return $ expr
+     where check (Ann (FuncExpr (Ann (FuncApp id exprs) _)) _)
+            = case op of
+                "pos"     -> mapM_ checkIsStringLiter exprs >>= \_ ->
+                             mapM_ (checkOverFlow (2^31 -1)) exprs
+                "neg"     -> mapM_ (checkOverFlow (2^31)) exprs
+                otherwise -> mapM_ check exprs
 
-           isIntLiter (Ann (IntLiter _) _) = True
-           isIntLiter liter = False
+            where (Ann (Ident op) _) = id
 
-           checkOverFlow intexpr = if invalid intexpr then fail("Int Overflow")
-            else return ()
-              where
-                invalid (Ann (UExpr Neg(Ann (LiterExpr(Ann (IntLiter i)_))_))_) = i > 2^31
-                invalid (Ann (LiterExpr(Ann (IntLiter i)_))_) = i > 2^31 -1
-                invalid _ = False
+           check (Ann (BracketExpr e) _) = check e
+           check (Ann (ArrayElem _ es) _)
+             = mapM_ check es
+           check e@(Ann (IntLiter i) _) = checkOverFlow (2^31 -1) e
+           check _ = return ()
 
+           checkIsStringLiter (Ann (StringLiter _) _) =
+             fail "string concatination not supported"
+           checkIsStringLiter _ = return ()
 
-table = [ [unary symbol "+" (UExpr Pos),
-           unary symbol "-" (UExpr Neg),
-           unary symbol"!" (UExpr Not),
-           unary reserved "len" (UExpr Len),
-           unary reserved "ord" (UExpr Ord),
-           unary reserved "chr" (UExpr Chr)],
-          [binary "*" (BExpr Mul) AssocLeft,
-           binary "/" (BExpr Div) AssocLeft,
-           binary "%" (BExpr Mod) AssocLeft],
-          [binary "+" (BExpr Plus) AssocLeft,
-           binary "-" (BExpr Minus) AssocLeft],
-          [binary ">=" (BExpr GEq) AssocLeft, --Don't mess up order between >= and >
-           binary ">" (BExpr G) AssocLeft,
-           binary "<=" (BExpr LEq) AssocLeft,
-           binary "<" (BExpr L) AssocLeft],
-          [binary "==" (BExpr Eq) AssocLeft,
-           binary "!=" (BExpr NEq) AssocLeft],
-          [binary "&&" (BExpr And) AssocLeft],
-          [binary "||" (BExpr Or) AssocLeft]
+           checkOverFlow limit (Ann e _) =
+             case e of
+               IntLiter i -> if i > limit then fail "Int Overflow" else return ()
+               otherwise -> return ()
+
+genFuncAppF :: String -> SourcePos -> [ExprF ()] -> (FuncAppF ())
+genFuncAppF fName pos expr =
+  Ann (FuncApp (Ann (Ident fName) (pos, None)) expr) (pos, None)
+
+table = [ [unary symbol "+" (genFuncAppF "pos"),
+           unary symbol "-" (genFuncAppF "neg"),
+           unary symbol"!" (genFuncAppF "!"),
+           unary reserved "len" (genFuncAppF "len"),
+           unary reserved "ord" (genFuncAppF "ord"),
+           unary reserved "chr" (genFuncAppF "chr")],
+          [binary "*" (genFuncAppF "*") AssocLeft,
+           binary "/" (genFuncAppF "/") AssocLeft,
+           binary "%" (genFuncAppF "%") AssocLeft],
+          [binary "+" (genFuncAppF "+") AssocLeft,
+           binary "-" (genFuncAppF "-") AssocLeft],
+          [binary ">=" (genFuncAppF ">=") AssocLeft, 
+           binary ">" (genFuncAppF ">") AssocLeft,
+           binary "<=" (genFuncAppF "<=") AssocLeft,
+           binary "<" (genFuncAppF "<") AssocLeft],
+          [binary "==" (genFuncAppF "==") AssocLeft,
+           binary "!=" (genFuncAppF "!=") AssocLeft],
+          [binary "&&" (genFuncAppF "&&") AssocLeft],
+          [binary "||" (genFuncAppF "||") AssocLeft]
         ]
 
+toFuncExpr funcApp@(Ann _ ann) = Ann (FuncExpr funcApp) ann
 
 unary operation n f =
-  Prefix . chainl1 (try (whiteSpace >>
-                    getPosition >>= \pos ->
-                    operation n >>
-                    (return $ \e -> Ann (f e) (pos, None)))) $ return (.)
+  Prefix . chainl1 (try $ whiteSpace >>
+                          getPosition >>= \pos ->
+                          operation n >>
+                          (return $ (\e -> toFuncExpr $ f pos [e]))) $ return (.)
 
 binary n f assoc =
-  Infix (try (whiteSpace >>
-         getPosition >>= \pos ->
-         symbol n >>
-         (return $ (\e1 e2 -> Ann (f e1 e2) (pos, None))))) assoc
+  Infix (try $ whiteSpace >>
+               getPosition >>= \pos ->
+               symbol n >>= \_ ->
+               return $ (\e1 e2 -> toFuncExpr $ f pos [e1, e2])) assoc
 
 term :: Parser (ExprF ())
-term =  try parseLiterExprF
-   <|>  try parseArrayExprF
-   <|>  try parseIdentExprF
-   <|>  try parseBracketExprF
+term = whiteSpace >>= \_ ->
+       getPosition >>= \pos ->
+      (try parseIntLiterF
+       <|> try parseBoolLiter
+       <|> try parseCharLiter
+       <|> try parseStringLiter
+       <|> try parsePairLiter
+       <|> try parseArrayElem
+       <|> try (parseIdentF >>= \id -> return $ IdentExpr id)
+       <|> try parseBracketExpr) >>= \expr ->
+       return $ Ann expr (pos, None)
 
+parseBracketExpr :: Parser (Expr ())
+parseBracketExpr = do { exprF <- parens parseExprF; return $ BracketExpr exprF}
 
-parseArrayExprF :: Parser (ExprF ())
-parseArrayExprF = do
-                  pos <- getPosition
-                  a <- parseArrayElemF
-                  return $ Ann (ArrayExpr a) (pos, None)
+parseIntLiterF :: Parser (Expr ())
+parseIntLiterF = do { x <- integer ; return $ IntLiter x}
 
-parseBracketExprF :: Parser (ExprF ())
-parseBracketExprF = do
-                    pos <- getPosition
-                    reservedOp "("
-                    exprF <- parseExprF
-                    reservedOp ")"
-                    return $ Ann (BracketExpr exprF) (pos, None)
+parseBoolLiter :: Parser (Expr ())
+parseBoolLiter = do
+                  (do {reserved "true";return $ BoolLiter True}
+                      <|> (do {reserved "false"; return $ BoolLiter False}))
 
-parseLiterExprF :: Parser (ExprF ())
-parseLiterExprF = do
-                  pos <- getPosition
-                  l <- parseLiterF
-                  return $ Ann (LiterExpr l) (pos, None)
+parseCharLiter :: Parser (Expr ())
+parseCharLiter = (try catchWrongEscape >> fail "wrong escape")
+             <|> (do { c <- charLiteral; return $ CharLiter c })
+     where catchWrongEscape = do { char '\''; char '\"'; char '\''; return '\"'}
 
-parseIdentExprF :: Parser (ExprF ())
-parseIdentExprF = do
-                  whiteSpace
-                  pos <- getPosition
-                  i <- parseIdentF
-                  return $ Ann (IdentExpr i) (pos, None)
+parseStringLiter :: Parser (Expr ())
+parseStringLiter = do { s <- stringLiteral; return $ StringLiter s }
 
-
-parseLiterF :: Parser (LiterF ())
-parseLiterF = try parseIntLiterF
-         <|> try parseBoolLiterF
-         <|> try parseCharLiterF
-         <|> try parseStringLiterF
-         <|> try parsePairLiterF
-
-parseIntLiterF :: Parser (LiterF ())
-parseIntLiterF = do
-                 pos <- getPosition
-                 x <- integer
-                 return $ Ann (IntLiter x) (pos, None)
-
-
-parseBoolLiterF :: Parser (LiterF ())
-parseBoolLiterF = do
-                  pos <- getPosition
-                  (do {reserved "true";return $ Ann (BoolLiter True) (pos, None)}
-                      <|> (do {reserved "false"; return $ Ann (BoolLiter False) (pos, None)}))
-
-parseCharLiterF :: Parser (LiterF ())
-parseCharLiterF = do
-                  pos <- getPosition
-                  ((try catchWrongEscape >> fail "wrong escape")
-                    <|> (do {c <- charLiteral; return $ Ann (CharLiter c) (pos, None)}))
-     where catchWrongEscape =
-             do
-               char '\''
-               char '\"'
-               char '\''
-               return '\"'
-
-
-parseStringLiterF :: Parser (LiterF ())
-parseStringLiterF = do
-                    pos <- getPosition
-                    s <- stringLiteral
-                    return $ Ann (StringLiter s) (pos, None)
-
-parsePairLiterF :: Parser (LiterF ())
-parsePairLiterF = do
-                  pos <- getPosition
-                  reserved "null"
-                  return $ Ann Null (pos, None)
-
-parseIdentF :: Parser (IdentF ())
-parseIdentF = do
-              pos <- getPosition
-              i <- ident
-              return $ Ann (Ident i) (pos, None)
-
-parseArrayElemF :: Parser (ArrayElemF ())
-parseArrayElemF = do
-                  pos <- getPosition
-                  i <- parseIdentF
-                  exprs <- many1 (try parseIndex)
-                  return $ Ann (ArrayElem i exprs) (pos, None)
-           where parseIndex :: Parser (ExprF ())
-                 parseIndex = do
-                              expr <- brackets parseExprF
-                              return expr
-
+parsePairLiter :: Parser (Expr ())
+parsePairLiter = do { reserved "null" ; return $ Null}
+                             
 parseFile :: String -> IO (ProgramF ())
 parseFile file =
   do
