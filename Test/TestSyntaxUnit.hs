@@ -7,7 +7,7 @@ import FrontEnd.Parser
 import FrontEnd.AST
 
 test = do
-      putStrLn "*†*:;;;:*†*:;;;:*†*Syntax error test*†*:;;;:*†*:;;;:*†*"
+      putStrLn "*:;;;:*:;;;:*:;;;:*Syntax error test*:;;;:*:;;;:*:;;;:*"
       integerTest
       charTest
       boolTest

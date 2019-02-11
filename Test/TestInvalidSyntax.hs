@@ -10,7 +10,7 @@ testSyntaxErr file =
   do
     program <- readFile file
     case parse parseProgramF "" program of
-      Left _ -> return ()
+      Left e -> return ()
       Right _ -> expectationFailure err
   where err = "successfully parse a syntactically incorrect wacc program"
 

@@ -63,7 +63,7 @@ analyzeUsing str par ana =
       case parse par "" text of
         Left e  -> return Nothing
         Right r -> (
-            case evalStateT (analyzedummy r ana) [] of
-              Left e' -> print e'>> return Nothing
+            case evalStateT (analyzedummy r ana) ([], Main) of
+              Left e' -> return Nothing
               Right r' -> return (Just (show r'))
               )
