@@ -23,7 +23,7 @@ parseProgramF = do
               stat <- parseStatListF
               reserved "end"
               eof
-              return $ Ann (Program fs stat) (pos, Void)
+              return $ Ann (Program fs stat) (pos, None)
 
 parseFuncF :: Parser (FuncF ())
 parseFuncF = do
@@ -36,8 +36,8 @@ parseFuncF = do
              stat <- parseStatListF
              checkReturnExit stat
              reserved "end"
-             return $ Ann (Func t ident ps stat) (pos, Void)
-    where checkReturnExit (Ann (StatList stats) (pos, Void))
+             return $ Ann (Func t ident ps stat) (pos, None)
+    where checkReturnExit (Ann (StatList stats) (pos, None))
             = case lastStat of
                 Return _ -> return ()
                 Exit _ -> return ()
@@ -96,8 +96,8 @@ parseStatListF = do
                  stat <- parseStatF
                  (try (semi >>
                     parseStatListF >>= \(Ann (StatList rest) _) ->
-                    return $ Ann (StatList (stat:rest)) (pos, Void))
-                    <|> (return $ Ann (StatList [stat]) (pos, Void)))
+                    return $ Ann (StatList (stat:rest)) (pos, None))
+                    <|> (return $ Ann (StatList [stat]) (pos, None)))
 
 
 parseStatF :: Parser (StatF ())
@@ -111,7 +111,7 @@ parseStatF = whiteSpace >>
          <|> parseIfStat
          <|> parseWhileStat
          <|> parseSubroutineStat ) >>= \stat ->
-             return $ Ann stat (pos, Void)
+             return $ Ann stat (pos, None)
 
 parseFuncAppStat :: Parser (Stat ())
 parseFuncAppStat =
@@ -120,15 +120,15 @@ parseFuncAppStat =
     let { ann = (pos, None) }
     (f, expr) <- foldl (<|>) App.empty $ map (\f -> try (parseFunc f)) builtInFunc
     return $ FuncStat (Ann (FuncApp (Ann (Ident f) ann) expr) ann) 
- where thrd (_,_,x) = x
-       parseFunc (f, ts) =
+ where parseFunc (f, (TFunc _ _ returnT)) =
          reserved f >>= \_ ->
-         if thrd ts /= Void
+         if returnT /= Void
          then fail "execute non void function in stat"
          else case f of
                 "skip" -> return (f, [])
                 "read" -> parseAssignLHSF >>= \e -> return (f, [e])
                 otherwise -> parseExprF >>= \e -> return (f, [e])
+       parseFunc _ = fail "builtIn symbol type is not function"
 
 parseAssignLHSF :: Parser (ExprF ())
 parseAssignLHSF =
@@ -141,12 +141,14 @@ parseAssignLHSF =
                   parseIdentF >>= \id -> return $ IdentExpr id]
 
 parsePairElem :: Parser (Expr ())
-parsePairElem = (reserved "fst" >>= \_ ->
-                 parseExprF >>= \expr -> 
-                 return $ PairElemFst expr)
-           <|>  (reserved "snd" >>= \_ ->
-                 parseExprF >>= \expr ->
-                 return $ PairElemSnd expr)
+parsePairElem = do pos <- getPosition
+                   let { ann = (pos, None) } in do {
+                   (reserved "fst" >>= \_ ->
+                    parseExprF >>= \expr -> 
+                    return $  FuncExpr (Ann (FuncApp (Ann (Ident "fst") ann) [expr]) ann))
+               <|> (reserved "snd" >>= \_ ->
+                    parseExprF >>= \expr ->
+                    return $  FuncExpr (Ann (FuncApp (Ann (Ident "snd") ann) [expr]) ann)) }
 
 parseArrayElem :: Parser (Expr ())
 parseArrayElem = do
@@ -162,7 +164,7 @@ parseIdentF :: Parser (IdentF ())
 parseIdentF = do
               pos <- getPosition
               i <- ident
-              return $ Ann (Ident i) (pos, Void)
+              return $ Ann (Ident i) (pos, None)
 
 parseDeclareStat :: Parser (Stat ())
 parseDeclareStat = do
@@ -234,11 +236,13 @@ parseArrayLiter :: Parser (Expr ())
 parseArrayLiter = do { es <- brackets (commaSep parseExprF); return $ ArrayLiter es}
 
 parseNewPair :: Parser (Expr ())
-parseNewPair = do reserved "newpair"
+parseNewPair = do pos <- getPosition
+                  let { ann = (pos, None); id = Ann (Ident "newpair") ann }
+                  reserved "newpair"
                   newpair <- parens (parseExprF >>= \expr1 ->
                              comma >>= \_ ->
                              parseExprF >>= \expr2 ->
-                             return $ NewPair expr1 expr2)
+                             return $ FuncExpr (Ann (FuncApp id [expr1,expr2]) ann))
                   return $ newpair
 
 parseCallF :: Parser (FuncAppF ())

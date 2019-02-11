@@ -39,7 +39,7 @@ data Type = TInt
           | TArray Type
           | TPair Type Type
           | TAny
-          | TFunc Type [Type] -- return type, param type
+          | TFunc [Type] [Type] Type -- paramtized type, return, paramType
           | Void
           | None
           | TRef Type
@@ -55,9 +55,6 @@ data Expr a = IntLiter Integer
             | ArrayElem (IdentF a) [ExprF a]
             | ArrayLiter [ExprF a]
             | FuncExpr (FuncAppF a)
-            | NewPair (ExprF a) (ExprF a)
-            | PairElemFst (ExprF a)
-            | PairElemSnd (ExprF a)
             deriving (Eq, Show)
 
 
@@ -83,19 +80,38 @@ type ParamF a = Ann (Param a)
 type FuncAppF a = Ann (FuncApp a)
 
 
+arrayT = TArray TAny
+pairT = TPair TAny TAny
 -- (functionName, allowed type, [type parameter matching],
 --  return type)
-builtInFunc :: [(String, ([Type], [Type], Type))]
+builtInFunc :: [(String, Type)]
 builtInFunc =
-  [("skip",    ([],                             [],        Void)),
-   ("read",    ([TInt, TChar],                  [TRef T],  Void)),
-   ("free",    ([TArray TAny, TPair TAny TAny], [TRef T],  Void)),
-   ("print",   ([TAny],                         [T],       Void)),
-   ("println", ([TAny],                         [T],       Void)),
-   ("newpair", ([],                             [],        TPair TAny TAny)),
-   ("fst",     ([TAny],                         [TPair T TAny], T)),
-   ("snd",     ([TAny],                         [TPair TAny T], TAny))]
-
+  [("skip",    TFunc []               []             Void),
+   ("read",    TFunc [TInt, TChar]    [T]            Void),
+   ("free",    TFunc [arrayT, pairT]  [T]            Void),
+   ("print",   TFunc [TAny]           [T]            Void),
+   ("println", TFunc [TAny]           [T]            Void),
+   ("newpair", TFunc []               []             pairT),
+   ("fst",     TFunc [TAny]           [TPair T TAny] T),
+   ("snd",     TFunc [TAny]           [TPair TAny T] TAny),
+   ("!",       TFunc []               [TBool]        TBool),
+   ("pos",     TFunc []               [TInt, TInt]   TInt),
+   ("neg",     TFunc []               [TInt, TInt]   TInt),
+   ("len",     TFunc []               [TArray TAny]  TInt),
+   ("ord",     TFunc []               [TChar]        TInt),
+   ("chr",     TFunc []               [TInt]         TChar),
+   ("*",       TFunc []               [TInt, TInt]   TInt),
+   ("%",       TFunc []               [TInt, TInt]   TInt),
+   ("+",       TFunc []               [TInt, TInt]   TInt),
+   ("-",       TFunc []               [TInt, TInt]   TInt),
+   (">",       TFunc [TInt, TChar]    [T, T]         TBool),
+   (">=",      TFunc [TInt, TChar]    [T, T]         TBool),
+   ("<",       TFunc [TInt, TChar]    [T, T]         TBool),
+   ("<=",      TFunc [TInt, TChar]    [T, T]         TBool),
+   ("==",      TFunc [TAny]           [T, T]         TBool),
+   ("!=",      TFunc [TAny]           [T, T]         TBool),
+   ("&&",      TFunc []               [TBool, TBool] TBool),
+   ("||",      TFunc []               [TBool, TBool] TBool)]
 
 
 instance (Show f) => Show (Ann f) where
@@ -115,8 +131,8 @@ instance Eq (Type) where
   TAny == _ = True
   _ == TAny = True
   Void == Void = True
-  (TFunc t1 ts1) == (TFunc t2 ts2) = (t1 == t2) &&
-                                     (ts1 == ts2)
+  (TFunc aT1 pT1 rT1) == (TFunc aT2 pT2 rT2) =
+    (aT1 == aT2) && (pT1 == pT2) && (rT1 == rT2)
   _ == _ = False
 
 instance Show (Type) where
@@ -129,11 +145,10 @@ instance Show (Type) where
                        ++ ")"
   show TAny = "Any"
   show Void = "Void"
-  show (TFunc t ts) = "TFunc (" ++ show t ++ ") " ++
+  show (TFunc _ ts t) = "TFunc (" ++ show t ++ ") " ++
     "(" ++ intersperse ',' (concat $ map show ts) ++ ")"
   show _ = "deal with it"
 
 instance Show (Ident a) where
   show (Ident s) = show s
-
 
