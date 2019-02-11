@@ -89,10 +89,6 @@ whiteSpace = CToken.whiteSpace lexer
 semi = CToken.semi lexer
 reservedOp = CToken.reservedOp lexer
 comma = CToken.comma lexer
-leftSqB = CToken.reservedOp lexer "["
-rightSqB = CToken.reservedOp lexer "]"
-leftRB = CToken.reservedOp lexer "("
-rightRB = CToken.reservedOp lexer ")"
 
 semiSep = CToken.semiSep lexer
 commaSep = CToken.commaSep lexer
