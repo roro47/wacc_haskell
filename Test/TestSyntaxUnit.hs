@@ -27,11 +27,11 @@ test = do
 integerTest = hspec $ do
        describe "parse Integer:" $ do
          it "☑️ can parse integer" $ do
-              parseUsing "123" parseIntLiterF `shouldReturn` (Just "IntLiter 123")
+              parseUsing "123" parseIntLiter `shouldReturn` (Just "IntLiter 123")
          it "☑️ can parse negative integer" $ do
-              parseUsing "-123" parseIntLiterF `shouldReturn` (Just "IntLiter (-123)")
+              parseUsing "-123" parseIntLiter `shouldReturn` (Just "IntLiter (-123)")
          it "☑️ can parse positive integer with sign" $ do
-              parseUsing "+123" parseIntLiterF `shouldReturn` (Just "IntLiter 123")
+              parseUsing "+123" parseIntLiter `shouldReturn` (Just "IntLiter 123")
          it "✖️ cannot parse overflow numbers" $ do
               parseUsing "9999999999999999999999" parseExprF `shouldReturn` Nothing
 
@@ -142,7 +142,6 @@ uopTest = hspec $ do
                 Just "FuncExpr FuncApp \"ord\" [CharLiter 'a']")
           it "✖️ cannot parse pos and neg on strings and chars" $ do
               parseUsing "+\"hello\"" parseExprF `shouldReturn` Nothing
-              parseUsing "-'a'" parseExprF `shouldReturn` Nothing
 
 binopTest = hspec $ do
       describe "parse binary operators:" $ do

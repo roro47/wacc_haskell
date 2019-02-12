@@ -323,7 +323,7 @@ binary n f assoc =
 term :: Parser (ExprF ())
 term = whiteSpace >>= \_ ->
        getPosition >>= \pos ->
-      (try parseIntLiterF
+      (try parseIntLiter
        <|> try parseBoolLiter
        <|> try parseCharLiter
        <|> try parseStringLiter
@@ -336,8 +336,8 @@ term = whiteSpace >>= \_ ->
 parseBracketExpr :: Parser (Expr ())
 parseBracketExpr = do { exprF <- parens parseExprF; return $ BracketExpr exprF}
 
-parseIntLiterF :: Parser (Expr ())
-parseIntLiterF = do { x <- integer ; return $ IntLiter x}
+parseIntLiter :: Parser (Expr ())
+parseIntLiter = do { x <- integer ; return $ IntLiter x}
 
 parseBoolLiter :: Parser (Expr ())
 parseBoolLiter = do
