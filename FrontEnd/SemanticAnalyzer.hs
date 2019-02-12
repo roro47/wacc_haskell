@@ -16,7 +16,7 @@ import FrontEnd.Parser
 data Context = Main | FContext Type deriving (Show, Eq)
 
 type SymbolT = Map String (Type, SourcePos)  -- declaration is stored at type
-type AnalysisState = ([SymbolT], Context) 
+type AnalysisState = ([SymbolT], Context)
 type Analyzer = StateT AnalysisState (Either String)
 
 builtInPos = newPos "builtIn" 0 0
@@ -30,7 +30,7 @@ class Matchable a where
 instance Matchable (Expr ()) where
  match msg a@(Ann (ArrayLiter exprs) (pos, t)) [TArray expectT] =
    mapM_ (\e -> match msg e [expectT]) exprs
-    
+
  match msg a@(Ann x (pos, t)) expectT =
    matchT msg t expectT pos
 
@@ -39,7 +39,7 @@ instance Matchable (Stat ()) where
    matchT msg t expectT pos
 
 matchT :: String -> Type -> [Type] -> SourcePos -> (Analyzer ())
-matchT msg t expectT pos 
+matchT msg t expectT pos
   = if not $ elem t expectT
     then throwError $ typeError msg pos expectT t
     else return ()
@@ -103,12 +103,12 @@ getContext = do { (_, c) <- get; return c }
 analyzeProgramF :: ProgramF () -> Analyzer (ProgramF ())
 analyzeProgramF p@(Ann (Program fs stat) ann@(pos, none)) = do
   pushScope
-  mapM (\(id, funcT) -> addSymbol (Ann (Ident id) (pos, None)) funcT builtInPos) builtInFunc 
+  mapM (\(id, funcT) -> addSymbol (Ann (Ident id) (pos, None)) funcT builtInPos) builtInFunc
   fs' <- mapM analyzeFuncF fs
   stat' <- analyzeStatListF stat
   popScope
   return $ Ann (Program fs' stat') ann
-  
+
 analyzeFuncF :: FuncF () -> Analyzer (FuncF ())
 analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) = do
   maybeT <- lookUpSymbol symbol
@@ -119,7 +119,7 @@ analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) = do
        pushScope
        mapM (\(Ann (Param t pName) (pos, _)) -> addSymbol pName t pos) ps
        stats' <- analyzeStatListF stats
-       popScope 
+       popScope
        setContext Main
        addSymbol symbol (TFunc [] paramTs t) pos
        return f
@@ -142,27 +142,27 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
           return $ Ann (FuncApp symbol exprs') (pos, returnT)
       otherwise -> throwError $ "Symbol " ++ show symbol ++ " at " ++ show pos ++
                               " is not a function symbol"
-                              
+
   where evalT :: Type -> ExprF () -> Analyzer Type
         evalT (TFunc [] (paramT:paramTs) returnT) expr
           = do { match "" expr [paramT]; return $ TFunc [] paramTs returnT }
-        
+
         evalT (TFunc allowedT (paramT:paramTs) returnT) expr@(Ann _ (_, t))
           = match "" expr allowedT >>= \_ ->
             if returnT == T
             then return $ TFunc [] (ListUtils.replace [T] [t] paramTs) t
             else return $ TFunc [] (ListUtils.replace [T] [t] paramTs) returnT
-            
+
         checkParamLen :: IdentF () -> SourcePos -> Int -> Int -> Analyzer ()
         checkParamLen symbol pos paramLen exprLen
          = if paramLen /= exprLen then throwError (paramLenError symbol pos paramLen exprLen)
            else return ()
-   
+
 analyzeStatF :: StatF () -> Analyzer (StatF ())
 analyzeStatF (Ann s@(Declare declareT symbol rhs) (pos, none)) =
   lookUpSymbolCurrScope symbol >>= \maybeT ->
     case maybeT of
-      Just (_, pos') -> throwError $ declaredError symbol pos pos' 
+      Just (_, pos') -> throwError $ declaredError symbol pos pos'
       otherwise -> do rhs' <- analyzeExprF rhs
                       match err rhs' [declareT]
                       addSymbol symbol declareT pos
@@ -186,7 +186,7 @@ analyzeStatF (Ann (Return expr) ann@(pos, none)) =
       match "Function return type not matched" expr' [returnT] >>= \_ ->
       return $ Ann (Return expr') (pos, getT expr')
     -- in other case, should throw non-exhaustive pattern match failure
-  
+
 analyzeStatF (Ann (Exit expr) ann) =
   do expr' <- analyzeExprF expr
      match err expr' [TInt]
@@ -195,7 +195,7 @@ analyzeStatF (Ann (Exit expr) ann) =
 
 analyzeStatF (Ann (FuncStat f) ann) =
   do { f' <- analyzeFuncAppF f ; return $ Ann (FuncStat f') ann }
-  
+
 analyzeStatF (Ann (If expr stat1 stat2) ann) =
   do expr' <- analyzeExprF expr
      match err expr' [TBool]
@@ -236,7 +236,7 @@ analyzeExprF (Ann (ArrayLiter exprs) (pos, _)) = do
 analyzeExprF (Ann e@(ArrayElem symbol exprs) (pos, _)) = do
   maybeT <- lookUpSymbol symbol
   case maybeT of
-    Nothing -> throwError $ notDeclaredError symbol pos 
+    Nothing -> throwError $ notDeclaredError symbol pos
     Just (t, _) -> do
       matchT "" t [TArray TAny] pos
       exprs' <- mapM analyzeExprF exprs
@@ -261,4 +261,3 @@ analyzeFile file =
        Right p -> case evalStateT (analyzeProgramF p) ([], Main) of
                     Left e -> putStr e >> fail ""
                     Right p' -> return p'
-

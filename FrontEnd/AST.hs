@@ -91,16 +91,17 @@ builtInFunc =
    ("free",    TFunc [arrayT, pairT]  [T]            Void),
    ("print",   TFunc [TAny]           [T]            Void),
    ("println", TFunc [TAny]           [T]            Void),
-   ("newpair", TFunc []               []             pairT),
+   ("newpair", TFunc []               [TAny, TAny]  pairT),
    ("fst",     TFunc [TAny]           [TPair T TAny] T),
    ("snd",     TFunc [TAny]           [TPair TAny T] TAny),
    ("!",       TFunc []               [TBool]        TBool),
-   ("pos",     TFunc []               [TInt, TInt]   TInt),
-   ("neg",     TFunc []               [TInt, TInt]   TInt),
+   ("pos",     TFunc []               [TInt]         TInt),
+   ("neg",     TFunc []               [TInt]         TInt),
    ("len",     TFunc []               [TArray TAny]  TInt),
    ("ord",     TFunc []               [TChar]        TInt),
    ("chr",     TFunc []               [TInt]         TChar),
    ("*",       TFunc []               [TInt, TInt]   TInt),
+   ("/",       TFunc []               [TInt, TInt]   TInt),
    ("%",       TFunc []               [TInt, TInt]   TInt),
    ("+",       TFunc []               [TInt, TInt]   TInt),
    ("-",       TFunc []               [TInt, TInt]   TInt),
@@ -147,8 +148,7 @@ instance Show (Type) where
   show Void = "Void"
   show (TFunc _ ts t) = "TFunc (" ++ show t ++ ") " ++
     "(" ++ intersperse ',' (concat $ map show ts) ++ ")"
-  show _ = "deal with it"
+  show _ = "deal with it" -- is t
 
 instance Show (Ident a) where
   show (Ident s) = show s
-

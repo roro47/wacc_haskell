@@ -4,6 +4,7 @@ import qualified System.Directory as SysDir
 import Control.Monad
 import Data.List hiding (insert)
 import Text.ParserCombinators.Parsec
+import Text.Parsec.Pos
 import Text.Parsec.Prim
 import FrontEnd.SemanticAnalyzer
 import Control.Applicative
@@ -48,22 +49,38 @@ toIO :: a -> IO a
 toIO = return
 
 -- fake a analyzer with stack
-analyzedummy :: a ->(a -> Analyzer (a))-> Analyzer (a)
-analyzedummy p a =
+analyzedummyGeneral :: [(String, Type)] -> a ->(a -> Analyzer (a))-> Analyzer (a)
+analyzedummyGeneral stk p a =
   do
     pushScope
+    mapM (\(id, funcT) ->
+        addSymbol (Ann (Ident id) (dummy_pos, None)) funcT dummy_pos) builtInFunc
+    mapM (\(id, funcT) ->
+        addSymbol (Ann (Ident id) (dummy_pos, None)) funcT dummy_pos) stk
     a' <- a p
     popScope
     return a'
 
+analyzedummy p a = analyzedummyGeneral [] p a
+analyzeplus stk p a = analyzedummyGeneral stk p a
+
+dummy_pos = newPos "test" 0 0
+
 -- analyze a string using a suitable parser and a suitable analyzer
-analyzeUsing :: Show a => String -> Parser(a) -> (a -> Analyzer(a)) -> IO (Maybe String)
-analyzeUsing str par ana =
-   do text  <- toIO str
+analyzeGeneral :: Show a => String -> Parser(a) -> (a -> Analyzer(a)) -> (a ->(a -> Analyzer (a))-> Analyzer (a)) -> IO (Maybe String)
+analyzeGeneral str par ana stack = do
+      text  <- toIO str
       case parse par "" text of
         Left e  -> return Nothing
         Right r -> (
-            case evalStateT (analyzedummy r ana) ([], Main) of
-              Left e' -> return Nothing
+            case evalStateT (stack r ana) ([], Main) of
+              Left e' ->  return Nothing
               Right r' -> return (Just (show r'))
               )
+
+analyzeUsing :: Show a => String -> Parser(a) -> (a -> Analyzer(a)) -> IO (Maybe String)
+analyzeUsing str par ana = analyzeGeneral str par ana analyzedummy
+
+-- addSymbol symbol declareT pos
+analyzeUsingPlus :: Show a => String -> Parser(a) -> (a -> Analyzer(a))-> [(String, Type)] -> IO (Maybe String)
+analyzeUsingPlus str par ana stk = analyzeGeneral str par ana (analyzeplus stk)

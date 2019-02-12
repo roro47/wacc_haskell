@@ -119,7 +119,7 @@ parseFuncAppStat =
     pos <- getPosition
     let { ann = (pos, None) }
     (f, expr) <- foldl (<|>) App.empty $ map (\f -> try (parseFunc f)) builtInFunc
-    return $ FuncStat (Ann (FuncApp (Ann (Ident f) ann) expr) ann) 
+    return $ FuncStat (Ann (FuncApp (Ann (Ident f) ann) expr) ann)
  where parseFunc (f, (TFunc _ _ returnT)) =
          reserved f >>= \_ ->
          if returnT /= Void
@@ -144,7 +144,7 @@ parsePairElem :: Parser (Expr ())
 parsePairElem = do pos <- getPosition
                    let { ann = (pos, None) } in do {
                    (reserved "fst" >>= \_ ->
-                    parseExprF >>= \expr -> 
+                    parseExprF >>= \expr ->
                     return $  FuncExpr (Ann (FuncApp (Ann (Ident "fst") ann) [expr]) ann))
                <|> (reserved "snd" >>= \_ ->
                     parseExprF >>= \expr ->
@@ -159,7 +159,7 @@ parseArrayElem = do
                  parseIndex = do
                               expr <- brackets parseExprF
                               return expr
-  
+
 parseIdentF :: Parser (IdentF ())
 parseIdentF = do
               pos <- getPosition
@@ -296,7 +296,7 @@ table = [ [unary symbol "+" (genFuncAppF "pos"),
            binary "%" (genFuncAppF "%") AssocLeft],
           [binary "+" (genFuncAppF "+") AssocLeft,
            binary "-" (genFuncAppF "-") AssocLeft],
-          [binary ">=" (genFuncAppF ">=") AssocLeft, 
+          [binary ">=" (genFuncAppF ">=") AssocLeft,
            binary ">" (genFuncAppF ">") AssocLeft,
            binary "<=" (genFuncAppF "<=") AssocLeft,
            binary "<" (genFuncAppF "<") AssocLeft],
@@ -354,7 +354,7 @@ parseStringLiter = do { s <- stringLiteral; return $ StringLiter s }
 
 parsePairLiter :: Parser (Expr ())
 parsePairLiter = do { reserved "null" ; return $ Null}
-                             
+
 parseFile :: String -> IO (ProgramF ())
 parseFile file =
   do
