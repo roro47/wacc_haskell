@@ -80,6 +80,7 @@ type FuncAppF a = Ann (FuncApp a)
 
 arrayT = TArray TAny
 pairT = TPair TAny TAny
+<<<<<<< HEAD
 
 {- Table of built in functions. Handled in parseFuncAppStat
    User defined functions are without allowed type -}
@@ -151,3 +152,4 @@ instance Show (Type) where
 
 instance Show (Ident a) where
   show (Ident s) = show s
+

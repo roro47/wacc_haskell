@@ -13,7 +13,7 @@ testSemanticErr file =
     program <- readFile file
     case parse parseProgramF "" program of
       Left syntaxErr -> expectationFailure err1
-      Right p -> Right p -> case evalStateT (analyzeProgramF p) ([], Main) of
+      Right p -> case evalStateT (analyzeProgramF p) ([], Main) of
                    Left semanticErr -> return ()
                    Right p' -> expectationFailure err2
  where err1 =  "the wacc program should be syntactically correct"

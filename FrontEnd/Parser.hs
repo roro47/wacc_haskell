@@ -79,7 +79,7 @@ parsePairType :: Parser Type
 parsePairType = do
                  string "pair"
                  pair <- (parens $ parsePairElemTypeF >>= \t1 ->
-                                  comma >>
+                                  comma >>= \_ ->
                                   parsePairElemTypeF >>= \t2 ->
                                   return $ TPair t1 t2)
                  return $ pair
@@ -119,9 +119,9 @@ parseFuncAppStat =
     pos <- getPosition
     let { ann = (pos, None) }
     (f, expr) <- foldl (<|>) App.empty $ map (\f -> try (parseFunc f)) builtInFunc
-    return $ FuncStat (Ann (FuncApp (Ann (Ident f) ann) expr) ann)
+    return $ FuncStat (Ann (FuncApp (Ann (Ident f) ann) expr) ann) 
  where parseFunc (f, (TFunc _ _ returnT)) =
-         reserved f >>
+         reserved f >>= \_ ->
          if returnT /= Void
          then fail "execute non void function in stat"
          else case f of
@@ -143,10 +143,10 @@ parseAssignLHSF =
 parsePairElem :: Parser (Expr ())
 parsePairElem = do pos <- getPosition
                    let { ann = (pos, None) } in do {
-                   (reserved "fst" >>
-                    parseExprF >>= \expr ->
+                   (reserved "fst" >>= \_ ->
+                    parseExprF >>= \expr -> 
                     return $  FuncExpr (Ann (FuncApp (Ann (Ident "fst") ann) [expr]) ann))
-               <|> (reserved "snd" >>
+               <|> (reserved "snd" >>= \_ ->
                     parseExprF >>= \expr ->
                     return $  FuncExpr (Ann (FuncApp (Ann (Ident "snd") ann) [expr]) ann)) }
 
@@ -159,7 +159,7 @@ parseArrayElem = do
                  parseIndex = do
                               expr <- brackets parseExprF
                               return expr
-
+  
 parseIdentF :: Parser (IdentF ())
 parseIdentF = do
               pos <- getPosition
@@ -240,7 +240,7 @@ parseNewPair = do pos <- getPosition
                   let { ann = (pos, None); id = Ann (Ident "newpair") ann }
                   reserved "newpair"
                   newpair <- parens (parseExprF >>= \expr1 ->
-                             comma >>
+                             comma >>= \_ ->
                              parseExprF >>= \expr2 ->
                              return $ FuncExpr (Ann (FuncApp id [expr1,expr2]) ann))
                   return $ newpair
@@ -259,10 +259,9 @@ parseExprF = do whiteSpace
                 return $ expr
      where check (Ann (FuncExpr (Ann (FuncApp id exprs) _)) _)
             = case op of
-                "pos"     -> mapM_ checkIsStringLiter exprs >>
+                "pos"     -> mapM_ checkIsStringLiter exprs >>= \_ ->
                              mapM_ (checkOverFlow (2^31 -1)) exprs
-                "neg"     -> mapM_ checkIsStringLiter exprs >>
-                             mapM_ (checkOverFlow (2^31)) exprs
+                "neg"     -> mapM_ (checkOverFlow (2^31)) exprs
                 otherwise -> mapM_ check exprs
 
             where (Ann (Ident op) _) = id
@@ -273,8 +272,6 @@ parseExprF = do whiteSpace
            check e@(Ann (IntLiter i) _) = checkOverFlow (2^31 -1) e
            check _ = return ()
 
-           checkIsStringLiter (Ann (CharLiter _) _) =
-             fail "string concatination not supported"
            checkIsStringLiter (Ann (StringLiter _) _) =
              fail "string concatination not supported"
            checkIsStringLiter _ = return ()
@@ -283,6 +280,10 @@ parseExprF = do whiteSpace
              case e of
                IntLiter i -> if i > limit then fail "Int Overflow" else return ()
                otherwise -> return ()
+
+genFuncAppF :: String -> SourcePos -> [ExprF ()] -> (FuncAppF ())
+genFuncAppF fName pos expr =
+  Ann (FuncApp (Ann (Ident fName) (pos, None)) expr) (pos, None)
 
 table = [ [unary symbol "+" (genFuncAppF "pos"),
            unary symbol "-" (genFuncAppF "neg"),
@@ -295,7 +296,7 @@ table = [ [unary symbol "+" (genFuncAppF "pos"),
            binary "%" (genFuncAppF "%") AssocLeft],
           [binary "+" (genFuncAppF "+") AssocLeft,
            binary "-" (genFuncAppF "-") AssocLeft],
-          [binary ">=" (genFuncAppF ">=") AssocLeft,
+          [binary ">=" (genFuncAppF ">=") AssocLeft, 
            binary ">" (genFuncAppF ">") AssocLeft,
            binary "<=" (genFuncAppF "<=") AssocLeft,
            binary "<" (genFuncAppF "<") AssocLeft],
@@ -304,10 +305,6 @@ table = [ [unary symbol "+" (genFuncAppF "pos"),
           [binary "&&" (genFuncAppF "&&") AssocLeft],
           [binary "||" (genFuncAppF "||") AssocLeft]
         ]
-
-genFuncAppF :: String -> SourcePos -> [ExprF ()] -> (FuncAppF ())
-genFuncAppF fName pos expr =
-  Ann (FuncApp (Ann (Ident fName) (pos, None)) expr) (pos, None)
 
 toFuncExpr funcApp@(Ann _ ann) = Ann (FuncExpr funcApp) ann
 
@@ -324,7 +321,7 @@ binary n f assoc =
                return $ (\e1 e2 -> toFuncExpr $ f pos [e1, e2])) assoc
 
 term :: Parser (ExprF ())
-term = whiteSpace >>
+term = whiteSpace >>= \_ ->
        getPosition >>= \pos ->
       (try parseIntLiterF
        <|> try parseBoolLiter
@@ -357,7 +354,7 @@ parseStringLiter = do { s <- stringLiteral; return $ StringLiter s }
 
 parsePairLiter :: Parser (Expr ())
 parsePairLiter = do { reserved "null" ; return $ Null}
-
+                             
 parseFile :: String -> IO (ProgramF ())
 parseFile file =
   do
