@@ -138,11 +138,11 @@ analyzeArrayTest = hspec $ do
 
        it "☑️ can access elements in array" $ do
               analyzeUsing "int[] a = [1,2,3]; int b = a[0]" parseStatListF analyzeStatListF `shouldReturn` (
-                Just "StatList [Declare TArray [TInt] \"a\" ArrayLiter [LiterExpr IntLiter 1,LiterExpr IntLiter 2,LiterExpr IntLiter 3],Declare TInt \"b\" ExprRHS ArrayExpr ArrayElem \"a\" [LiterExpr IntLiter 0]]")
+                Just "StatList [Declare TArray [TInt] \"a\" ArrayLiter [IntLiter 1,IntLiter 2,IntLiter 3],Declare TInt \"b\" ArrayElem \"a\" [IntLiter 0]]")
 
        it "☑️ can modify array" $ do
               analyzeUsing "int[] a = [1,2,3]; a[0] = 0" parseStatListF analyzeStatListF `shouldReturn` (
-                 Just "StatList [Declare TArray [TInt] \"a\" ArrayLiter [LiterExpr IntLiter 1,LiterExpr IntLiter 2,LiterExpr IntLiter 3],Assign ArrayElemLHS ArrayElem \"a\" [LiterExpr IntLiter 0] ExprRHS LiterExpr IntLiter 0]")
+                 Just "StatList [Declare TArray [TInt] \"a\" ArrayLiter [IntLiter 1,IntLiter 2,IntLiter 3],Assign ArrayElem \"a\" [IntLiter 0] IntLiter 0]")
               analyzeUsing "int[] a = [1,2,3]; a = [2,3]" parseStatListF analyzeStatListF `shouldReturn` (
                 Just "StatList [Declare TArray [TInt] \"a\" ArrayLiter [IntLiter 1,IntLiter 2,IntLiter 3],Assign IdentExpr \"a\" ArrayLiter [IntLiter 2,IntLiter 3]]")
 

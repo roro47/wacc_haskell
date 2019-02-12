@@ -13,6 +13,7 @@ import Text.ParserCombinators.Parsec.Pos
 import FrontEnd.AST
 import FrontEnd.Parser
 
+
 data Context = Main | FContext Type deriving (Show, Eq)
 
 type SymbolT = Map String (Type, SourcePos)  -- declaration is stored at type
@@ -241,7 +242,8 @@ analyzeExprF (Ann e@(ArrayElem symbol exprs) (pos, _)) = do
       matchT "" t [TArray TAny] pos
       exprs' <- mapM analyzeExprF exprs
       mapM (\e -> match "Array Index has incorrect type" e [TInt]) exprs'
-      return $ Ann (ArrayElem symbol exprs') (pos, t)
+      let { TArray elemT = t }
+      return $ Ann (ArrayElem symbol exprs') (pos, elemT)
 
 analyzeExprF (Ann (BracketExpr expr) (pos, _)) = do
   expr' <- analyzeExprF expr
@@ -251,13 +253,8 @@ analyzeExprF (Ann (FuncExpr f) (pos, _)) = do
   f'@(Ann _ (_, t)) <- analyzeFuncAppF f
   return $ Ann (FuncExpr f') (pos, t)
 
-analyzeFile :: String -> IO (ProgramF ())
-analyzeFile file =
-  do
-    program <- readFile file
-    case parse parseProgramF "" program of
-       Left e -> print e >>
-                fail ("parse error: at " ++ show (errorPos e) ++ " with file " ++ file)
-       Right p -> case evalStateT (analyzeProgramF p) ([], Main) of
-                    Left e -> putStr e >> fail ""
-                    Right p' -> return p'
+analyzeAST :: ProgramF () -> IO (ProgramF ())
+analyzeAST ast = do
+  case evalStateT (analyzeProgramF ast) ([], Main) of
+    Left e -> putStr e >> fail ""
+    Right p' -> return p'
