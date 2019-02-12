@@ -1,6 +1,6 @@
 before_script:
   - source ~/.bashrc
-  - cabal install Parsec hspec hashmap
+  - cabal install Parsec hspec hashmap MissingH
 stages:
   - build
   - test
