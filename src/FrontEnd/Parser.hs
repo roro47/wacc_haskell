@@ -1,6 +1,7 @@
 module FrontEnd.Parser where
 
 import System.IO
+import System.Exit
 import Data.List as List
 import Control.Monad
 import Control.Monad.Except
@@ -360,8 +361,8 @@ parseFile file =
   do
     program <- readFile file
     case parse parseProgramF "" program of
-      Left e -> print e >>
-                fail ("parse error: " ++ "at line " ++ line e ++ " and col " ++ col e ++ " with file " ++ file)
+      Left e -> fail "#syntax_error#" >>
+                exitWith (ExitFailure 100)
       Right r -> return r
       where line = \e -> show $ sourceLine $ errorPos e
             col = \e -> show $ sourceLine $ errorPos e

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a3d03b7a12b30ea04d1e500543fea4d08e680332a6c7e557474c522f898eb099
+-- hash: a8045b8a7a1591c92212ac3f5a59ede0272581f6a92528734655bba735f622cc
 
 name:           wacc32
 version:        0.1.0.0
@@ -43,6 +43,7 @@ library
     , hashable
     , hashmap
     , hslogger
+    , hspec
     , mtl
     , parsec
     , regex-base
@@ -65,6 +66,7 @@ executable compile
     , hashable
     , hashmap
     , hslogger
+    , hspec
     , mtl
     , parsec
     , regex-base
@@ -97,6 +99,7 @@ test-suite wacc32-test
     , hashable
     , hashmap
     , hslogger
+    , hspec
     , mtl
     , parsec
     , regex-base

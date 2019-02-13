@@ -2,6 +2,7 @@
 
 module FrontEnd.SemanticAnalyzer where
 
+import System.Exit
 import qualified Data.List as List
 import qualified Data.List.Utils as ListUtils
 import Control.Applicative
@@ -311,5 +312,6 @@ analyzeExprF (Ann (FuncExpr f) (pos, _)) = do
 analyzeAST :: ProgramF () -> IO (ProgramF ())
 analyzeAST ast = do
   case evalStateT (analyzeProgramF ast) (([], HashMap.empty), Main) of
-    Left e -> putStr e >> fail ""
+    Left e -> fail "#semantic_error#" >>
+              exitWith (ExitFailure 200)
     Right p' -> return p'

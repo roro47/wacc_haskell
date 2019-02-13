@@ -17,3 +17,6 @@ compile file = do
   ast <- parseFile file 
   analyzeAST ast
   return ()
+
+
+    

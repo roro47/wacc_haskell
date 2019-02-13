@@ -32,6 +32,7 @@ dependencies:
 - regex-compat
 - regex-posix
 - mtl
+- hspec
 
 library:
   source-dirs: src
@@ -60,3 +61,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - wacc32
+    - hspec
