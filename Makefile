@@ -1,10 +1,11 @@
 main:
 	stack build
-	cabal build
 
 all: main
 
 clean:
-	cabal clean
+	stack clean
+	rm -rf dist
+	rm -rf .stack-work
 
 .PHONY: all
