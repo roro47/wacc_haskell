@@ -8,10 +8,9 @@ stages:
 job1:
   stage: build
   script: 
-    - ghc -o compile Compiler.hs
+    - stack build
 
 job2:
   stage: test
   script: 
-    - ghc -o test Test/Test.hs
-    - ./test
+    - stack test
