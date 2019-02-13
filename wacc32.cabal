@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c03858ab423a3593c406b9ac43f19f568dab98e2ae77cec21b16658ac51e703b
+-- hash: a3d03b7a12b30ea04d1e500543fea4d08e680332a6c7e557474c522f898eb099
 
 name:           wacc32
 version:        0.1.0.0
@@ -36,10 +36,21 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , MissingH
+    , base >=4.7 && <5
+    , call-stack
+    , hashable
+    , hashmap
+    , hslogger
+    , mtl
+    , parsec
+    , regex-base
+    , regex-compat
+    , regex-posix
   default-language: Haskell2010
 
-executable wacc32-exe
+executable compile
   main-is: Main.hs
   other-modules:
       Paths_wacc32
@@ -47,10 +58,18 @@ executable wacc32-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      MissingH
+      HUnit
+    , MissingH
     , base >=4.7 && <5
+    , call-stack
+    , hashable
     , hashmap
+    , hslogger
+    , mtl
     , parsec
+    , regex-base
+    , regex-compat
+    , regex-posix
     , wacc32
   default-language: Haskell2010
 
@@ -71,6 +90,17 @@ test-suite wacc32-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , MissingH
+    , base >=4.7 && <5
+    , call-stack
+    , hashable
+    , hashmap
+    , hslogger
+    , mtl
+    , parsec
+    , regex-base
+    , regex-compat
+    , regex-posix
     , wacc32
   default-language: Haskell2010

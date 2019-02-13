@@ -15,7 +15,7 @@ import FrontEnd.AST
 
 
 parseProgramF :: Parser (ProgramF ())
-  parseProgramF = do
+parseProgramF = do
   whiteSpace
   pos <- getPosition
   reserved "begin"
@@ -23,7 +23,7 @@ parseProgramF :: Parser (ProgramF ())
   stat <- parseStatListF
   reserved "end"
   eof
-return $ Ann (Program fs stat) (pos, None)
+  return $ Ann (Program fs stat) (pos, None)
 
 parseFuncF :: Parser (FuncF ())
 parseFuncF = do

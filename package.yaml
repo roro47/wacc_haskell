@@ -21,12 +21,23 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- HUnit
+- MissingH
+- call-stack
+- hashable
+- hashmap
+- hslogger
+- parsec
+- regex-base
+- regex-compat
+- regex-posix
+- mtl
 
 library:
   source-dirs: src
 
 executables:
-  wacc32-exe:
+  compile:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
