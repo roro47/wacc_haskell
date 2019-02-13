@@ -190,6 +190,7 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
          = if paramLen /= exprLen then throwError (paramLenError symbol paramLen exprLen)
            else return ()
 
+        -- decide which type replace T
         decideT :: Type -> Type -> Analyzer Type
         decideT (TPair t1 t2) (TPair T _) = return t1
         decideT (TPair t1 t2) (TPair _ T) = return t2

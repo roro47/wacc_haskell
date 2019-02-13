@@ -15,28 +15,28 @@ import FrontEnd.AST
 
 
 parseProgramF :: Parser (ProgramF ())
-parseProgramF = do
-              whiteSpace
-              pos <- getPosition
-              reserved "begin"
-              fs <- many (try parseFuncF)
-              stat <- parseStatListF
-              reserved "end"
-              eof
-              return $ Ann (Program fs stat) (pos, None)
+  parseProgramF = do
+  whiteSpace
+  pos <- getPosition
+  reserved "begin"
+  fs <- many (try parseFuncF)
+  stat <- parseStatListF
+  reserved "end"
+  eof
+return $ Ann (Program fs stat) (pos, None)
 
 parseFuncF :: Parser (FuncF ())
 parseFuncF = do
-             whiteSpace
-             pos <- getPosition
-             t <- parseType
-             ident <- parseIdentF
-             ps <- parens (commaSep parseParamF)
-             reserved "is"
-             stat <- parseStatListF
-             checkReturnExit stat
-             reserved "end"
-             return $ Ann (Func t ident ps stat) (pos, None)
+  whiteSpace
+  pos <- getPosition
+  t <- parseType
+  ident <- parseIdentF
+  ps <- parens (commaSep parseParamF)
+  reserved "is"
+  stat <- parseStatListF
+  checkReturnExit stat
+  reserved "end"
+  return $ Ann (Func t ident ps stat) (pos, None)
     where checkReturnExit (Ann (StatList stats) (pos, None))
             = case lastStat of
                 Return _ -> return ()
@@ -52,11 +52,11 @@ parseFuncF = do
 
 parseParamF :: Parser (ParamF ())
 parseParamF = do
-              whiteSpace
-              pos <- getPosition
-              t <- parseType
-              ident <- parseIdentF
-              return $ Ann (Param t ident) (pos, None)
+  whiteSpace
+  pos <- getPosition
+  t <- parseType
+  ident <- parseIdentF
+  return $ Ann (Param t ident) (pos, None)
 
 parseType :: Parser Type
 parseType =
@@ -64,40 +64,40 @@ parseType =
 
 parseArrayType :: Parser Type
 parseArrayType = do
-                  t <- (parseBaseType <|> parsePairType)
-                  rs <- many (try $ reserved "[]")
-                  return $ foldl (\acc x -> TArray acc) t rs
+  t <- (parseBaseType <|> parsePairType)
+  rs <- many (try $ reserved "[]")
+  return $ foldl (\acc x -> TArray acc) t rs
 
 parseBaseType :: Parser Type
 parseBaseType = do
-                 ((reserved "int" >> return TInt)
-                  <|> (reserved "bool" >> return TBool)
-                  <|> (reserved "char" >> return TChar)
-                  <|> (reserved "string" >> return TStr))
+  ((reserved "int" >> return TInt)
+   <|> (reserved "bool" >> return TBool)
+   <|> (reserved "char" >> return TChar)
+   <|> (reserved "string" >> return TStr))
 
 parsePairType :: Parser Type
 parsePairType = do
-                 string "pair"
-                 pair <- (parens $ parsePairElemTypeF >>= \t1 ->
-                                  comma >>= \_ ->
-                                  parsePairElemTypeF >>= \t2 ->
-                                  return $ TPair t1 t2)
-                 return $ pair
-        where parsePairElemTypeF :: Parser Type
-              parsePairElemTypeF = try parseArrayType
-                               <|> try parseBaseType
-                               <|> (string "pair" >>
-                                    return TAny)
+  string "pair"
+  pair <- (parens $ parsePairElemTypeF >>= \t1 ->
+                   comma >>= \_ ->
+                   parsePairElemTypeF >>= \t2 ->
+                   return $ TPair t1 t2)
+  return $ pair
+  where parsePairElemTypeF :: Parser Type
+        parsePairElemTypeF = try parseArrayType
+                         <|> try parseBaseType
+                         <|> (string "pair" >>
+                              return TAny)
 
 parseStatListF :: Parser (StatListF ())
 parseStatListF = do
-                 whiteSpace
-                 pos <- getPosition
-                 stat <- parseStatF
-                 (try (semi >>
-                    parseStatListF >>= \(Ann (StatList rest) _) ->
-                    return $ Ann (StatList (stat:rest)) (pos, None))
-                    <|> (return $ Ann (StatList [stat]) (pos, None)))
+  whiteSpace
+  pos <- getPosition
+  stat <- parseStatF
+  (try (semi >>
+     parseStatListF >>= \(Ann (StatList rest) _) ->
+     return $ Ann (StatList (stat:rest)) (pos, None))
+     <|> (return $ Ann (StatList [stat]) (pos, None)))
 
 
 parseStatF :: Parser (StatF ())
@@ -152,9 +152,9 @@ parsePairElem = do pos <- getPosition
 
 parseArrayElem :: Parser (Expr ())
 parseArrayElem = do
-                  i <- parseIdentF
-                  exprs <- many1 (try parseIndex)
-                  return $ ArrayElem i exprs
+  i <- parseIdentF
+  exprs <- many1 (try parseIndex)
+  return $ ArrayElem i exprs
            where parseIndex :: Parser (ExprF ())
                  parseIndex = do
                               expr <- brackets parseExprF

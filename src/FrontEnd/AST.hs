@@ -136,7 +136,6 @@ instance Eq (Type) where
   Void == Void = True
   TAny == _ = True
   _ == TAny = True
-
   (TArray TChar) == TStr = True
   TStr == (TArray TChar) = True
   (TArray t1) == (TArray t2) = t1 == t2
@@ -164,3 +163,4 @@ instance Show (Type) where
 
 instance Show (Ident a) where
   show (Ident s) = show s
+
