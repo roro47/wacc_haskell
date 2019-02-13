@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-stack exec compile
+stack exec compile $1
