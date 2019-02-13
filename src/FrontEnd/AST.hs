@@ -120,8 +120,7 @@ builtInFunc =
 
 
 instance (Show f) => Show (Ann f) where
-  --show (Ann f _) = show f
- show (Ann f (_, t)) = "(" ++ show f ++ "<" ++ show t ++ ">" ++ ")"
+  show (Ann f _) = show f
 
 instance (Eq f) => Eq (Ann f) where
   (Ann f1 _) == (Ann f2 _) = f1 == f2

@@ -315,3 +315,4 @@ analyzeAST ast = do
     Left e -> putStrLn "#semantic_error#" >> 
               exitWith (ExitFailure 200)
     Right p' -> return p'
+

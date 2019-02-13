@@ -55,7 +55,7 @@ analyzedummyGeneral stk p a =
   do
     pushScope
     mapM (\(id, funcT) ->
-        addSymbol (Ann (Ident id) (dummy_pos, None)) funcT dummy_pos) builtInFunc
+        addFunctionSymbol (Ann (Ident id) (dummy_pos, None)) funcT dummy_pos) builtInFunc
     mapM (\(id, funcT) ->
         addSymbol (Ann (Ident id) (dummy_pos, None)) funcT dummy_pos) stk
     a' <- a p
