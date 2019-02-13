@@ -1,4 +1,5 @@
 main:
+	ghc -v
 	cabal build
 
 all: main
