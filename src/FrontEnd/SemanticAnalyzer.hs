@@ -312,6 +312,6 @@ analyzeExprF (Ann (FuncExpr f) (pos, _)) = do
 analyzeAST :: ProgramF () -> IO (ProgramF ())
 analyzeAST ast = do
   case evalStateT (analyzeProgramF ast) (([], HashMap.empty), Main) of
-    Left e -> fail "#semantic_error#" >>
+    Left e -> putStrLn "#semantic_error#" >> 
               exitWith (ExitFailure 200)
     Right p' -> return p'

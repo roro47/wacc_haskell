@@ -361,7 +361,7 @@ parseFile file =
   do
     program <- readFile file
     case parse parseProgramF "" program of
-      Left e -> fail "#syntax_error#" >>
+      Left e -> putStrLn "#syntax_error#" >>
                 exitWith (ExitFailure 100)
       Right r -> return r
       where line = \e -> show $ sourceLine $ errorPos e
