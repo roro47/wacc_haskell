@@ -17,5 +17,5 @@ testSyntaxErr file =
 
 test = hspec $ do
        describe "test invalid (syntax) :" $ do
-         waccs <- runIO (getWacc "Test/invalid/syntaxErr")
+         waccs <- runIO (getWacc "test/invalid/syntaxErr")
          mapM_ (\wacc -> it ("file: " ++ wacc) (testSyntaxErr wacc)) waccs

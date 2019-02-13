@@ -1,5 +1,5 @@
 main:
-	stack build
+	stack build --system-ghc
 
 all: main
 

@@ -14,5 +14,5 @@ testValidParse file = do
 
 test = hspec $ do
        describe "test valid : check that all wacc program " $ do
-         waccs <- runIO (getWacc "Test/valid")
+         waccs <- runIO (getWacc "test/valid")
          mapM_ (\wacc -> it ("file: " ++ wacc) (testValidParse wacc)) waccs

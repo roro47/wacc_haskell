@@ -48,11 +48,11 @@ matchT msg t expectT pos
 -- errors
 declaredError :: IdentF () -> SourcePos -> SourcePos -> String
 declaredError symbol pos1 pos2
- = "symbol " ++ show symbol ++ " at " ++ show pos1 ++ " already declared at "  ++ show pos2
+ = "symbol " ++ show symbol ++ " at " ++ show pos1 ++ " already declared at "  ++ show pos2 ++ "\n"
 
 notDeclaredError :: IdentF () -> SourcePos -> String
 notDeclaredError symbol pos
- = "symbol " ++ show symbol ++ " at " ++ show pos ++ " not defined."
+ = "symbol " ++ show symbol ++ " at " ++ show pos ++ " not defined.\n"
 
 typeError :: String -> SourcePos -> [Type] -> Type -> String
 typeError msg pos expected actual =
@@ -62,11 +62,17 @@ typeError msg pos expected actual =
   "actual: " ++ (show actual) ++ "\n"
   where msg' = if msg /= "" then msg ++ "\n" else msg
 
-paramLenError :: IdentF () -> SourcePos -> Int -> Int -> String
-paramLenError symbol pos paramLen exprLen =
-  "For function call " ++ show symbol ++ " at " ++ show pos
-   ++", require " ++ show paramLen ++ " parameters, " ++
-   show exprLen ++ " are given.\n"
+paramLenError :: IdentF () -> Int -> Int -> String
+paramLenError symbol paramLen exprLen =
+  "For " ++ functionType symbol ++ ", require " ++ 
+  show paramLen ++ " parameters, " ++
+  show exprLen ++ " are given.\n"
+
+-- whether function is builtIn or user-defined
+functionType :: IdentF () -> String
+functionType (Ann (Ident s) (pos, _))
+  | elem s (map fst builtInFunc) = "built-in function " ++ "\"" ++ s ++ "\""
+  | otherwise = "function " ++ "\"" ++ s ++ "\"" ++ " defined at " ++ show pos
 
 pushScope :: Analyzer ()
 pushScope = do { (tables, context) <- get; put (HashMap.empty:tables, context) }
@@ -147,19 +153,20 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
       otherwise -> throwError $ "Symbol " ++ show symbol ++ " at " ++ show pos ++
                               " is not a function symbol"
 
-  where evalT :: Type -> ExprF () -> Analyzer Type
+  where errT = "For call of " ++ functionType symbol ++ ", type is not matched."
+        evalT :: Type -> ExprF () -> Analyzer Type
         evalT (TFunc [] (paramT:paramTs) returnT) expr
-          = do { match "" expr [paramT]; return $ TFunc [] paramTs returnT }
+          = do { match errT expr [paramT]; return $ TFunc [] paramTs returnT }
 
         evalT (TFunc allowedT (paramT:paramTs) returnT) expr@(Ann _ (_, t))
-          = match "" expr allowedT >>= \_ ->
+          = match errT expr allowedT >>= \_ ->
             if returnT == T
             then return $ TFunc [] (ListUtils.replace [T] [t] paramTs) t
             else return $ TFunc [] (ListUtils.replace [T] [t] paramTs) returnT
 
         checkParamLen :: IdentF () -> SourcePos -> Int -> Int -> Analyzer ()
         checkParamLen symbol pos paramLen exprLen
-         = if paramLen /= exprLen then throwError (paramLenError symbol pos paramLen exprLen)
+         = if paramLen /= exprLen then throwError (paramLenError symbol paramLen exprLen)
            else return ()
 
 analyzeStatF :: StatF () -> Analyzer (StatF ())
@@ -184,7 +191,7 @@ analyzeStatF (Ann (Assign lhs rhs) ann@(pos, none)) = do
 analyzeStatF (Ann (Return expr) ann@(pos, none)) =
   getContext >>= \c ->
   case c of
-    Main -> throwError $ "Attempt to return from main scope at " ++ show pos
+    Main -> throwError $ "Attempt to return from main scope at " ++ show pos ++ "\n"
     FContext (TFunc _ _ returnT) ->
       analyzeExprF expr >>= \expr' ->
       match "Function return type not matched" expr' [returnT] >>= \_ ->
