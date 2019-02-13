@@ -259,9 +259,9 @@ parseExprF = do whiteSpace
                 return $ expr
      where check (Ann (FuncExpr (Ann (FuncApp id exprs) _)) _)
             = case op of
-                "pos"     -> mapM_ checkIsStringLiter exprs >>= \_ ->
+                "#pos"     -> mapM_ checkIsStringLiter exprs >>= \_ ->
                              mapM_ (checkOverFlow (2^31 -1)) exprs
-                "neg"     -> mapM_ (checkOverFlow (2^31)) exprs
+                "#neg"     -> mapM_ (checkOverFlow (2^31)) exprs
                 otherwise -> mapM_ check exprs
 
             where (Ann (Ident op) _) = id
@@ -285,8 +285,8 @@ genFuncAppF :: String -> SourcePos -> [ExprF ()] -> (FuncAppF ())
 genFuncAppF fName pos expr =
   Ann (FuncApp (Ann (Ident fName) (pos, None)) expr) (pos, None)
 
-table = [ [unary symbol "+" (genFuncAppF "pos"),
-           unary symbol "-" (genFuncAppF "neg"),
+table = [ [unary symbol "+" (genFuncAppF "#pos"),
+           unary symbol "-" (genFuncAppF "#neg"),
            unary symbol"!" (genFuncAppF "!"),
            unary reserved "len" (genFuncAppF "len"),
            unary reserved "ord" (genFuncAppF "ord"),

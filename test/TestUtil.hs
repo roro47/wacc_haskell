@@ -3,6 +3,7 @@ module TestUtil where
 import qualified System.Directory as SysDir
 import Control.Monad
 import Data.List hiding (insert)
+import qualified Data.HashMap as HashMap hiding (map)
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Pos
 import Text.Parsec.Prim
@@ -73,7 +74,7 @@ analyzeGeneral str par ana stack = do
       case parse par "" text of
         Left e  -> return Nothing
         Right r -> (
-            case evalStateT (stack r ana) ([], Main) of
+            case evalStateT (stack r ana) (([], HashMap.empty), Main) of
               Left e' ->  return Nothing
               Right r' -> return (Just (show r'))
               )

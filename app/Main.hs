@@ -14,6 +14,6 @@ main = do
   return ()
 
 compile file = do
-  ast <- parseFile file
+  ast <- parseFile file 
   analyzeAST ast
   return ()

@@ -8,8 +8,8 @@ import TestSemanticUnit as SemUnit
 
 main :: IO ()
 main = do
-  SynUnit.test
-  SemUnit.test
+ -- SynUnit.test
+ -- SemUnit.test
   Valid.test
   InvalidSyntax.test
   InvalidSemantic.test

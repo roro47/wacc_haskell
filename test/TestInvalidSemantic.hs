@@ -3,6 +3,7 @@ module TestInvalidSemantic where
 import Test.Hspec
 import Text.ParserCombinators.Parsec
 import Control.Monad.State
+import Data.HashMap as HashMap hiding (map)
 
 import FrontEnd.Parser
 import FrontEnd.SemanticAnalyzer
@@ -13,7 +14,7 @@ testSemanticErr file =
     program <- readFile file
     case parse parseProgramF "" program of
       Left syntaxErr -> expectationFailure err1
-      Right p -> case evalStateT (analyzeProgramF p) ([], Main) of
+      Right p -> case evalStateT (analyzeProgramF p) (([], HashMap.empty), Main) of
                    Left semanticErr -> 
                      appendFile "output.txt" (file ++ ":\n" ++ semanticErr ++ "\n") >> return ()
                    Right p' -> expectationFailure err2

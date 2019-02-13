@@ -42,7 +42,6 @@ data Type = TInt
           | TFunc [Type] [Type] Type -- stored in scope after func declaration
           | Void
           | None
-          | TRef Type
           | T -- similar to type parameter
 
 data Expr a = IntLiter Integer
@@ -90,18 +89,18 @@ isTFunc _ = False
    User defined functions are without allowed type -}
 builtInFunc :: [(String, Type)]
 builtInFunc =
--- name        allowed type           parameters     return type
-  [("skip",    TFunc []               []             Void),
-   ("read",    TFunc [TInt, TChar]    [T]            Void),
-   ("free",    TFunc [arrayT, pairT]  [T]            Void),
-   ("print",   TFunc [TAny]           [T]            Void),
-   ("println", TFunc [TAny]           [T]            Void),
-   ("newpair", TFunc []               [TAny, TAny]   pairT),
-   ("fst",     TFunc [TAny]           [TPair T TAny] T),
-   ("snd",     TFunc [TAny]           [TPair TAny T] T),
-   ("!",       TFunc []               [TBool]        TBool),
-   ("pos",     TFunc []               [TInt]         TInt),
-   ("neg",     TFunc []               [TInt]         TInt),
+-- name        allowed type            parameters     return type
+  [("skip",    TFunc []                []             Void),
+   ("read",    TFunc [TInt, TChar]     [T]            Void),
+   ("free",    TFunc [arrayT, pairT]   [T]            Void),
+   ("print",   TFunc [TAny]            [T]            Void),
+   ("println", TFunc [TAny]            [T]            Void),
+   ("newpair", TFunc []                [TAny, TAny]   pairT),
+   ("fst",     TFunc [TPair TAny TAny] [TPair T TAny] T),
+   ("snd",     TFunc [TPair TAny TAny] [TPair TAny T] T),
+   ("!",       TFunc []                [TBool]        TBool),
+   ("#pos",     TFunc []               [TInt]         TInt),
+   ("#neg",     TFunc []               [TInt]         TInt),
    ("len",     TFunc []               [TArray TAny]  TInt),
    ("ord",     TFunc []               [TChar]        TInt),
    ("chr",     TFunc []               [TInt]         TChar),
@@ -121,7 +120,8 @@ builtInFunc =
 
 
 instance (Show f) => Show (Ann f) where
-  show (Ann f (_, t)) = show f
+  --show (Ann f _) = show f
+ show (Ann f (_, t)) = "(" ++ show f ++ "<" ++ show t ++ ">" ++ ")"
 
 instance (Eq f) => Eq (Ann f) where
   (Ann f1 _) == (Ann f2 _) = f1 == f2
@@ -131,15 +131,20 @@ instance Eq (Type) where
   TBool == TBool = True
   TChar == TChar = True
   TStr == TStr = True
-  (TArray t1) == (TArray t2) = t1 == t2
-  (TPair ft1 st1) == (TPair ft2 st2) = (ft1 == ft2) &&
-                                       (st1 == st2)
+  T == T = True
+  None == None = True
+  Void == Void = True
   TAny == _ = True
   _ == TAny = True
-  Void == Void = True
+
+  (TArray TChar) == TStr = True
+  TStr == (TArray TChar) = True
+  (TArray t1) == (TArray t2) = t1 == t2
+  (TPair ft1 st1) == (TPair ft2 st2) = (ft1 == ft2) && (st1 == st2)
   (TFunc aT1 pT1 rT1) == (TFunc aT2 pT2 rT2) =
     (aT1 == aT2) && (pT1 == pT2) && (rT1 == rT2)
   _ == _ = False
+
 
 instance Show (Type) where
   show TInt = "TInt"
@@ -153,7 +158,9 @@ instance Show (Type) where
   show Void = "Void"
   show (TFunc _ ts t) = "TFunc (" ++ show t ++ ") " ++
     "(" ++ intersperse ',' (concat $ map show ts) ++ ")"
-  show _ = "deal with it" -- is t
+  show None = "None"
+  show T = "T"
+
 
 instance Show (Ident a) where
   show (Ident s) = show s

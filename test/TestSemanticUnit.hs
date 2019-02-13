@@ -61,9 +61,9 @@ analyzeExprTest = hspec $ do
 
           it "☑️ accepts some unary operations (Pos, Neg, Chr) before integers" $ do
               analyzeUsing "+ 2" parseExprF analyzeExprF `shouldReturn` (
-                Just "FuncExpr FuncApp \"pos\" [IntLiter 2]")
+                Just "FuncExpr FuncApp \"#pos\" [IntLiter 2]")
               analyzeUsing "-3" parseExprF analyzeExprF `shouldReturn` (
-                Just "FuncExpr FuncApp \"neg\" [IntLiter 3]")
+                Just "FuncExpr FuncApp \"#neg\" [IntLiter 3]")
               analyzeUsing "chr 23" parseExprF analyzeExprF `shouldReturn` (
                 Just "FuncExpr FuncApp \"chr\" [IntLiter 23]")
 

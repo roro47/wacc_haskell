@@ -131,9 +131,9 @@ uopTest = hspec $ do
       describe "parse unary operators:" $ do
           it "☑️ can parse pos, neg, chr, ord" $ do
               parseUsing "+1" parseExprF `shouldReturn` (
-                Just "FuncExpr FuncApp \"pos\" [IntLiter 1]")
+                Just "FuncExpr FuncApp \"#pos\" [IntLiter 1]")
               parseUsing "-a" parseExprF `shouldReturn` (
-                Just "FuncExpr FuncApp \"neg\" [IdentExpr \"a\"]")
+                Just "FuncExpr FuncApp \"#neg\" [IdentExpr \"a\"]")
               parseUsing "!a" parseExprF `shouldReturn` (
                 Just "FuncExpr FuncApp \"!\" [IdentExpr \"a\"]")
               parseUsing "chr 12" parseExprF `shouldReturn` (
