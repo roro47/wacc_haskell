@@ -77,8 +77,9 @@ popScope = do { (tables, context) <- get; put (tail tables, context) }
 
 addSymbol :: IdentF () -> Type -> SourcePos -> Analyzer ()
 addSymbol id t pos = do
-  (table:tables, context) <- get
-  put ((insert symbol (t, pos) table):tables, context)
+  (tables, context) <- get
+  guard $ tables /= []
+  put ((insert symbol (t, pos) (head tables)):(tail tables), context)
   where Ann (Ident symbol) _ = id
 
 lookUpSymbol :: IdentF () -> Analyzer (Maybe (Type, SourcePos))
@@ -139,7 +140,9 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
         do
           exprs' <- mapM analyzeExprF exprs
           checkParamLen symbol pos (length paramTs) (length exprs')
-          (TFunc _ _ returnT) <- foldM evalT funcT exprs'
+          funcT' <- foldM evalT funcT exprs'
+          guard (isTFunc funcT')
+          let { TFunc _ _ returnT = funcT' }
           return $ Ann (FuncApp symbol exprs') (pos, returnT)
       otherwise -> throwError $ "Symbol " ++ show symbol ++ " at " ++ show pos ++
                               " is not a function symbol"

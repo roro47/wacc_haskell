@@ -81,6 +81,11 @@ type FuncAppF a = Ann (FuncApp a)
 arrayT = TArray TAny
 pairT = TPair TAny TAny
 
+isTFunc :: Type -> Bool
+isTFunc (TFunc _ _ _) = True
+isTFunc _ = False
+
+
 {- Table of built in functions. Handled in parseFuncAppStat
    User defined functions are without allowed type -}
 builtInFunc :: [(String, Type)]
