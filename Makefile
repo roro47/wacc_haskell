@@ -1,5 +1,4 @@
 main:
-	ghc -v
 	stack build
 	cabal build
 
