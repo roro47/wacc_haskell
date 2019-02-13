@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 474ebf3f7140f4b992bb1ac78e0c34cf413cbb6c448c0e38c73b941cb1a59938
+-- hash: c03858ab423a3593c406b9ac43f19f568dab98e2ae77cec21b16658ac51e703b
 
 name:           wacc32
 version:        0.1.0.0
@@ -36,10 +36,10 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >=4.7 && <5, parsec, hashmap, MissingH, mtl
+      base >=4.7 && <5
   default-language: Haskell2010
 
-executable compile
+executable wacc32-exe
   main-is: Main.hs
   other-modules:
       Paths_wacc32
@@ -47,14 +47,18 @@ executable compile
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5, hspec
+      MissingH
+    , base >=4.7 && <5
+    , hashmap
+    , parsec
     , wacc32
   default-language: Haskell2010
 
 test-suite wacc32-test
   type: exitcode-stdio-1.0
-  main-is: Test.hs
+  main-is: Spec.hs
   other-modules:
+      Test
       TestInvalidSemantic
       TestInvalidSyntax
       TestSemanticUnit
@@ -68,5 +72,5 @@ test-suite wacc32-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , wacc32, hspec, directory, parsec, mtl, hashmap 
+    , wacc32
   default-language: Haskell2010
