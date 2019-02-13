@@ -40,11 +40,19 @@ instance Matchable (Stat ()) where
  match msg a@(Ann x (pos, t)) expectT =
    matchT msg t expectT pos
 
+-- allow function acting on base case of recursive of recursive type
+class Mappable a where
+  fmap' :: (a -> a) -> a -> a
+
+instance Mappable Type where
+  fmap' f (TPair t1 t2) = TPair (f t1) (f t2)
+  fmap' f (TArray t) = TArray (f t)
+  fmap' f funcT@(TFunc _ _ _) = funcT
+  fmap' f t = f t
+
 matchT :: String -> Type -> [Type] -> SourcePos -> (Analyzer ())
 matchT msg t expectT pos
-  = if not $ elem t expectT
-    then throwError $ typeError msg pos expectT t
-    else return ()
+  = if not $ elem t expectT then throwError $ typeError msg pos expectT t else return ()
 
 -- errors
 declaredError :: IdentF () -> SourcePos -> SourcePos -> String
@@ -184,7 +192,8 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
         evalT (TFunc allowedT (paramT:paramTs) returnT) expr@(Ann _ (_, t))
           = match errT expr allowedT >>= \_ ->
             decideT t paramT >>= \passT ->
-            return $ TFunc [] (map (replace passT) paramTs) (replace passT returnT)
+            return $ TFunc [] (map (\t -> if t == T then passT else t) paramTs) 
+                               (replace passT returnT)
 
         checkParamLen :: IdentF () -> SourcePos -> Int -> Int -> Analyzer ()
         checkParamLen symbol pos paramLen exprLen
