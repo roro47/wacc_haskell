@@ -1,6 +1,6 @@
 before_script:
   - source ~/.bashrc
-  - cabal install Parsec hspec hashmap MissingH
+  - stack upgrade
 stages:
   - build
   - test
@@ -8,7 +8,7 @@ stages:
 job1:
   stage: build
   script: 
-    - stack build
+    - stack build --system-ghc
 
 job2:
   stage: test

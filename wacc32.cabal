@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a8045b8a7a1591c92212ac3f5a59ede0272581f6a92528734655bba735f622cc
+-- hash: 18bfafd6a13919f1a949bab3af37b94cebf29f9365201f6ab4870ffea2ef7ce5
 
 name:           wacc32
 version:        0.1.0.0
@@ -79,7 +79,6 @@ test-suite wacc32-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Test
       TestInvalidSemantic
       TestInvalidSyntax
       TestSemanticUnit
@@ -96,6 +95,7 @@ test-suite wacc32-test
     , MissingH
     , base >=4.7 && <5
     , call-stack
+    , directory
     , hashable
     , hashmap
     , hslogger

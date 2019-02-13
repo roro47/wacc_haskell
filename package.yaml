@@ -62,3 +62,6 @@ tests:
     dependencies:
     - wacc32
     - hspec
+    - hashmap
+    - parsec
+    - directory
