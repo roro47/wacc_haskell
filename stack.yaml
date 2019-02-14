@@ -2,7 +2,7 @@ flags: {}
 packages:
 - .
 system-ghc: true
-extra-deps:
+extra-deps: true
 - HUnit-1.6.0.0
 - MissingH-1.4.0.1
 - ansi-terminal-0.8.2
