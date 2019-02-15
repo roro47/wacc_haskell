@@ -95,12 +95,13 @@ instance Show Instr where
   show (MC_ s r op) = (show_ s)  ++ (show r) ++ (show op)
   show (SHIFT_ s r1 r2 r3) = (show_ s)  ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
   show (BRANCH_ b l) = (show_ b)  ++ l
-  show (STACK_ s (r:regs)) = show_ s  ++ show r ++ (concatMap (\x -> ", " ++ show x) regs)
+  show (STACK_ s (r:regs)) = show_ s  ++ "{" ++ show r ++ (concatMap (\x -> ", " ++ show x) regs) ++ "}"
   show (C2_ c r1 r2 r3 r4) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3) ++ ", " ++ (show r4)
   show (S_ s r1 op) = (show_ s) ++ (show r1) ++ ", " ++ (show op)
 
+{- Sample instruction representations -}
 sample1 = CB_ (ADD NoSuffix AL) R1 R2 (IMM 3)
-sample2 = MC_ (CMP BackEnd.Instructions.GT) R0 (R R0)
+sample2 = MC_ (CMP BackEnd.Instructions.GT) R7 (R R0)
 sample3 = SHIFT_ (LSL NoSuffix AL) R0 R1 R2
 sample4 = BRANCH_ (B BackEnd.Instructions.EQ) "Hello"
 sample5 = STACK_ (POP BackEnd.Instructions.LS) [R1, R2, PC, SP]
