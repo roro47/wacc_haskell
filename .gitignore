@@ -7,3 +7,5 @@ src/antlr
 *~
 *o
 *i
+*.s
+EXEName
