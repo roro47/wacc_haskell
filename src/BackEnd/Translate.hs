@@ -297,12 +297,23 @@ translateUserFuncAppF :: FuncAppF () -> State TranslateState IExp
 translateUserFuncAppF (Ann (FuncApp id exprs) _) = undefined
 
 
-translateLen :: String -> StateTranslateState Stm
+ -- For lily and audrey
+translateLen :: String -> StateTranslateState IExp
 translateLen s = undefined
 
+translateOrd :: Exp -> StateTranslateState IExp
+translateOrd e = undefined
+
+translateFst :: Exp -> StateTranslateState IExp
+translateFst e = undefined
+
+translateSnd :: Exp -> StateTranslateState IExp
+translateSnd e = undefined
 
 -- for built-in function below, need to generate code and
 -- add them to segment list
+-- 1.generate function
+-- 2. add to func segment list
 translateRead :: Type -> State TranslateState ()
 translateRead = undefined
 
