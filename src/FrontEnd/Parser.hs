@@ -119,7 +119,7 @@ parseFuncAppStat = do
   pos <- getPosition
   let { ann = (pos, None) }
   (f, expr) <- foldl (<|>) App.empty $ map (\f -> try (parseFunc f)) builtInFunc
-  return $ FuncStat (Ann (FuncApp (Ann (Ident f) ann) expr) ann)
+  return $ FuncStat (Ann (FuncApp None (Ann (Ident f) ann) expr) ann)
     where parseFunc (f, (TFunc _ _ returnT)) =
            reserved f >>
            if returnT /= Void
@@ -149,7 +149,7 @@ parsePairElem = do
       parsePairElem' str ann =
         reserved str >>
         parseExprF >>= \expr ->
-        return $  FuncExpr (Ann (FuncApp (Ann (Ident str) ann) [expr]) ann)
+        return $  FuncExpr (Ann (FuncApp None (Ann (Ident str) ann) [expr]) ann)
 
 parseArrayElem :: Parser (Expr ())
 parseArrayElem = do
@@ -243,7 +243,7 @@ parseNewPair = do
   newpair <- parens (parseExprF >>= \expr1 ->
     comma >>
     parseExprF >>= \expr2 ->
-    return $ FuncExpr (Ann (FuncApp id [expr1,expr2]) ann))
+    return $ FuncExpr (Ann (FuncApp None id [expr1,expr2]) ann))
   return $ newpair
 
 parseCallF :: Parser (FuncAppF ())
@@ -252,7 +252,7 @@ parseCallF = do
   reserved "call"
   ident <- parseIdentF
   args <- parens (commaSep parseExprF)
-  return $ Ann (FuncApp ident args) (pos, None)
+  return $ Ann (FuncApp None ident args) (pos, None)
 
 parseExprF :: Parser (ExprF ())
 parseExprF = do
@@ -260,7 +260,7 @@ parseExprF = do
   expr <- buildExpressionParser table term
   check expr
   return $ expr
-     where check (Ann (FuncExpr (Ann (FuncApp id exprs) _)) _)
+     where check (Ann (FuncExpr (Ann (FuncApp None id exprs) _)) _)
             = case op of
                 "#pos"     -> mapM_ checkIsStringLiter exprs >>
                              mapM_ (checkOverFlow (2^31 -1)) exprs
@@ -286,7 +286,7 @@ parseExprF = do
 
 genFuncAppF :: String -> SourcePos -> [ExprF ()] -> (FuncAppF ())
 genFuncAppF fName pos expr =
-  Ann (FuncApp (Ann (Ident fName) (pos, None)) expr) (pos, None)
+  Ann (FuncApp None (Ann (Ident fName) (pos, None)) expr) (pos, None)
 
 table = [ [unary symbol "+" (genFuncAppF "#pos"),
            unary symbol "-" (genFuncAppF "#neg"),

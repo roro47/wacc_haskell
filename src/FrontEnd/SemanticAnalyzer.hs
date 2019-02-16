@@ -96,6 +96,7 @@ popScope = do
 
 addSymbol :: IdentF () -> Type -> SourcePos -> Analyzer ()
 addSymbol id t pos = do
+  fmap' :: (Type -> b) -> Type -> b
   ((tables, fTable), context) <- get
   guard $ tables /= []
   put (((insert symbol (t, pos) (head tables)):(tail tables), fTable), context)

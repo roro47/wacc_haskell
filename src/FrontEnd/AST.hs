@@ -58,7 +58,7 @@ data Expr a = IntLiter Integer
 
 {- The datatype for all functions, including built-in and user decleared ones.
    The IdentF represents the name of the function and the exprf are the parameters. -}
-data FuncApp a = FuncApp (IdentF a) [ExprF a] deriving (Eq, Show)
+data FuncApp a = FuncApp Type (IdentF a) [ExprF a] deriving (Eq, Show)
 
 data Ident a = Ident String deriving (Eq)
 
