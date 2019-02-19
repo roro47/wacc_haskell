@@ -96,7 +96,6 @@ popScope = do
 
 addSymbol :: IdentF () -> Type -> SourcePos -> Analyzer ()
 addSymbol id t pos = do
-  fmap' :: (Type -> b) -> Type -> b
   ((tables, fTable), context) <- get
   guard $ tables /= []
   put (((insert symbol (t, pos) (head tables)):(tail tables), fTable), context)
@@ -170,7 +169,7 @@ analyzeStatListF (Ann (StatList stats) ann) =
   mapM analyzeStatF stats >>= \stats' ->
   return $ Ann (StatList stats') ann
 
-analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
+analyzeFuncAppF (Ann (FuncApp _ symbol exprs) (pos, _)) = do
     maybeT <- lookUpFunction symbol
     case maybeT of
       Nothing -> throwError $ notDeclaredError symbol pos
@@ -181,7 +180,7 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
           funcT' <- foldM evalT funcT exprs'
           guard (isTFunc funcT')
           let { TFunc _ _ returnT = funcT' }
-          return $ Ann (FuncApp symbol exprs') (pos, returnT)
+          return $ Ann (FuncApp None symbol exprs') (pos, returnT)
       otherwise -> throwError $ "Symbol " ++ show symbol ++ " at " ++ show pos ++
                               " is not a function symbol"
 

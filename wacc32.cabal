@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 18bfafd6a13919f1a949bab3af37b94cebf29f9365201f6ab4870ffea2ef7ce5
+-- hash: a1bc9f65802999881056a66e7b82507670641814ae11234d9686ac18180e467c
 
 name:           wacc32
 version:        0.1.0.0
@@ -27,6 +27,11 @@ source-repository head
 
 library
   exposed-modules:
+      BackEnd.Frame
+      BackEnd.IR
+      BackEnd.Temp
+      BackEnd.Translate
+      BackEnd.Translate2
       FrontEnd.AST
       FrontEnd.Lexer
       FrontEnd.Parser

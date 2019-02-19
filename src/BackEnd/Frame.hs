@@ -1,5 +1,6 @@
 module BackEnd.Frame where
 
+import FrontEnd.AST
 import BackEnd.Temp as Temp
 import BackEnd.IR 
 
@@ -15,38 +16,73 @@ data Fragment = PROC Stm Frame
               | STRING Temp.Label String
               deriving (Eq, Show)
 
--- char is 1 byte
-charSize :: Exp
-charSize = CONST 1
 
--- int is 4 byte
-intSize :: Exp
-intSize = CONST 4
+charSize :: Int
+charSize = 1
 
--- address
-addrSize :: Exp
-addrSize = CONST 4
+intSize :: Int
+intSize = 4
+
+addrSize :: Int
+addrSize = 4
+
+typeSize :: Type -> Int
+typeSize t = 
+ case t of
+   TInt -> intSize
+   TChar -> charSize
+   TArray _ -> addrSize
+   TPair _ _ -> addrSize
+   _ -> undefined
+
+pc :: Temp.Temp
+pc = 15
 
 -- frame pointer register
 fp :: Temp.Temp
-fp = 1
+fp = 13
 
--- return value registemodule BackEnd.Translate where
---
+-- link register, store return address
+ra :: Temp.Temp
+ra  = 14
+
+-- function return value register
 rv :: Temp.Temp
-rv = 2
+rv = 0
+
+-- function parameter register
+param0 :: Temp.Temp
+param0 = 0
+
+param1 :: Temp.Temp
+param1 = 1
+
+param2 :: Temp.Temp
+param2 = 2
+
+param3 :: Temp.Temp
+param3 = 3
 
 -- return a new stack frame
 newFrame :: String -> Frame
-newFrame = undefined
+newFrame label = Frame label 0
 
 -- Allocate a new variable on the given frame
--- Given true, then variable is passed by reference , hence is allocated
--- in stack.
 -- Given false, then variable can be allocated in register
 allocLocal :: Frame -> Type -> Bool -> Temp.TempAllocator ->
               (Frame, Access, Temp.TempAllocator)
-allocLocal = undefined
+allocLocal frame t escape tempAlloc =
+  case escape of
+    True -> (frame { frameSize = offset }, InFrame (-offset), tempAlloc ) 
+    False -> (frame, InReg temp, tempAlloc')
+  where (tempAlloc', temp) = newTemp tempAlloc
+        offset = (frameSize frame) + allocSize
+        allocSize = case t of
+                      TInt -> intSize
+                      TChar -> charSize
+                      TArray _ -> addrSize
+                      TPair _ _ -> addrSize
+                      _ -> undefined
 
 externalCall :: String -> [Exp] -> Exp
 externalCall sysFunc args = CALL (NAME sysFunc) args

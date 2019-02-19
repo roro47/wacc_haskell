@@ -1,81 +1,83 @@
 module BackEnd.Translate where
 
+import Prelude hiding (LT, EQ, GT, seq)
 import Control.Monad.State.Lazy
 import Data.HashMap as HashMap hiding (map)
-import BackEnd.Frame as Frame
-import qualified BackEnd.IR as IR
+import FrontEnd.AST
+import qualified BackEnd.Frame as Frame
+import qualified BackEnd.Temp as Temp
+import BackEnd.IR
 
-data Access = Access Frame.Frame Frame.Access
+
+data Access = Access Frame.Frame Frame.Access deriving (Eq, Show)
 
 data EnvEntry = VarEntry Access Type
-              | FunEntry Frame Temp.Label Type
+              | FunEntry Frame.Frame Temp.Label Type
               deriving (Eq, Show)
 
--- to avoid clash of mapping to varEntry and funEntry
--- key for funEntry is "%functionName"
-data Level = Level Frame.Frame (HashMap.Map String EnvEntry) deriving (Eq, Show)
+data Level = Level { levelFrame :: Frame.Frame,
+                     varTable :: (HashMap.Map String EnvEntry),
+                     funTable :: (HashMap.Map String EnvEntry) } deriving (Eq, Show)
 
 data TranslateState = TranslateState { levels :: [Level],
-                                       dataFrags :: [Fragment],
-                                       procFrags :: [Fragment],
-                                       tempAllocator :: TempAllocator,
-                                       labelAllocator :: LabelAllocator,
-                                       }
+                                       dataFrags :: [Frame.Fragment],
+                                       procFrags :: [Frame.Fragment],
+                                       tempAlloc :: Temp.TempAllocator,
+                                       controlLabelAlloc :: Temp.LabelAllocator,
+                                       dataLabelAlloc :: Temp.LabelAllocator,
+                                       frameLabelAlloc :: Temp.LabelAllocator}
                       deriving (Eq, Show)
 
-data IExp = Ex IR.Exp
-          | Nx IR.Stm
-          | Cx (Temp.Label -> Temp.Label -> IR.Stm)
-         deriving (Eq, Show)
+data IExp = Ex Exp
+          | Nx Stm
+          | Cx (Temp.Label -> Temp.Label -> Stm)
 
 
-data ScopeAllocator = ScopeAllocator Int deriving (Eq, Show)
-
-newScopeName' :: ScopeAllocator -> (ScopeAllocator, String)
-newScopeName' (ScopeAllocator i) = (ScopeAllocator i+1, show i ++ "_scope")
-
--- should panic if length stm < 1
 seq :: [Stm] -> Stm
 seq (stm:stms) = SEQ stm (seq stms)
-seq stm = stm
-
-
--- turn IExp to Exp
-unEx :: IExp -> State TranslateState IR.Exp
-unEx (Ex e) = return e
-unEx (Cx genStm) = do
-  temp <- newTemp
-  label1 <- newTemp
-  label2 <- newTemp
-  return $ ESEQ (seq [MOVE (TEMP temp) (CONSTI 1),
-                      genStm label1 label2,
-                      LABEL label2,
-                      MOVE (TEMP temp) (CONSTI 0),
-                      LABEL label1]) (TEMP temp)  
-unEx (Nx s) = return $ IR.ESEQ s (IR.CONSTI 0)
-
--- TODO
-unNx :: IExp -> State TranslateState IR.Stm
-unNx = undefined
-
--- TODO
-unCx :: IExp -> State TranslateState (Temp.Label -> Temp.Label -> IR.Stm)
-unCx (Ex e) = undefined
-unCx (Cx c) = return c
-unCx (Nx _) = undefined
-
+seq [] = MOV (TEMP Frame.rv) (TEMP Frame.rv) 
 
 verifyLevels :: [Level] -> State TranslateState [Level]
 verifyLevels [] = fail "no frames available"
 verifyLevels levels  = return levels
 
-topFrame :: State TranslateState Frame.Frame
-topFrame = undefined
-
-pushLevel :: String -> State TranslateState ()
-pushLevel scopeName = do
+newTemp :: State TranslateState Temp.Temp
+newTemp = do
   state <- get
-  put $ state { levels = (Frame scopeName 0, HashMap.empty):levels state }
+  let { (tempAlloc', temp) = Temp.newTemp (tempAlloc state) }
+  put $ state { tempAlloc = tempAlloc' }
+  return temp
+
+newFrameLabel :: State TranslateState Temp.Label
+newFrameLabel = do
+  state <- get
+  let { (alloc, label) = Temp.newFrameLabel (frameLabelAlloc state) }
+  put $ state { frameLabelAlloc = alloc }
+  return label
+
+newDataLabel :: State TranslateState Temp.Label
+newDataLabel = do
+  state <- get
+  let { (alloc, label) = Temp.newDataLabel (dataLabelAlloc state) }
+  put $ state { dataLabelAlloc = alloc }
+  return label
+
+newControlLabel :: State TranslateState Temp.Label
+newControlLabel = do
+  state <- get
+  let { (alloc, label) = Temp.newControlLabel (controlLabelAlloc state) }
+  put $ state { controlLabelAlloc = alloc }
+  return label
+
+newLevel :: State TranslateState Level
+newLevel = do
+  label <- newFrameLabel
+  return $ Level (Frame.newFrame label) HashMap.empty HashMap.empty
+
+pushLevel :: Level -> State TranslateState ()
+pushLevel level = do
+  state <- get
+  put $ state { levels = (level:(levels state)) }
   return ()
 
 popLevel :: State TranslateState ()
@@ -85,121 +87,110 @@ popLevel = do
   put $ state { levels = rest }
   return ()
 
-newTemp :: State TranslateState Temp.Temp
-newTemp = do
-  state <- get
-  let { (tempAlloc, temp) = Temp.newTemp (tempAllocator state) }
-  put $ state { tempAllocator = temp }
-  return temp
 
-newScopeName :: State TranslateState String
-newScopeName = do
-  state <- get
-  let { (scopeAlloc', name) = newScopeName' (scopeAllocator state) }
-  put $ state { scopeAlloc = scopeAlloc' }
-  return name
-
--- allocate a local variable to a frame
 allocLocal :: String -> Type -> Bool -> State TranslateState Access
-allocLocal symbol t escaped = do
+allocLocal symbol t escape = do
   state <- get
-  ((frame, env):rest) <- verifyLevels $ levels state
-  let { tmpAlloc = tempAllocator state;
-        (frame', access, tmpAlloc') = Frame.allocLocal frame escaped tmpAlloc}
-  put $ state { levels = (frame', env):levels, tempAllocator = tmpAlloc'}
-  addVarEntry symbol t access
-  return ()
-
-newLabel :: State TranslateState Temp.Label
-newLabel = do
-  state <- get
-  let { (labelAlloc', label) = Temp.newLabel $ labelAllocator state }
-  put $ state { labelAllocator = labelAlloc' }
-  return label
+  (level:rest) <- verifyLevels $ levels state
+  let { frame  = levelFrame level;
+        alloc = tempAlloc state;
+        (frame', access, alloc') = Frame.allocLocal frame t escape alloc;
+        level' = level { levelFrame = frame' }}
+  put $ state { levels = (level':rest), tempAlloc = alloc' }
+  return $ Access frame access
 
 addVarEntry :: String -> Type -> Access -> State TranslateState ()
 addVarEntry symbol t access = do
   state <- get
-  ((frame, env):rest) <- verifyLevels $ levels state
-  let { varEntry = VarEntry access t }
-  put $ state { levels = (frame, insert symbol varEntry env):rest }
+  (level:rest) <- verifyLevels $ levels state
+  let { varEntry = VarEntry access t;
+        level' = level { varTable = insert symbol varEntry (varTable level)}}
+  put $ state { levels = (level':rest) }
   return ()
 
 addFunEntry :: String -> Type -> State TranslateState ()
-addFunEntry label t = do  
+addFunEntry symbol t = do  
   state <- get
-  ((frame, env):rest) <- verifyLevels $ levels state
-  let { funEntry = FunEntry frame label t }
-  put $ state { levels = (frame, insert ("%" ++ label) funEntry env):rest }
+  (level:rest) <- verifyLevels $ levels state
+  let { funEntry = FunEntry (levelFrame level) symbol t;
+        level' = level { funTable = insert symbol funEntry (funTable level)}}
+  put $ state { levels = (level':rest) }
   return ()
 
-addFragment :: Fragment -> State TranslateState ()
+addFragment :: Frame.Fragment -> State TranslateState ()
 addFragment frag = do
   state <- get
   case frag of
-    STRING _ _ -> put $ state { dataFrags = frag:(dataFrags state) }
-    PROC _ _ -> put $ state { procFrags = frag:(procFrags state) }
+    Frame.STRING _ _ -> put $ state { dataFrags = frag:(dataFrags state) }
+    Frame.PROC _ _ -> put $ state { procFrags = frag:(procFrags state) }
 
 -- translate access in current frame 
 accessToMem :: Access -> Exp
-accessToMem (_, access) =
+accessToMem (Access _ access) =
   case access of
-    InFrame offset -> MEM (BINOP PLUS fp (CONSTI offset))
-    InReg tmp -> TEMP tmp
+    Frame.InFrame offset -> MEM (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset))
+    Frame.InReg tmp -> TEMP tmp
 
 -- obtain how to access a variable
-getVarEntry :: String -> State TranslateState IExp
+getVarEntry :: String -> State TranslateState Exp
 getVarEntry symbol = do
   state <- get
-  let { mem = foldl f (TEMP Temp.fp) (takeWhile notFound (levels state)) }
-  return $ Ex mem
-  where notFound (Level _ env) =
-          case HashMap.lookup symbol env of
+  let { mem = foldl f (TEMP Frame.fp) (takeWhile notFound $ levels state) }
+  return mem
+  where notFound level =
+          case HashMap.lookup symbol (varTable level) of
             Just (VarEntry _ _) -> False
             otherwise -> True
-        f mem (Level frame _) = MEM $ BINEXP PLUS (frameSize frame) mem
+        f mem level =
+          MEM $ BINEXP PLUS (CONSTI $ Frame.frameSize $ levelFrame level) mem
+
 
 translateProgramF :: ProgramF () -> State TranslateState IExp
-translateProgramF (Ann (Program fs stms) _) = undefined
-
-translateFuncF :: FuncF () -> State TranslateState IExp
-translateFuncF (Ann (Func t id params stms) _) = undefined
+translateProgramF (Ann (Program fs stms) _) = translateStatListF stms
 
 translateStatListF :: StatListF () -> State TranslateState IExp
-translateStatListF (Ann (StatList stms) _) = undefined
+translateStatListF (Ann (StatList stms) _) = do
+  stms' <- mapM translateStatF stms
+  stm <- mapM unNx stms'
+  return $ Nx (seq stm)
 
 translateStatF :: StatF () -> State TranslateState IExp
 translateStatF (Ann (Declare t id expr) _) = do
-  access <- allocLocal
+  let { Ann (Ident symbol) _ = id }
+  access <- allocLocal symbol t (escape t)
   exp <- translateExprF expr
-  let { mem = accessToMem tmp;
-        Ann (Ident symbol) _  = id }
+  let { mem = accessToMem access }
   addVarEntry symbol t access
-  return $ Nx (MOV mem (unEx exp))
+  exp' <- unEx exp
+  return $ Nx (MOV mem exp')
 
 translateStatF (Ann (Assign expr1 expr2) _) = do
   exp1 <- translateExprF expr1
   exp2 <- translateExprF expr2
-  return $ Nx (MOV (unEx exp1) (unEx exp2))
+  exp1' <- unEx exp1
+  exp2' <- unEx exp2
+  return $ Nx (MOV exp1' exp2')
 
 translateStatF (Ann (Return expr) _) = do
   exp <- translateExprF expr
-  return $ Nx (MOV Frame.rv exp)
+  exp' <- unEx exp
+  return $ Nx (MOV (TEMP Frame.rv) exp')
 
--- TODO: need to call system function
 translateStatF (Ann (Exit expr) _) = do
   exp <- translateExprF expr
-  return $ Nx (externalCall "exit" [unEx exp])
+  exp' <- unEx exp
+  temp <- newTemp
+  return $ Nx (MOV (TEMP temp) (Frame.externalCall "exit" [exp']))
 
 translateStatF (Ann (If expr stms1 stms2) _) = do
-  exp <- translatExprF expr
+  exp <- translateExprF expr
   stms1' <- translateStatListF stms1
   stms2' <- translateStatListF stms2
   c <- unCx exp
   stm1 <- unNx stms1'
   stm2 <- unNx stms2'
-  label1 <- newLabel
-  label2 <- newLabel
+  label1 <- newControlLabel
+  label2 <- newControlLabel
   return $ Nx (seq [c label1 label2,
                     SEQ (LABEL label1) stm1, SEQ (LABEL label2) stm2])
 
@@ -207,126 +198,135 @@ translateStatF (Ann (While expr stms) _) = do
   exp <- translateExprF expr
   stms' <- translateStatListF stms
   c <- unCx exp
-  stm <- unEx stms
-  test <- newLabel
-  body <- newLabel
-  done <- newLabel
+  stm <- unNx stms'
+  test <- newControlLabel
+  body <- newControlLabel
+  done <- newControlLabel
   return $ Nx (seq [LABEL test, c body done,
                     LABEL body, stm,
-                    JUMP (CONSTI 1, [LABEL test]) -- just have simple jump?
+                    JUMP (CONSTI 1) [test],
                     LABEL done])
 
 translateStatF (Ann (Subroutine stms) _) = do
-  scopeName <- newScopeName
-  pushLevel scopeName
+  level <- newLevel
+  pushLevel level
   stms' <- translateStatListF stms
   popLevel
-  return $ Nx stms'
-  
+  return $ stms'
+
 translateExprF :: ExprF () -> State TranslateState IExp
-translateExprF (Ann (IntLiter i) _) = return $ CONSTI i
+translateExprF (Ann (IntLiter i) _) = return $ Ex (CONSTI i)
 translateExprF (Ann (BoolLiter b) _) =
   case b of
     True -> return $ Ex (CONSTI 1)
     False -> return $ Ex (CONSTI 0)
 translateExprF (Ann (CharLiter c) _) = return $ Ex (CONSTC c)
 translateExprF (Ann (StringLiter s) _) = do
-  label <- newLabel
-  addFragment $ STRING label s
-  return $ Ex (NAME label) 
+  label <- newDataLabel
+  addFragment $ Frame.STRING label s
+  return $ Ex (NAME label)
 
 -- need to call system function to allocate memory
-translateExprF (Ann (ArrayLiter a) _) = undefined
+translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
+  exps <- mapM translateExprF exprs
+  exps' <- mapM unEx exps
+  temp <- newTemp
+  let { arrayLen = length exprs;
+        (TArray elemT) = t;
+        elemSize = Frame.typeSize elemT;
+        call = Frame.externalCall "malloc" [CONSTI (arrayLen*elemSize)];
+        moveElem = f (TEMP temp) 0 elemSize exps' }
+  return $ Ex (ESEQ (SEQ (MOV (TEMP temp) call) moveElem) (TEMP temp))
+  where f temp index elemSize [exp]
+          = MOV (BINEXP PLUS temp (CONSTI (elemSize * index))) exp
+        f temp index elemSize (exp:exps)
+          = SEQ (MOV (BINEXP PLUS temp (CONSTI (elemSize*index))) exp)
+                (f temp (index+1) elemSize exps)
+  
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
-translateExprF (Ann (IdentExpr id) _) =
+translateExprF (Ann (IdentExpr id) _) = do
   let { Ann (Ident symbol) _ = id }
   exp <- getVarEntry symbol
-  return Ex exp
+  return $ Ex exp
 
-translateExprF (Ann (ArrayElem id exprs) (_, t)) = do
+translateExprF (Ann (FuncExpr f) _) = translateFuncAppF f
+
+translateFuncAppF :: FuncAppF () -> State TranslateState IExp
+translateFuncAppF f@(Ann (FuncApp t id exprs) _) = do
   let { Ann (Ident symbol) _ = id }
-  a <- getVarEntry symbol -- array address
-  exps <- mapM translateExprF exprs
-  let { (mem, _) = foldl f (a, t) (map unEx exps) }
-  return $ Ex mem
-  where f :: (Exp, Type) -> Exp 
-        f (mem, TArray t) exp =
-          (MEM $ BINOP PLUS mem (BINOP MUL exp addrSize) , t)
-        f (mem, t) exp =
-          let size = case t of
-                         TInt -> intSize
-                         TBool -> intSize
-                         TChar -> charSize
-                         TPair _ _ -> addrSize
-                         _ -> intSize  in 
-          (MEM $ BINOP PLUS mem (BINOP MUL exp size), t)
-            
+  if elem symbol (map fst builtInFunc)
+  then translateBuiltInFuncAppF f
+  else undefined
 
 translateBuiltInFuncAppF :: FuncAppF () -> State TranslateState IExp
 translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
-  exps <- map translateExprF exprs
+  exps <- mapM translateExprF exprs
+  exps' <- mapM unEx exps
   let { Ann (Ident symbol) _ = id }
-  case id of
-    "read" -> translateRead
-    "free" -> translateFree
-    "print" -> translatePrint
-    "println" -> translatePrintln
-    "len" -> translate
-    "*" -> return $ binexp MUL 
-    "/" -> return $ binexp DIV 
-    "%" -> return $ binexp MOD 
-    "+" -> return $ binexp PLUS 
-    "-" -> return $ binexp MINUS
-    "&&" -> return $ binexp AND
-    "||" -> return $ binexp OR
-    ">" -> return $ condition GT 
-    ">=" -> return $ condition GE 
-    "<" -> return $ condition LT 
-    "<=" -> return $ condition LE 
-    "==" -> return $ condition EQ 
-    "!=" -> return $ condition NE
+  case symbol of
+    "*" -> return $ binexp MUL exps' 
+    "/" -> return $ binexp DIV exps'
+    "%" -> return $ binexp MOD exps'
+    "+" -> return $ binexp PLUS exps'
+    "-" -> return $ binexp MINUS exps'
+    "&&" -> return $ binexp AND exps'
+    "||" -> return $ binexp OR exps'
+    ">" -> return $ condition GT exps'
+    ">=" -> return $ condition GE exps'
+    "<" -> return $ condition LT exps'
+    "<=" -> return $ condition LE exps'
+    "==" -> return $ condition EQ exps'
+    "!=" -> return $ condition NE exps'
     otherwise -> fail "not predicted situation"
  where binexp bop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
            Ex $ BINEXP bop exp1 exp2
        condition rop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
-          Ex $ Cx (\label1 label2 -> CJUMP rop exp1 exp2 label1 label2)
+          Cx (\label1 label2 -> CJUMP rop exp1 exp2 label1 label2)
 
-translateUserFuncAppF :: FuncAppF () -> State TranslateState IExp
-translateUserFuncAppF (Ann (FuncApp id exprs) _) = undefined
+-- turn IExp to Exp
+unEx :: IExp -> State TranslateState Exp
+unEx (Ex e) = return e
+unEx (Cx genStm) = do
+  temp <- newTemp
+  label1 <- newControlLabel
+  label2 <- newControlLabel
+  return $ ESEQ (seq [MOV (TEMP temp) (CONSTI 1),
+                      genStm label1 label2,
+                      LABEL label2,
+                      MOV (TEMP temp) (CONSTI 0),
+                      LABEL label1]) (TEMP temp)  
+unEx (Nx s) = return $ ESEQ s (CONSTI 0)
 
+-- turn IExp to Stm
+unNx :: IExp -> State TranslateState Stm
+unNx (Nx stm) = return stm
+unNx (Ex e) = do
+  temp <- newTemp
+  return $ MOV (TEMP temp) e
+unNx (Cx c) = do
+  label1 <- newControlLabel
+  label2 <- newControlLabel
+  return $ c label1 label2
 
- -- For lily and audrey
-translateLen :: String -> StateTranslateState IExp
-translateLen s = undefined
+-- turn IExp to conditionals
+unCx :: IExp -> State TranslateState (Temp.Label -> Temp.Label -> Stm)
+unCx (Ex e) = do
+  case e of
+    CONSTI 0 -> return $ (\label1 label2 -> JUMP e [label2])
+    CONSTI 1 -> return $ (\label1 label2 -> JUMP e [label1])
+    otherwise -> return $ (\label1 label2 -> CJUMP EQ e (CONSTI 1) label1 label2)
+    
+unCx (Cx c) = return c
+unCx (Nx _) = undefined
 
-translateOrd :: Exp -> StateTranslateState IExp
-translateOrd e = undefined
+escape :: Type -> Bool
+escape TInt = False
+escape TBool = False
+escape TStr = False
+escape TChar = False
+escape _ = True
 
-translateFst :: Exp -> StateTranslateState IExp
-translateFst e = undefined
-
-translateSnd :: Exp -> StateTranslateState IExp
-translateSnd e = undefined
-
--- for built-in function below, need to generate code and
--- add them to segment list
--- 1.generate function
--- 2. add to func segment list
-translateRead :: Type -> State TranslateState ()
-translateRead = undefined
-
-translateFree :: Type -> State TranslateState ()
-translateFree = undefined
-
-translatePrint :: Type -> State TranslateState ()
-translatePrint = undefined
-
-translatePrintln :: Type -> State TranslateState ()
-translatePrintln = undefined
-
-translateFree :: Type -> State TranslateState ()
-translateFree = undefined
-
+                      
 

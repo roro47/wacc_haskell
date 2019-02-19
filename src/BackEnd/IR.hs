@@ -12,7 +12,7 @@ data Exp = CONSTI Int              -- constant int
          | ESEQ Stm Exp     -- evaluated for side effect
            deriving (Eq, Show)
 
-data Stm = MOVE Exp Exp -- move values to address or register
+data Stm = MOV Exp Exp -- move values to address or register
          | PUSH Exp
          | POP Exp
          | JUMP Exp [Temp.Label]  -- Jump: expression to evaluate, list of possible jump destination
@@ -34,7 +34,7 @@ data BOp = PLUS
 data ROp = EQ
          | NE
          | LT
+         | LE
          | GT
-         | LT
          | GE
            deriving (Eq, Show)

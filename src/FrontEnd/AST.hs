@@ -44,7 +44,7 @@ data Type = TInt
           | None
           | T -- similar to type parameter
 
-data Expr a = IntLiter Integer
+data Expr a = IntLiter Int
             | BoolLiter Bool
             | CharLiter Char
             | StringLiter String
