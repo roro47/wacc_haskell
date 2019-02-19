@@ -159,7 +159,10 @@ instance Show (Type) where
   show None = "None"
   show T = "T"
 
-
 instance Show (Ident a) where
   show (Ident s) = show s
 
+typeLen :: Type -> Int
+typeLen TChar = 1
+typeLen TBool = 1
+typeLen _ = 4

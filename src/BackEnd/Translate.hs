@@ -35,7 +35,7 @@ data IExp = Ex Exp
 
 seq :: [Stm] -> Stm
 seq (stm:stms) = SEQ stm (seq stms)
-seq [] = MOV (TEMP Frame.rv) (TEMP Frame.rv) 
+seq [] = MOV (TEMP Frame.rv) (TEMP Frame.rv)
 
 verifyLevels :: [Level] -> State TranslateState [Level]
 verifyLevels [] = fail "no frames available"
@@ -109,7 +109,7 @@ addVarEntry symbol t access = do
   return ()
 
 addFunEntry :: String -> Type -> State TranslateState ()
-addFunEntry symbol t = do  
+addFunEntry symbol t = do
   state <- get
   (level:rest) <- verifyLevels $ levels state
   let { funEntry = FunEntry (levelFrame level) symbol t;
@@ -124,7 +124,7 @@ addFragment frag = do
     Frame.STRING _ _ -> put $ state { dataFrags = frag:(dataFrags state) }
     Frame.PROC _ _ -> put $ state { procFrags = frag:(procFrags state) }
 
--- translate access in current frame 
+-- translate access in current frame
 accessToMem :: Access -> Exp
 accessToMem (Access _ access) =
   case access of
@@ -242,7 +242,7 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
         f temp index elemSize (exp:exps)
           = SEQ (MOV (BINEXP PLUS temp (CONSTI (elemSize*index))) exp)
                 (f temp (index+1) elemSize exps)
-  
+
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
 translateExprF (Ann (IdentExpr id) _) = do
   let { Ann (Ident symbol) _ = id }
@@ -264,7 +264,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
   exps' <- mapM unEx exps
   let { Ann (Ident symbol) _ = id }
   case symbol of
-    "*" -> return $ binexp MUL exps' 
+    "*" -> return $ binexp MUL exps'
     "/" -> return $ binexp DIV exps'
     "%" -> return $ binexp MOD exps'
     "+" -> return $ binexp PLUS exps'
@@ -296,7 +296,7 @@ unEx (Cx genStm) = do
                       genStm label1 label2,
                       LABEL label2,
                       MOV (TEMP temp) (CONSTI 0),
-                      LABEL label1]) (TEMP temp)  
+                      LABEL label1]) (TEMP temp)
 unEx (Nx s) = return $ ESEQ s (CONSTI 0)
 
 -- turn IExp to Stm
@@ -317,7 +317,7 @@ unCx (Ex e) = do
     CONSTI 0 -> return $ (\label1 label2 -> JUMP e [label2])
     CONSTI 1 -> return $ (\label1 label2 -> JUMP e [label1])
     otherwise -> return $ (\label1 label2 -> CJUMP EQ e (CONSTI 1) label1 label2)
-    
+
 unCx (Cx c) = return c
 unCx (Nx _) = undefined
 
@@ -328,5 +328,149 @@ escape TStr = False
 escape TChar = False
 escape _ = True
 
-                      
+-- For lily and audrey
 
+-- can not be type here need an expr
+translateLen :: Exp -> State TranslateState IExp
+-- assume n is msg_ or any array address
+translateLen arr = do
+  reg <- newTemp
+  let temp = TEMP reg in
+    return (Nx $ SEQ (MOV temp (MEM arr)) (MOV temp (MEM temp)))
+
+translateChr :: Exp -> State TranslateState IExp
+translateChr t@(TEMP temp) = do
+  return (Nx $ PUSH t)
+translateChr m = do
+  reg <- newTemp
+  return (Nx $ SEQ (MOV (TEMP reg) m) (PUSH (TEMP reg))) -- memory or int
+
+-- not a fraction
+translateOrd :: Exp -> State TranslateState (IExp, Int)
+--pre: e is (CONST Char)
+translateOrd e = do
+  reg <- newTemp
+  return ((Nx $ MOV (TEMP reg) e), 1) --STRB hence need to record length
+
+translateFst :: Exp -> Type -> State TranslateState (IExp, Int)
+translateFst e (TPair t1 t2) = do
+  reg <- newTemp
+  let temp = TEMP reg in
+    return  (Nx $ SEQ (MOV temp (MEM e)) (MOV temp (MEM temp)), typeLen t1)
+
+translateSnd :: Exp -> Type -> State TranslateState (IExp, Int)
+translateSnd e (TPair t1 t2) = do
+  reg <- newTemp
+  let temp = TEMP reg
+      sndPos = BINEXP PLUS temp (CONSTI 4) in
+        return ( Nx $ SEQ (MOV temp (MEM e)) (MOV temp (MEM sndPos)), typeLen t2)
+
+
+translateFree :: Exp -> State TranslateState IExp
+-- string & array: need no fragmentation
+translateFree e = do
+  reg <- newTemp
+  return (Nx $ SEQ (MOV (TEMP reg) (MEM e)) (JUMP (NAME "free") ["free"]))
+
+-- for built-in function below, need to generate code and
+-- add them to segment list
+-- 1. generate function
+-- 2. add to func segment list
+
+-- ***NOT INCLUDING PUSH POP***
+--pre: FRAGMENT TRANSLATES CAN ONLY BE CALLED AFTER VISITING THE WHOLE TREE
+-- AND CAN ONLY BE CALLED ONCE EACH
+
+translateRead :: Type -> State TranslateState ()
+translateRead t = do
+  msg <- newDataLabel
+  temp0 <- newTemp
+  temp1 <- newTemp
+  let  str TInt = "%d\0"
+       str TChar = "%c\0" in
+       addFragment (Frame.STRING msg (str t))
+  let  statement = SEQ (MOV reg1 reg0) (SEQ (MOV reg0 (NAME msg))
+                  (SEQ reg0_plus_4 (JUMP (NAME "scanf") ["scanf"])))
+       reg0 = TEMP temp0
+       reg1 = TEMP temp1
+       reg0_plus_4 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+       f TInt = Frame.newFrame "p_read_int"
+       f TChar = Frame.newFrame "p_read_char" in
+        addFragment (Frame.PROC statement (f t))
+
+
+translateFreePair :: State TranslateState ()
+-- pair: new fragment
+-- pre: Includes throw run time error and print
+translateFreePair = do
+  msg <- newDataLabel
+  temp <- newTemp
+  addFragment (Frame.STRING msg "NullReferenceError: dereference a null reference\n\0")
+  let  reg0 = TEMP temp
+       frame = Frame.newFrame "p_free_pair"
+       error_label = "p_throw_runtime_error"
+       statement = SEQ (LABEL "free") (SEQ (PUSH reg0) free_all)
+       check_null_ptr = SEQ (CJUMP EQ (CONSTI 0) (reg0) "error" "free") run_error
+       run_error = SEQ (LABEL "error") (SEQ (MOV reg0 (NAME msg)) (JUMP (NAME error_label) [error_label]))
+       free1 = SEQ (MOV (reg0) (MEM reg0)) bl_free
+       free2 = SEQ (POP reg0) (SEQ (MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))) bl_free)
+       free_all = SEQ free1 (SEQ free2 (SEQ (POP reg0) bl_free))
+       bl_free = JUMP (NAME "free") ["free"] in
+          addFragment (Frame.PROC statement frame)
+
+
+translatePrint :: Type -> State TranslateState ()
+translatePrint TStr = do
+  temp0 <- newTemp
+  temp1 <- newTemp
+  temp2 <- newTemp
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg "%.*s\0")
+  let  reg0 = TEMP temp0
+       reg1 = TEMP temp1
+       reg2 = TEMP temp2
+       frame = Frame.newFrame "p_print_string"
+       s1 = MOV reg1 (MEM reg0)
+       s2 = MOV reg2 (BINEXP PLUS reg0 (CONSTI 4))
+       s3 = MOV reg0 (NAME msg)
+       s4 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+       s5 = JUMP (NAME "printf") ["printf"]
+       s6 = MOV reg0 (CONSTI 0)
+       s7 = JUMP (NAME "fflush") ["fflush"]
+       statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 (SEQ s6 s7))))) in
+         addFragment (Frame.PROC statement frame)
+
+translatePrint TChar = translatePrint TStr
+
+translatePrint TInt = do
+ msg <- newDataLabel
+ temp1 <- newTemp
+ temp2 <- newTemp
+ addFragment (Frame.STRING msg "%d\0")
+ let reg0 = TEMP temp1
+     reg1 = TEMP temp2
+     frame = Frame.newFrame "p_print_int"
+     s1 = MOV reg1 reg0
+     s2 = MOV reg0 (NAME msg)
+     s3 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+     s4 = JUMP (NAME "printf") ["printf"]
+     s5 = MOV reg0 (CONSTI 0)
+     s6 = JUMP (NAME "fflush") ["fflush"]
+     statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 s6)))) in
+        addFragment (Frame.PROC statement frame)
+
+
+translatePrintln :: Type -> State TranslateState ()
+translatePrintln _ = do
+ msg <- newDataLabel
+ temp <- newTemp
+ addFragment (Frame.STRING msg "\0")
+ let reg0 = TEMP temp
+     frame = Frame.newFrame "p_print_ln"
+     s1 = MOV reg0 (NAME msg)
+     s2 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+     s3 = JUMP (NAME "puts") ["puts"]
+     s4 = MOV reg0 (CONSTI 0)
+     s5 = JUMP (NAME "fflush") ["fflush"]
+     statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
+       addFragment (Frame.PROC statement frame)
