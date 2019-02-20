@@ -15,7 +15,7 @@ data Lable = L_ String | R_ REG deriving Eq
 data Suffix = S | NoSuffix deriving Eq-- if specified, update the flags
 data Opt = OPT REG | NoReg deriving Eq-- Optional Register
 data SLType = B_ | SB | H | SH | W deriving (Generic, Eq) -- only saw sb in ref compiler
-data SLOP2 = MSG String | PRE REG Int | POST REG Int | Imm REG Int deriving Eq-- IF int is zero dont show
+data SLOP2 = MSG String | PRE REG Int | POST REG Int | Imm REG Int | NUM Int deriving Eq-- IF int is zero dont show
 
 {- Cond not included here :  HS/CS LO/CC because I don't knwo which to use-}
 data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | AL
@@ -68,6 +68,7 @@ instance Show SLOP2 where
   show (PRE reg int) = show (Imm reg int) ++ "!"
   show (POST reg int) = "[" ++ show reg ++ "]" ++ ", #" ++ show int
   show (MSG str) = ", =" ++ str  -- did not include shift *
+  show (NUM int) = ", =" ++ show int  -- did not include shift *
 
 {- Instructions not included here: cpy adc abc neg mul cmn mul
    bic mvn tst bx blx ldrh ldrsh ldrb ldmia strh stmia cps setend
@@ -117,3 +118,6 @@ sample4 = BRANCH_ (B BackEnd.Instructions.EQ) (L_ "Hello")
 sample5 = STACK_ (POP BackEnd.Instructions.LS) [R1, R2, PC, SP]
 sample6 = C2_ (SMULL S AL) R12 R11 R10 R9
 sample7 = S_ (LDR B_ AL) R9 (POST R5 3)
+
+
+--TODO: ADD r5, r5, r6, LSL #2 <- like this
