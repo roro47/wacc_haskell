@@ -32,7 +32,6 @@ data IExp = Ex Exp
           | Nx Stm
           | Cx (Temp.Label -> Temp.Label -> Stm)
 
-
 seq :: [Stm] -> Stm
 seq (stm:stms) = SEQ stm (seq stms)
 seq [] = MOV (TEMP Frame.rv) (TEMP Frame.rv)
@@ -444,11 +443,11 @@ translatePrint TChar = translatePrint TStr
 
 translatePrint TInt = do
  msg <- newDataLabel
+ temp0 <- newTemp
  temp1 <- newTemp
- temp2 <- newTemp
  addFragment (Frame.STRING msg "%d\0")
  let reg0 = TEMP temp1
-     reg1 = TEMP temp2
+     reg1 = TEMP temp1
      frame = Frame.newFrame "p_print_int"
      s1 = MOV reg1 reg0
      s2 = MOV reg0 (NAME msg)
@@ -459,6 +458,30 @@ translatePrint TInt = do
      statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 s6)))) in
         addFragment (Frame.PROC statement frame)
 
+translatePrint TBool = do
+  msg0 <- newDataLabel
+  msg1 <- newDataLabel
+  temp1 <- newTemp
+  addFragment (Frame.STRING msg0 "false\0")
+  addFragment (Frame.STRING msg1 "true\0")
+  let reg0 = TEMP temp1
+      frame = Frame.newFrame "p_print_bool"
+      s1 = CJUMP NE reg0 (CONSTI 0) "ne" "eq"
+      s_ne = SEQ (LABEL "ne") (MOV reg0 (NAME msg0))
+      s_eq = SEQ (LABEL "eq") (MOV reg0 (NAME msg1))
+      s2 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+      s3 = JUMP (NAME "printf") ["printf"]
+      s4 = MOV reg0 (CONSTI 0)
+      s5 = JUMP (NAME "fflush") ["fflush"]
+      statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
+        addFragment (Frame.PROC statement frame)
+        -- 46		CMP r0, #0
+        -- 47		LDRNE r0, =msg_0
+        -- 48		LDREQ r0, =msg_1
+        -- 49		ADD r0, r0, #4
+        -- 50		BL printf
+        -- 51		MOV r0, #0
+        -- 52		BL fflush
 
 translatePrintln :: Type -> State TranslateState ()
 translatePrintln _ = do

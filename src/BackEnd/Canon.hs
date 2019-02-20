@@ -60,7 +60,7 @@ basicBlocks [] = do
 
 
 traceSchedule :: [[Stm]] -> Temp.Label -> [Stm]
-    
+
 
 -- test whether two statements commute or not
 commute :: Exp -> Stm -> Bool
@@ -85,7 +85,7 @@ reorder (exp:rest) = do
   else newTemp >>= \temp ->
        return (SEQ stm' (SEQ (MOV (TEMP temp) exps') stm2'),
                (TEMP temp):exps2')
-reorder [] = return (NOP, []) 
+reorder [] = return (NOP, [])
 
 reorderStm :: [Exp] -> ([Exp] -> Stm) -> State CanonState Stm
 reorderStm exps build = do
@@ -114,7 +114,7 @@ doStm (SEQ stm1 stm2) = do
   stm1' <- doStm stm1
   stm2' <- doStm stm2
   return $ SEQ stm1' stm2'
-  
+
 doStm stm = return stm
 
 doExp :: Exp -> State CanonState (Stm, Exp)
