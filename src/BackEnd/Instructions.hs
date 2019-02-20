@@ -8,18 +8,18 @@ import Data.Char
 import BackEnd.Temp
 
 data REG = PC | LR | SP | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
-           R11 | R12 | RTEMP Temp deriving Show
+           R11 | R12 | RTEMP Temp deriving (Show, Eq)
 
-data OP =  R REG | IMM Int | CHR Char | NoOP -- immediate values need to be restricted size
+data OP =  R REG | IMM Int | CHR Char | NoOP deriving Eq-- immediate values need to be restricted size
 type Lable = String
-data Suffix = S | NoSuffix -- if specified, update the flags
-data Opt = OPT REG | NoReg -- Optional Register
-data SLType = B_ | SB | H | SH | W deriving Generic -- only saw sb in ref compiler
-data SLOP2 = MSG String | PRE REG Int | POST REG Int | Imm REG Int -- IF int is zero dont show
+data Suffix = S | NoSuffix deriving Eq-- if specified, update the flags
+data Opt = OPT REG | NoReg deriving Eq-- Optional Register
+data SLType = B_ | SB | H | SH | W deriving (Generic, Eq) -- only saw sb in ref compiler
+data SLOP2 = MSG String | PRE REG Int | POST REG Int | Imm REG Int deriving Eq-- IF int is zero dont show
 
 {- Cond not included here :  HS/CS LO/CC because I don't knwo which to use-}
 data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | AL
-            deriving Generic
+            deriving (Generic, Eq)
 
 instance GShow Cond
 
@@ -79,24 +79,25 @@ class Show a => Header a where
   show_ a = (filter (not.isSpace) (show a)) ++ " "
 
 data Calc = ADD Suffix Cond | SUB Suffix Cond | AND Suffix Cond |
-            EOR Suffix Cond | ORR Suffix Cond deriving (Show, Header)
-data Simple = CMP Cond | MOV Cond deriving (Show, Header)
-data Shift = LSL Suffix Cond | ASR Suffix Cond | LSR Suffix Cond | ROR Suffix Cond deriving (Show, Header)
-data Branch = B Cond | BL Cond deriving (Show, Header)
-data StackOP = PUSH Cond | POP Cond deriving (Show, Header)
-data Calc2 = SMULL Suffix Cond deriving (Show, Header)
-data SL = LDR SLType Cond | STR SLType Cond deriving (Show, Header)
-data Calc3 = SDIV Cond deriving (Show, Header)
+            EOR Suffix Cond | ORR Suffix Cond | LSL Suffix Cond |
+            ASR Suffix Cond | LSR Suffix Cond | ROR Suffix Cond
+            deriving (Show, Header, Eq)
+data Simple = CMP Cond | MOV Cond deriving (Show, Header, Eq)
+data Branch = B Cond | BL Cond deriving (Show, Header, Eq)
+data StackOP = PUSH Cond | POP Cond deriving (Show, Header, Eq)
+data Calc2 = SMULL Suffix Cond deriving (Show, Header, Eq)
+data SL = LDR SLType Cond | STR SLType Cond deriving (Show, Header, Eq)
+data Calc3 = SDIV Cond deriving (Show, Header, Eq)
 
-data Instr = CB_ Calc REG REG OP | MC_ Simple REG OP |
-             SHIFT_ Shift REG REG REG | BRANCH_ Branch Lable |
-             STACK_ StackOP [REG] | C2_ Calc2 REG REG REG REG |
-             S_ SL REG SLOP2 | C3_ Calc3 REG REG REG
+data Instr = CBS_ Calc REG REG OP | MC_ Simple REG OP |
+             BRANCH_ Branch Lable | C2_ Calc2 REG REG REG REG |
+             STACK_ StackOP [REG] | S_ SL REG SLOP2 |
+             C3_ Calc3 REG REG REG deriving Eq
 
 instance Show Instr where
-  show (CB_ c r1 r2 op) = (show_ c)  ++ (show r1) ++ ", " ++ (show r2) ++ (show op)
+  show (CBS_ c r1 r2 op) = (show_ c)  ++ (show r1) ++ ", " ++ (show r2) ++ (show op)
   show (MC_ s r op) = (show_ s)  ++ (show r) ++ (show op)
-  show (SHIFT_ s r1 r2 r3) = (show_ s)  ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
+  show (CBS_ s r1 r2 r3) = (show_ s)  ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
   show (BRANCH_ b l) = (show_ b)  ++ l
   show (STACK_ s (r:regs)) = show_ s  ++ "{" ++ show r ++ (concatMap (\x -> ", " ++ show x) regs) ++ "}"
   show (C2_ c r1 r2 r3 r4) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3) ++ ", " ++ (show r4)
@@ -104,9 +105,9 @@ instance Show Instr where
   show (C3_ c r1 r2 r3) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
 
 {- Sample instruction representations -}
-sample1 = CB_ (ADD NoSuffix AL) R1 R2 (IMM 3)
+sample1 = CBS_ (ADD NoSuffix AL) R1 R2 (IMM 3)
 sample2 = MC_ (CMP BackEnd.Instructions.GT) R7 (CHR 'a')
-sample3 = SHIFT_ (LSL NoSuffix AL) R0 R1 R2
+sample3 = CBS_ (LSL NoSuffix AL) R0 R1 (R R2)
 sample4 = BRANCH_ (B BackEnd.Instructions.EQ) "Hello"
 sample5 = STACK_ (POP BackEnd.Instructions.LS) [R1, R2, PC, SP]
 sample6 = C2_ (SMULL S AL) R12 R11 R10 R9

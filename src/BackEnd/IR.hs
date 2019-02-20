@@ -22,16 +22,18 @@ data Stm = MOV Exp Exp -- move values to address or register
          | NOP
           deriving (Eq, Show)
 
-data BOp = PLUS
-         | MINUS
-         | MUL
-         | DIV
-         | AND
-         | OR
-         | LSHIFT
-         | RSHIFT
-         | MOD
+--         IR    ARM type
+data BOp = PLUS --CALC1
+         | MINUS --CALC1
+         | MUL --CALC2
+         | DIV --CALC3
+         | AND --CALC1
+         | OR  --CALC1
+         | LSHIFT --SHIFT
+         | RSHIFT --SHIFT
+         | MOD  --hand written
          deriving (Eq, Show)
+         
 data ROp = EQ
          | NE
          | LT
