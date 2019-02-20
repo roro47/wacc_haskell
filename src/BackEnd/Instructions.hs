@@ -11,7 +11,7 @@ data REG = PC | LR | SP | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 
            R11 | R12 | RTEMP Temp deriving (Show, Eq)
 
 data OP =  R REG | IMM Int | CHR Char | NoOP deriving Eq-- immediate values need to be restricted size
-type Lable = String
+data Lable = L_ String | R_ REG deriving Eq
 data Suffix = S | NoSuffix deriving Eq-- if specified, update the flags
 data Opt = OPT REG | NoReg deriving Eq-- Optional Register
 data SLType = B_ | SB | H | SH | W deriving (Generic, Eq) -- only saw sb in ref compiler
@@ -22,6 +22,10 @@ data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | AL
             deriving (Generic, Eq)
 
 instance GShow Cond
+
+instance Show Lable where
+  show (L_ x) = x
+  show (R_ reg) = show reg
 
 instance Show Cond where
   show AL = ""
@@ -92,23 +96,24 @@ data Calc3 = SDIV Cond deriving (Show, Header, Eq)
 data Instr = CBS_ Calc REG REG OP | MC_ Simple REG OP |
              BRANCH_ Branch Lable | C2_ Calc2 REG REG REG REG |
              STACK_ StackOP [REG] | S_ SL REG SLOP2 |
-             C3_ Calc3 REG REG REG deriving Eq
+             C3_ Calc3 REG REG REG | LAB String deriving Eq
 
 instance Show Instr where
   show (CBS_ c r1 r2 op) = (show_ c)  ++ (show r1) ++ ", " ++ (show r2) ++ (show op)
   show (MC_ s r op) = (show_ s)  ++ (show r) ++ (show op)
   show (CBS_ s r1 r2 r3) = (show_ s)  ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
-  show (BRANCH_ b l) = (show_ b)  ++ l
+  show (BRANCH_ b l) = (show_ b)  ++ show l
   show (STACK_ s (r:regs)) = show_ s  ++ "{" ++ show r ++ (concatMap (\x -> ", " ++ show x) regs) ++ "}"
   show (C2_ c r1 r2 r3 r4) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3) ++ ", " ++ (show r4)
   show (S_ s r1 op) = (show_ s) ++ (show r1) ++ ", " ++ (show op)
   show (C3_ c r1 r2 r3) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
+  show (LAB str) = (str ++ ":\n")
 
 {- Sample instruction representations -}
 sample1 = CBS_ (ADD NoSuffix AL) R1 R2 (IMM 3)
 sample2 = MC_ (CMP BackEnd.Instructions.GT) R7 (CHR 'a')
 sample3 = CBS_ (LSL NoSuffix AL) R0 R1 (R R2)
-sample4 = BRANCH_ (B BackEnd.Instructions.EQ) "Hello"
+sample4 = BRANCH_ (B BackEnd.Instructions.EQ) (L_ "Hello")
 sample5 = STACK_ (POP BackEnd.Instructions.LS) [R1, R2, PC, SP]
 sample6 = C2_ (SMULL S AL) R12 R11 R10 R9
 sample7 = S_ (LDR B_ AL) R9 (POST R5 3)
