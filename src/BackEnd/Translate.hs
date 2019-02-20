@@ -475,13 +475,6 @@ translatePrint TBool = do
       s5 = JUMP (NAME "fflush") ["fflush"]
       statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
         addFragment (Frame.PROC statement frame)
-        -- 46		CMP r0, #0
-        -- 47		LDRNE r0, =msg_0
-        -- 48		LDREQ r0, =msg_1
-        -- 49		ADD r0, r0, #4
-        -- 50		BL printf
-        -- 51		MOV r0, #0
-        -- 52		BL fflush
 
 translatePrintln :: Type -> State TranslateState ()
 translatePrintln _ = do
@@ -497,3 +490,68 @@ translatePrintln _ = do
      s5 = JUMP (NAME "fflush") ["fflush"]
      statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
        addFragment (Frame.PROC statement frame)
+
+data ErrorType = RunTime | Overflow | ArrayBound
+
+translateError :: ErrorType -> State TranslateState ()
+
+--   p_throw_runtime_error:
+-- 70		BL p_print_string
+-- 71		MOV r0, #-1
+-- 72		BL exit
+translateError RunTime = do
+ temp <- newTemp
+
+ let reg0 = TEMP temp
+     frame = Frame.newFrame "p_throw_runtime_error:\n\0"
+     s1 = JUMP (NAME "p_print_string") ["p_print_string"]
+     s2 = MOV reg0 (CONSTI (-1))
+     s_exit = JUMP (NAME "exit") ["exit"]
+     statement = SEQ (SEQ s1 s2) s_exit in
+       addFragment (Frame.PROC statement frame)
+
+
+ -- p_throw_overflow_error:
+ -- 67		LDR r0, =msg_2
+ -- 68		BL p_throw_runtime_error
+translateError Overflow = do
+ msg <- newDataLabel
+ temp <- newTemp
+ addFragment (Frame.STRING msg "OverflowError: the result is too small/large to store in a 4-byte signed-integer.\n\0")
+
+ let reg0 = TEMP temp
+     frame = Frame.newFrame "p_throw_overflow_error:\n\0"
+     s1 = MOV reg0 (NAME msg)
+     runTimeError = JUMP (NAME "p_throw_runtime_error:\n\0") ["p_throw_runtime_error:\n\0"]
+     statement = SEQ s1 runTimeError in
+       addFragment (Frame.PROC statement frame)
+
+-- p_check_array_bounds:
+-- 67		PUSH {lr}
+-- 68		CMP r0, #0
+-- 69		LDRLT r0, =msg_0
+-- 70		BLLT p_throw_runtime_error
+-- 71		LDR r1, [r1]
+-- 72		CMP r0, r1
+-- 73		LDRCS r0, =msg_1
+-- 74		BLCS p_throw_runtime_error
+-- 75		POP {pc}
+
+-- translateError ArrayBound = do
+--  msg0 <- newDataLabel
+--  msg1 <- newDataLabel
+--  temp0 <- newTemp
+--  temp1 <- newTemp
+--  addFragment (Frame.STRING msg0 "ArrayIndexOutOfBoundsError: negative index\n\0")
+--  addFragment (Frame.STRING msg1 "ArrayIndexOutOfBoundsError: index too large\n\0")
+--
+--  let reg0 = TEMP temp0
+--      reg1 = TEMP temp1
+--      frame = Frame.newFrame "p_check_array_bounds:\n\0"
+--      s1 = CJUMP LT reg0 (CONSTI 0) "neg" "rest"
+--      s_neg = SEQ (SEQ (LABEL "neg") (MOV reg0 (NAME msg0))) runTimeError
+--      s_rest = SEQ (MOV reg1 (MEM reg1)) check_out_of_bound
+--      check_out_of_bound =
+--      runTimeError = JUMP (NAME "p_throw_runtime_error:\n\0") ["p_throw_runtime_error:\n\0"]
+--      statment =  in
+--        addFragment (Frame.PROC statement frame)
