@@ -10,11 +10,11 @@ import BackEnd.Frame as Frame
 
 type MunchExp = ([ASSEM.Instr], Temp)
 
-bopToCBS :: BOp -> Suffix -> Cond ->  Maybe Calc
-bopToCBS bop s cond
-  = lookup bop [(IR.PLUS, ARM.ADD s cond), (IR.MINUS, ARM.SUB s cond),
-            (IR.AND, ARM.AND s cond), (IR.OR, ARM.ORR s cond),
-            (IR.LSHIFT, ARM.LSL s cond), (IR.RSHIFT, ARM.LSR s cond)]
+bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
+bopToCBS bop
+  = lookup bop [(IR.PLUS, ARM.ADD), (IR.MINUS, ARM.SUB),
+            (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
+            (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
 armCond :: ROp -> Cond
 armCond c = fromJust $ lookup c [(IR.EQ, ARM.EQ), (IR.NE, ARM.NE), (IR.LT, ARM.LT), (IR.LE, ARM.LE),
@@ -24,58 +24,88 @@ munchExp :: Exp -> State TranslateState (MunchExp)
 munchExp (BINEXP DIV e1 e2) = undefined  -- before  other BINEXP as it cannot be simplified
 munchExp (BINEXP MOD e1 e2) = undefined  -- before  other BINEXP as it need special treatment
 
-munchExp (ESEQ s e) = do  --not sure
-  ls <- munchStm s
-  (i, t) <- munchExp e
-  return (ls ++ i, t)
-
-munchExp (BINEXP MUL e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  tLo <- newTemp
-  tHi <- newTemp
-  let mul = IMOV {assem = C2_ (SMULL NoSuffix AL) (RTEMP tLo) (RTEMP tHi) (RTEMP t1) (RTEMP t2),
-                   src = [t1, t2], dst = [tLo, tHi]}
-  return $ (i1 ++ i2 ++ [mul], tLo) -- how to pass two of them ??? need special treatement
-
-munchExp (BINEXP bop e (CONSTI int)) = do
-  (i1, t1) <- munchExp e
-  let {cbs = bopToCBS bop NoSuffix AL}
-  if cbs /= Nothing then
-    let {this = IOPER {assem = CBS_ (fromJust cbs) (RTEMP t1) (RTEMP t1) (IMM int),
-         dst = [t1], src = [t1], jump = []}} in return (i1 ++ [this], t1)
+{-If munched stm is of length 2 then it must be a SEQ conaing a naive stm and a label -}
+munchExp (ESEQ (SEQ cj@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
+  ci <- munchStm cj
+  state <- get
+  fi <- munchStm false
+  if (length fi == 2) then
+    do
+    put state
+    condf <- condStm (fst $ deSeq false)
+    brf <- munchStm (snd $ deSeq false)
+    state2 <- get
+    ti <- munchStm true
+    if(length ti == 2) then
+      do
+      put state2
+      condt <- condStm (snd $ deSeq true)
+      --no need the brach thing
+      (i, t) <- munchExp e
+      return ((condf (invert rop)) ++ (condt $ same rop) ++ i, t)
+    else
+      do
+      (i, t) <- munchExp e
+      return ((condf (invert rop)) ++ brf ++ ti ++ i, t)
   else
-      fail ""
--- CONSTC???
-munchExp (BINEXP bop e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  let {cbs = bopToCBS bop NoSuffix AL}
-  if cbs /= Nothing then
-    let {this = IOPER {assem = CBS_ (fromJust cbs) (RTEMP t1) (RTEMP t1) (R $ RTEMP t2),
-         dst = [t1], src = [t1, t2], jump = []}} in return (i1 ++ [this], t1)
-  else
-      fail ""
+    do
+    ti <- munchStm true
+    (i, t) <- munchExp e
+    return (ci ++ fi ++ ti ++ i, t)
 
 munchExp (CALL f es) = do
   (fi, ft) <- munchExp f -- assume result returned in fi
   state <- get
   ls <- mapM (liftM fst.munchExp) es
-  return (fi ++ concat ls, ft)
-
-munchExp (CONSTI i) = do
-  t <- newTemp
-  return ([IMOV {assem = MC_ (ARM.MOV AL) (RTEMP t) (IMM i) , dst = [t], src = []}], t)
-
-munchExp (CONSTC c) = do
-  t <- newTemp
-  return ([IMOV {assem = MC_ (ARM.MOV AL) (RTEMP t) (CHR c) , dst = [t], src = []}], t)
+  return (fi ++ concat ls, ft) --NO CALLER / CALLEE SAVE CONVENTION YET!
 
 munchExp (TEMP t) = return ([],t)
 
-munchExp (NAME l) = do
+munchExp x = do
+  c <- condExp x
+  return $ c AL
+
+condExp :: Exp -> State TranslateState (Cond -> MunchExp)
+condExp (BINEXP MUL e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  tLo <- newTemp
+  tHi <- newTemp
+  return $ \c -> (i1 ++ i2 ++ [IMOV {assem = C2_ (SMULL NoSuffix c) (RTEMP tLo)
+                 (RTEMP tHi) (RTEMP t1) (RTEMP t2),
+                 src = [t1, t2], dst = [tLo, tHi]}], tLo)
+  -- how to pass two of them ??? need special treatement
+
+condExp (BINEXP bop e (CONSTI int)) = do
+  (i1, t1) <- munchExp e
+  let {cbs = bopToCBS bop}
+  case cbs of
+    Nothing -> fail ""
+    otherwise -> return $ \c -> (i1 ++ [IOPER {assem = CBS_ ((fromJust cbs) NoSuffix c)
+                                (RTEMP t1) (RTEMP t1) (IMM int),
+                                dst = [t1], src = [t1], jump = []}], t1)
+
+condExp (BINEXP bop e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  let {cbs = bopToCBS bop}
+  case cbs of
+    Nothing -> fail ""
+    otherwise -> return $ \c -> (i1 ++ [IOPER {assem = CBS_ ((fromJust cbs) NoSuffix c)
+                                (RTEMP t1) (RTEMP t1) (R $ RTEMP t2),
+                                dst = [t1], src = [t1, t2], jump = []}], t1)
+
+condExp (CONSTI int) = do
   t <- newTemp
-  return ([IMOV {assem = S_ (ARM.LDR W AL) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
+  return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int) , dst = [t], src = []}], t)
+
+condExp (CONSTC chr) = do
+  t <- newTemp
+  return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (CHR chr) , dst = [t], src = []}], t)
+
+condExp (NAME l) = do
+  t <- newTemp
+  return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
 
 munchMem :: Exp -> State TranslateState ([ASSEM.Instr], [Int], SLOP2)
 --- PRE-INDEX ---
@@ -91,7 +121,7 @@ munchMem (CONSTI int) = return ([], [], NUM int)
 
 --- ALL OTHER CASES ---
 {- Including msg -}
-munchMem e = do 
+munchMem e = do
   (i, t) <- munchExp e
   return (i, [t], MSG "SLOP2 NOT USED")
 
@@ -105,70 +135,88 @@ munchStm (SEQ s1 s2) = do
   l2 <- munchStm s2
   return $ l1 ++ l2
 
-munchStm (CJUMP rop e1 e2 t f) = do
+munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
   let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [], src = [t1, t2], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (armCond rop)) (L_ t), dst = [], src = [], jump = [t]}
-      jfalse = IOPER {assem = BRANCH_ (ARM.B AL) (L_ f), dst = [], src = [], jump = [f]}
-  return $ i1 ++ i2 ++ [compare, jtrue, jfalse] --UNSURE: HOW TO MAKE SURE THE BRANCHES RETURN TO THE SAME POINT AFTERWARDS?
+  return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
-munchStm x = do 
-  m <- munchStm_ x
+munchStm x = do
+  m <- condStm x
   return $ m AL
 
-munchStm_ :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
+condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
 
 --- split save load to independent functions if possible to allow SLTYPE
   --- LDRSB ??? STRB ???? LACK OF ***INFOMATION***
-munchStm_ (IR.MOV e (MEM me)) = do -- LDR
+condStm (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
-  if null l then 
+  if null l then
     return (\c -> i ++ [IMOV { assem = S_ (ARM.LDR W c) (RTEMP t) op, src = ts, dst = [t]}])
   else
     let s = head ts in
     return (\c -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR W c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}])
 
-munchStm_ (IR.MOV (MEM me) e) = do -- STR
+condStm (IR.MOV (MEM me) e) = do -- STR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
-  if null l then 
+  if null l then
     return (\c -> i ++ [IMOV { assem = S_ (ARM.STR W c) (RTEMP t) op, src = ts, dst = [t]}])
   else
     let s = head ts in
     return (\c -> i ++ l ++ [IMOV { assem = S_ (ARM.STR W c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}])
 
-munchStm_ (IR.PUSH e) = do
+condStm (IR.PUSH e) = do
   (i, t) <- munchExp e
   return (\c -> i ++ [IMOV {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [t], src = []}]) --sp here or not ??
 
-munchStm_ (IR.POP e) = do
+condStm (IR.POP e) = do
   (i, t) <- munchExp e
   return (\c -> i ++ [IMOV {assem = STACK_ (ARM.POP c) [RTEMP t], dst = [t], src = []}])
 
-munchStm_ (IR.MOV e (CONSTI int)) = do
+condStm (IR.MOV e (CONSTI int)) = do
   (i, t) <- munchExp e
   return (\c -> i ++ [IMOV { assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int), src = [], dst = [t]}])
-  
-munchStm_ (IR.MOV e (CONSTC char)) = do
+
+condStm (IR.MOV e (CONSTC char)) = do
   (i, t) <- munchExp e
   return (\c -> i ++ [IMOV { assem = MC_ (ARM.MOV c) (RTEMP t) (CHR char), src = [], dst = [t]}])
 
-munchStm_ (IR.MOV e1 e2) = do
+condStm (IR.MOV e1 e2) = do
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
   return (\c -> i1 ++ i2 ++ [ IMOV { assem = MC_ (ARM.MOV c) (RTEMP t1) (R (RTEMP t2)),
                                      src = [t2], dst = [t1]}])
 
-munchStm_ (JUMP (NAME l) ls) = do
+condStm (JUMP (NAME l) ls) = do
   return (\c -> [IOPER {assem = BRANCH_ (ARM.B c) (L_ l), dst = [], src = [], jump = [l]}])
 
-munchStm_ (JUMP e ls) = do 
+condStm (JUMP e ls) = do
   (i, t) <- munchExp e
   return (\c -> [IOPER {assem = BRANCH_ (ARM.B c) (R_ (RTEMP t)), dst = [], src = [], jump = []}])
 
 -------------------- Utilities ---------------------
+
+invert :: ROp -> Cond
+invert IR.EQ = ARM.NE
+invert IR.NE = ARM.EQ
+invert IR.LT = ARM.GE
+invert IR.GE = ARM.LT
+invert IR.GT = ARM.LE
+invert IR.LE = ARM.GT
+
+same :: ROp -> Cond
+same IR.EQ = ARM.EQ
+same IR.NE = ARM.NE
+same IR.LT = ARM.LT
+same IR.GE = ARM.GE
+same IR.GT = ARM.GT
+same IR.LE = ARM.LE
+
+deSeq :: Stm -> (Stm, Stm)
+deSeq (SEQ s1 s2) = (s1, s2)
 
 showStm stm = do
   munch <- evalState (munchStm stm) translateState
@@ -202,7 +250,7 @@ s5 = JUMP (NAME "fflush") ["fflush"]
 statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5)))
 
 
-s_1 = SEQ (LABEL "ne") (IR.MOV (TEMP 7) (CONSTI 4))
-s_2 = SEQ (LABEL "eq") (IR.MOV (TEMP 7) (CONSTI 5))     
-s_3 = CJUMP IR.EQ (CONSTI 1) (CONSTI 2) "eq" "ne"     
+s_1 = SEQ (IR.PUSH (TEMP 7)) (JUMP (NAME "something") ["something"])
+s_2 = SEQ (LABEL "eq") (IR.MOV (TEMP 7) (CONSTI 5))
+s_3 = CJUMP IR.EQ (CONSTI 1) (CONSTI 2) "eq" "ne"
 expr = ESEQ (SEQ s_3 (SEQ s_1 s_2)) (TEMP 7)

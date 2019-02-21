@@ -1,5 +1,5 @@
 module BackEnd.IR where
-
+import Prelude hiding(NE, EQ, GT, GE, LT, LE)
 import BackEnd.Temp as Temp
 
 data Exp = CONSTI Int              -- constant int
@@ -33,7 +33,7 @@ data BOp = PLUS --CALC1
          | RSHIFT --SHIFT
          | MOD  --hand written
          deriving (Eq, Show)
-         
+
 data ROp = EQ
          | NE
          | LT
