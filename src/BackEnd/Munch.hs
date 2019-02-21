@@ -24,6 +24,7 @@ munchExp :: Exp -> State TranslateState (MunchExp)
 munchExp (BINEXP DIV e1 e2) = undefined  -- before  other BINEXP as it cannot be simplified
 munchExp (BINEXP MOD e1 e2) = undefined  -- before  other BINEXP as it need special treatment
 
+--munch eseq eseq??
 {-If munched stm is of length 2 then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cj@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
   ci <- munchStm cj
@@ -32,15 +33,15 @@ munchExp (ESEQ (SEQ cj@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
   if (length fi == 2) then
     do
     put state
-    condf <- condStm (fst $ deSeq false)
-    brf <- munchStm (snd $ deSeq false)
+    let (fc, fb) = deSeq false
+    condf <- condStm fc
+    brf <- munchStm fb
     state2 <- get
     ti <- munchStm true
     if(length ti == 2) then
       do
       put state2
-      condt <- condStm (snd $ deSeq true)
-      --no need the brach thing
+      condt <- condStm (snd $ deSeq true) -- branch info not needed
       (i, t) <- munchExp e
       return ((condf (invert rop)) ++ (condt $ same rop) ++ i, t)
     else
@@ -198,22 +199,14 @@ condStm (JUMP e ls) = do
   return (\c -> [IOPER {assem = BRANCH_ (ARM.B c) (R_ (RTEMP t)), dst = [], src = [], jump = []}])
 
 -------------------- Utilities ---------------------
+condIR = [IR.EQ, IR.LT, IR.LE, IR.GT, IR.GE, IR.NE]
+condARM = [ARM.EQ, ARM.LT, ARM.LE, ARM.GT, ARM.GE, ARM.NE]
 
 invert :: ROp -> Cond
-invert IR.EQ = ARM.NE
-invert IR.NE = ARM.EQ
-invert IR.LT = ARM.GE
-invert IR.GE = ARM.LT
-invert IR.GT = ARM.LE
-invert IR.LE = ARM.GT
+invert a = fromJust $ lookup a (zip condIR (reverse condARM))
 
 same :: ROp -> Cond
-same IR.EQ = ARM.EQ
-same IR.NE = ARM.NE
-same IR.LT = ARM.LT
-same IR.GE = ARM.GE
-same IR.GT = ARM.GT
-same IR.LE = ARM.LE
+same a = fromJust $ lookup a (zip condIR condARM)
 
 deSeq :: Stm -> (Stm, Stm)
 deSeq (SEQ s1 s2) = (s1, s2)
@@ -252,5 +245,5 @@ statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5)))
 
 s_1 = SEQ (IR.PUSH (TEMP 7)) (JUMP (NAME "something") ["something"])
 s_2 = SEQ (LABEL "eq") (IR.MOV (TEMP 7) (CONSTI 5))
-s_3 = CJUMP IR.EQ (CONSTI 1) (CONSTI 2) "eq" "ne"
+s_3 = CJUMP IR.GT (CONSTI 1) (CONSTI 2) "eq" "ne"
 expr = ESEQ (SEQ s_3 (SEQ s_1 s_2)) (TEMP 7)
