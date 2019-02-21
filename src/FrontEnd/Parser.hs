@@ -340,7 +340,7 @@ parseBracketExpr :: Parser (Expr ())
 parseBracketExpr = do { exprF <- parens parseExprF; return $ BracketExpr exprF}
 
 parseIntLiter :: Parser (Expr ())
-parseIntLiter = do { x <- integer ; return $ IntLiter x}
+parseIntLiter = do { x <- integer ; return $ IntLiter (fromIntegral x)}
 
 parseBoolLiter :: Parser (Expr ())
 parseBoolLiter = do

@@ -2,7 +2,7 @@ module BackEnd.Canon where
 
 
 import Control.Monad.State.Lazy
-import Data.HashMap as HashMap hiding (map)
+import Data.HashMap as HashMap hiding (map, filter)
 import qualified BackEnd.Translate as Translate
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
@@ -59,7 +59,35 @@ basicBlocks [] = do
   return $ ([[LABEL label, JUMP (CONSTI 1) [label]]], label)
 
 
-traceSchedule :: [[Stm]] -> Temp.Label -> [Stm]
+bLabel ((LABEL label):_) = label
+
+traceSchedule :: [[Stm]] -> [Stm]
+traceSchedule blocks = traceSchedule' blocks blockTable markTable
+  where markTable = HashMap.empty
+        blockTable = foldl addBlock HashMap.empty blocks 
+        addBlock acc b = insert (bLabel b) b acc
+
+traceSchedule' [] _ _ = []
+traceSchedule' (block:rest) blockTable markTable
+ = trace ++ traceSchedule' rest' blockTable markTable'
+ where (trace, markTable') =
+         traceSchedule'' block blockTable markTable
+       rest' =
+         filter (\b -> not $ member (bLabel b) markTable') rest 
+
+traceSchedule'' block@((LABEL label):rest) blockTable markTable
+  | unMarkedSucc /= [] = (block ++ trace, markTable'')
+  | otherwise = (block, markTable')
+  where nextBlock = blockTable ! (head unMarkedSucc)
+        markTable' = insert label 1 markTable
+        unMarkedSucc =
+          filter (\l -> not $ member l markTable) (succs block)
+        (trace, markTable'') =
+          traceSchedule'' nextBlock blockTable markTable'
+        succs block =
+          case last block of
+            JUMP _ labels -> labels
+            CJUMP _ _ _ label1 label2 -> [label1, label2]
     
 
 -- test whether two statements commute or not
