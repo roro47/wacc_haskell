@@ -28,6 +28,7 @@ data TranslateState = TranslateState { levels :: [Level],
                                        frameLabelAlloc :: Temp.LabelAllocator}
                       deriving (Eq, Show)
 
+
 data IExp = Ex Exp
           | Nx Stm
           | Cx (Temp.Label -> Temp.Label -> Stm)

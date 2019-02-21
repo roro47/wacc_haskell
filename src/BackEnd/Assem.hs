@@ -13,5 +13,10 @@ data Instr = IOPER  { assem :: Arm.Instr,
            | IMOV   { assem :: Arm.Instr,
                       dst  :: [Temp.Temp],
                       src :: [Temp.Temp] }
-            deriving Show
+           -- deriving Show
              -- for IMOV, length dst == 1, length src == 1
+
+instance Prelude.Show Instr where
+    show (IOPER assem  dst src jump) = Arm.output_show assem
+    show (ILABEL assem lab) = Arm.output_show assem
+    show (IMOV assem  dst src) = Arm.output_show assem

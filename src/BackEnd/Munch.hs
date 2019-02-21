@@ -2,10 +2,11 @@ module BackEnd.Munch where
 import BackEnd.Instructions as ARM
 import BackEnd.IR as IR
 import BackEnd.Assem as ASSEM
-import BackEnd.Temp hiding (newTemp)
+import BackEnd.Temp hiding (newTemp, newDataLabel)
 import Data.Maybe
 import Control.Monad.State.Lazy
 import BackEnd.Translate as T
+import BackEnd.Frame as Frame
 
 type MunchExp = ([ASSEM.Instr], Temp)
 
@@ -35,7 +36,7 @@ munchExp (BINEXP MUL e1 e2) = do
   tHi <- newTemp
   let mul = IMOV {assem = C2_ (SMULL NoSuffix AL) (RTEMP tLo) (RTEMP tHi) (RTEMP t1) (RTEMP t2),
                    src = [t1, t2], dst = [tLo, tHi]}
-  return $ (i1 ++ i2 ++ [mul], tLo) -- how to pass two of them ???
+  return $ (i1 ++ i2 ++ [mul], tLo) -- how to pass two of them ??? need special treatement
 
 munchExp (BINEXP bop e (CONSTI int)) = do
   (i1, t1) <- munchExp e
@@ -110,7 +111,7 @@ munchStm (CJUMP rop e1 e2 t f) = do
   let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [], src = [t1, t2], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (armCond rop)) (L_ t), dst = [], src = [], jump = [t]}
       jfalse = IOPER {assem = BRANCH_ (ARM.B AL) (L_ f), dst = [], src = [], jump = [f]}
-  return $ i1 ++ i2 ++ [compare, jtrue, jfalse] --UNSURE
+  return $ i1 ++ i2 ++ [compare, jtrue, jfalse] --UNSURE: HOW TO MAKE SURE THE BRANCHES RETURN TO THE SAME POINT AFTERWARDS?
 
 munchStm x = do 
   m <- munchStm_ x
@@ -119,6 +120,7 @@ munchStm x = do
 munchStm_ :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
 
 --- split save load to independent functions if possible to allow SLTYPE
+  --- LDRSB ??? STRB ???? LACK OF ***INFOMATION***
 munchStm_ (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
@@ -128,7 +130,7 @@ munchStm_ (IR.MOV e (MEM me)) = do -- LDR
     let s = head ts in
     return (\c -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR W c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}])
 
-munchStm_ (IR.MOV (MEM me) e) = do -- LDR
+munchStm_ (IR.MOV (MEM me) e) = do -- STR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
   if null l then 
@@ -170,11 +172,11 @@ munchStm_ (JUMP e ls) = do
 
 showStm stm = do
   munch <- evalState (munchStm stm) translateState
-  return $ munch
+  return munch
 
 showExp exp = do
   munch <- evalState (munchExp exp) translateState
-  return $ munch
+  return munch
 
 translateState = TranslateState { levels = [],
                                   dataFrags = [],
@@ -183,3 +185,24 @@ translateState = TranslateState { levels = [],
                                   controlLabelAlloc = newLabelAllocator,
                                   dataLabelAlloc = newLabelAllocator,
                                   frameLabelAlloc = newLabelAllocator}
+
+--- a sample ----
+reg0 = TEMP 23
+reg1 = TEMP 24
+msg0 = "0"
+msg1 = "1"
+frame = Frame.newFrame "p_print_bool"
+s1 = CJUMP IR.NE reg0 (CONSTI 0) "ne" "eq"
+s_ne = SEQ (LABEL "ne") (IR.MOV reg0 (NAME msg0))
+s_eq = SEQ (LABEL "eq") (IR.MOV reg0 (NAME msg1))
+s2 = IR.MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+s3 = JUMP (NAME "printf") ["printf"]
+s4 = IR.MOV reg0 (CONSTI 0)
+s5 = JUMP (NAME "fflush") ["fflush"]
+statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5)))
+
+
+s_1 = SEQ (LABEL "ne") (IR.MOV (TEMP 7) (CONSTI 4))
+s_2 = SEQ (LABEL "eq") (IR.MOV (TEMP 7) (CONSTI 5))     
+s_3 = CJUMP IR.EQ (CONSTI 1) (CONSTI 2) "eq" "ne"     
+expr = ESEQ (SEQ s_3 (SEQ s_1 s_2)) (TEMP 7)

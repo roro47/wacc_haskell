@@ -67,8 +67,8 @@ instance Show SLOP2 where
   show (Imm reg int) = "[" ++ show reg ++ ", #" ++ show int ++ "]"
   show (PRE reg int) = show (Imm reg int) ++ "!"
   show (POST reg int) = "[" ++ show reg ++ "]" ++ ", #" ++ show int
-  show (MSG str) = ", =" ++ str  -- did not include shift *
-  show (NUM int) = ", =" ++ show int  -- did not include shift *
+  show (MSG str) = "=" ++ str  -- did not include shift *
+  show (NUM int) = "=" ++ show int  -- did not include shift *
 
 {- Instructions not included here: cpy adc abc neg mul cmn mul
    bic mvn tst bx blx ldrh ldrsh ldrb ldmia strh stmia cps setend
@@ -102,13 +102,15 @@ data Instr = CBS_ Calc REG REG OP | MC_ Simple REG OP |
 instance Show Instr where
   show (CBS_ c r1 r2 op) = (show_ c)  ++ (show r1) ++ ", " ++ (show r2) ++ (show op)
   show (MC_ s r op) = (show_ s)  ++ (show r) ++ (show op)
-  show (CBS_ s r1 r2 r3) = (show_ s)  ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
   show (BRANCH_ b l) = (show_ b)  ++ show l
   show (STACK_ s (r:regs)) = show_ s  ++ "{" ++ show r ++ (concatMap (\x -> ", " ++ show x) regs) ++ "}"
   show (C2_ c r1 r2 r3 r4) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3) ++ ", " ++ (show r4)
   show (S_ s r1 op) = (show_ s) ++ (show r1) ++ ", " ++ (show op)
   show (C3_ c r1 r2 r3) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
   show (LAB str) = (str ++ ":\n")
+
+output_show :: Instr -> String
+output_show instr = show instr
 
 {- Sample instruction representations -}
 sample1 = CBS_ (ADD NoSuffix AL) R1 R2 (IMM 3)
