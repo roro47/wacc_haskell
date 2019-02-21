@@ -10,22 +10,21 @@ import BackEnd.Frame as Frame
 
 type MunchExp = ([ASSEM.Instr], Temp)
 
+optimsedMunch stm = do
+  m <- munchStm stm
+  return $ preIndexOptimise m
+
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
   = lookup bop [(IR.PLUS, ARM.ADD), (IR.MINUS, ARM.SUB),
             (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
-armCond :: ROp -> Cond
-armCond c = fromJust $ lookup c [(IR.EQ, ARM.EQ), (IR.NE, ARM.NE), (IR.LT, ARM.LT), (IR.LE, ARM.LE),
-                                 (IR.GT, ARM.GT), (IR.GE, ARM.GE)]
-
 munchExp :: Exp -> State TranslateState (MunchExp)
 munchExp (BINEXP DIV e1 e2) = undefined  -- before  other BINEXP as it cannot be simplified
 munchExp (BINEXP MOD e1 e2) = undefined  -- before  other BINEXP as it need special treatment
 
---munch eseq eseq??
-{-If munched stm is of length 2 then it must be a SEQ conaing a naive stm and a label -}
+{-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cj@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
   ci <- munchStm cj
   state <- get
@@ -112,6 +111,7 @@ munchMem :: Exp -> State TranslateState ([ASSEM.Instr], [Int], SLOP2)
 --- PRE-INDEX ---
 -- NOT HANDLED AT THIS STAGE; CAN USE PATTER MATCH TO OPTIMISE AFTERWARDS...
 -- FOR EXAMPLE: [ADD R1 #4 , STR R4 R1] ==> [STR R4 [R1, #4]!]
+-- HANDLED USING preIndexOptimise
 
 -- TODO: more simplification allowed here : eval the e if possible to a int....
 ---- IMMEDIATE ----
@@ -126,6 +126,22 @@ munchMem e = do
   (i, t) <- munchExp e
   return (i, [t], MSG "SLOP2 NOT USED")
 
+--- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
+preIndexOptimise :: [ASSEM.Instr] -> [ASSEM.Instr]
+preIndexOptimise (s1@(IOPER { assem = (CBS_ (ARM.ADD NoSuffix c) (RTEMP t11) (RTEMP t12) (IMM int))}) :
+                  s2@(IMOV { assem = (S_ (ARM.LDR slt1 d) (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
+  | t11 == t12 && t22 == t11 && c == d
+        = IMOV { assem = (S_ (ARM.LDR slt1 d) (RTEMP t21) (PRE (RTEMP t11) int)),src = [t11], dst = [t12]}
+                : preIndexOptimise remain
+  | otherwise = (s1 : s2 :preIndexOptimise remain)
+preIndexOptimise (s1@(IOPER { assem = (CBS_ (ARM.ADD NoSuffix c) (RTEMP t11) (RTEMP t12) (IMM int))}) :
+                  s2@(IMOV { assem = (S_ (ARM.STR slt1 d) (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
+  | t11 == t12 && t22 == t11 && c == d
+        = IMOV { assem = (S_ (ARM.STR slt1 d) (RTEMP t21) (PRE (RTEMP t11) int)), src = [t11], dst = [t12]}
+                  : preIndexOptimise remain
+  | otherwise = (s1 : s2 :preIndexOptimise remain)
+preIndexOptimise (x:xs) = x : (preIndexOptimise xs)
+preIndexOptimise [] = []
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 
@@ -140,7 +156,7 @@ munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
   let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [], src = [t1, t2], jump = []}
-      jtrue = IOPER {assem = BRANCH_ (ARM.B (armCond rop)) (L_ t), dst = [], src = [], jump = [t]}
+      jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
 munchStm x = do
@@ -192,11 +208,18 @@ condStm (IR.MOV e1 e2) = do
                                      src = [t2], dst = [t1]}])
 
 condStm (JUMP (NAME l) ls) = do
-  return (\c -> [IOPER {assem = BRANCH_ (ARM.B c) (L_ l), dst = [], src = [], jump = [l]}])
+  return (\c -> [IOPER {assem = BRANCH_ (ARM.BL c) (L_ l), dst = [], src = [], jump = [l]}])
 
 condStm (JUMP e ls) = do
   (i, t) <- munchExp e
   return (\c -> [IOPER {assem = BRANCH_ (ARM.B c) (R_ (RTEMP t)), dst = [], src = [], jump = []}])
+
+munchBuiltInFuncFrag :: Fragment -> State TranslateState [ASSEM.Instr]
+munchBuiltInFuncFrag (PROC stm frame) = do
+  munch <- munchStm stm
+  let push = IMOV {assem = STACK_ (ARM.PUSH AL) [LR], dst = [], src = [-2]}
+      pop = IMOV {assem = STACK_ (ARM.POP AL) [PC], dst = [-1], src = []}
+  return (push : munch ++ [pop])
 
 -------------------- Utilities ---------------------
 condIR = [IR.EQ, IR.LT, IR.LE, IR.GT, IR.GE, IR.NE]
@@ -212,8 +235,8 @@ deSeq :: Stm -> (Stm, Stm)
 deSeq (SEQ s1 s2) = (s1, s2)
 
 showStm stm = do
-  munch <- evalState (munchStm stm) translateState
-  return munch
+  munch <- evalState (optimsedMunch stm) translateState
+  return $ munch
 
 showExp exp = do
   munch <- evalState (munchExp exp) translateState
@@ -247,3 +270,8 @@ s_1 = SEQ (IR.PUSH (TEMP 7)) (JUMP (NAME "something") ["something"])
 s_2 = SEQ (LABEL "eq") (IR.MOV (TEMP 7) (CONSTI 5))
 s_3 = CJUMP IR.GT (CONSTI 1) (CONSTI 2) "eq" "ne"
 expr = ESEQ (SEQ s_3 (SEQ s_1 s_2)) (TEMP 7)
+
+-- pre-Index sample --
+assemPre = (IOPER { assem = (CBS_ (ARM.ADD NoSuffix ARM.EQ) (RTEMP 1) (RTEMP 1) (IMM 2)), src = [1], dst = [1], jump = []}) :
+           (IMOV { assem = (S_ (ARM.LDR W ARM.EQ) (RTEMP 2) (Imm (RTEMP 1) 0)), src = [2], dst = [1]}) : []
+irPre = IR.MOV (BINEXP PLUS (TEMP 2) (CONSTI 1)) (MEM (TEMP 2))

@@ -9,7 +9,7 @@ import BackEnd.Temp
 
 data REG = PC | LR | SP | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
            R11 | R12 | RTEMP Temp deriving (Show, Eq)
-
+--- PC = -1 LR = -2 SP = -3
 data OP =  R REG | IMM Int | CHR Char | NoOP deriving Eq-- immediate values need to be restricted size
 data Lable = L_ String | R_ REG deriving Eq
 data Suffix = S | NoSuffix deriving Eq-- if specified, update the flags
