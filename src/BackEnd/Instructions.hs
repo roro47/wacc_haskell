@@ -10,7 +10,9 @@ import BackEnd.Temp
 data REG = PC | LR | SP | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
            R11 | R12 | RTEMP Temp deriving (Show, Eq)
 --- PC = -1 LR = -2 SP = -3
-data OP =  R REG | IMM Int | CHR Char | NoOP deriving Eq-- immediate values need to be restricted size
+data OP =  R REG | IMM Int | CHR Char | LSL_ Int | NoOP deriving Eq
+-- immediate values need to be restricted size
+-- LSL values need to be 1, 2 or 3
 data Lable = L_ String | R_ REG deriving Eq
 data Suffix = S | NoSuffix deriving Eq-- if specified, update the flags
 data Opt = OPT REG | NoReg deriving Eq-- Optional Register
@@ -48,6 +50,7 @@ instance Show OP where
   show (IMM int) = ", #" ++ show int
   show (R reg) = ", " ++ show reg
   show (CHR chr) = ", #" ++ show chr
+  show (LSL_ int) = " LSL #" ++ show int
   show _ = ""
 -- since op is always at the end of an assembly I included the spaces and comma here
 

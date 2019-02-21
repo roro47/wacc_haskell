@@ -129,19 +129,16 @@ munchMem e = do
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 preIndexOptimise :: [ASSEM.Instr] -> [ASSEM.Instr]
 preIndexOptimise (s1@(IOPER { assem = (CBS_ (ARM.ADD NoSuffix c) (RTEMP t11) (RTEMP t12) (IMM int))}) :
-                  s2@(IMOV { assem = (S_ (ARM.LDR slt1 d) (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
-  | t11 == t12 && t22 == t11 && c == d
-        = IMOV { assem = (S_ (ARM.LDR slt1 d) (RTEMP t21) (PRE (RTEMP t11) int)),src = [t11], dst = [t12]}
+                  s2@(IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
+  | t11 == t12 && t22 == t11 && (stackEqualCond c sl)
+        = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) int)),src = [t11], dst = [t12]}
                 : preIndexOptimise remain
-  | otherwise = (s1 : s2 :preIndexOptimise remain)
-preIndexOptimise (s1@(IOPER { assem = (CBS_ (ARM.ADD NoSuffix c) (RTEMP t11) (RTEMP t12) (IMM int))}) :
-                  s2@(IMOV { assem = (S_ (ARM.STR slt1 d) (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
-  | t11 == t12 && t22 == t11 && c == d
-        = IMOV { assem = (S_ (ARM.STR slt1 d) (RTEMP t21) (PRE (RTEMP t11) int)), src = [t11], dst = [t12]}
-                  : preIndexOptimise remain
-  | otherwise = (s1 : s2 :preIndexOptimise remain)
 preIndexOptimise (x:xs) = x : (preIndexOptimise xs)
 preIndexOptimise [] = []
+
+stackEqualCond :: Cond -> SL -> Bool
+stackEqualCond c1 (LDR _ c2) = c1 == c2
+stackEqualCond c1 (STR _ c2) = c1 == c2
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 
