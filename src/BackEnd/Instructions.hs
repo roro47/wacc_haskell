@@ -123,6 +123,6 @@ sample4 = BRANCH_ (B BackEnd.Instructions.EQ) (L_ "Hello")
 sample5 = STACK_ (POP BackEnd.Instructions.LS) [R1, R2, PC, SP]
 sample6 = C2_ (SMULL S AL) R12 R11 R10 R9
 sample7 = S_ (LDR B_ AL) R9 (POST R5 3)
-
+sample8 = BRANCH_ (BL AL) (L_ "__aeabi_idivmod")
 
 --TODO: ADD r5, r5, r6, LSL #2 <- like this

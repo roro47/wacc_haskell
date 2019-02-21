@@ -21,8 +21,28 @@ bopToCBS bop
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
 munchExp :: Exp -> State TranslateState (MunchExp)
-munchExp (BINEXP DIV e1 e2) = undefined  -- before  other BINEXP as it cannot be simplified
-munchExp (BINEXP MOD e1 e2) = undefined  -- before  other BINEXP as it need special treatment
+{- r0 / r1 : result in r0
+  need to check if r0 is divided by zero-}
+munchExp (BINEXP DIV e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  r0 <- newTemp -- dividend
+  r1 <- newTemp --divisor
+  let divLabel = "__aeabi_idiv"
+      binOpDiv = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel), src = [r0, r1], dst = [r0]} in
+      return $ (i1 ++ i2 ++ [binOpDiv], r0)
+
+
+{- r0 % r1 : result in r1
+  need to check if r0 is divided by zero-}
+munchExp (BINEXP MOD e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  r0 <- newTemp -- dividend
+  r1 <- newTemp --divisor
+  let modLabel = "__aeabi_idivmod"
+      binOpMod = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel), src = [r0, r1], dst = [r1]} in
+      return $ (i1 ++ i2 ++ [binOpMod], r1)
 
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cj@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
