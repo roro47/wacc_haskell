@@ -32,24 +32,30 @@ munchExp (CALL (NAME "read") e) = undefined
 {- r0 / r1 : result in r0
   need to check if r0 is divided by zero-}
 munchExp (BINEXP DIV e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  r0 <- newTemp -- dividend
-  r1 <- newTemp --divisor
+  (i1, t1) <- munchExp e1 -- dividend
+  (i2, t2) <- munchExp e2 --divisor
   let divLabel = "__aeabi_idiv"
-      binOpDiv = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel), src = [r0, r1], dst = [r0]} in
-      return $ (i1 ++ i2 ++ [binOpDiv], r0)
+      moveDividend = IMOV {assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t1)),
+                      src = [t1], dst = [0]}
+      moveDivisor = IMOV {assem = MC_ (ARM.MOV AL) R1 (R (RTEMP t2)),
+                      src = [t2], dst = [1]}
+      divInstr = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel),
+                      src = [0, 1], dst = [0]} in
+      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, divInstr], 0)
 
 {- r0 % r1 : result in r1
   need to check if r0 is divided by zero-}
 munchExp (BINEXP MOD e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  r0 <- newTemp -- dividend
-  r1 <- newTemp --divisor
+  (i1, t1) <- munchExp e1 -- dividend
+  (i2, t2) <- munchExp e2  --divisor
   let modLabel = "__aeabi_idivmod"
-      binOpMod = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel), src = [r0, r1], dst = [r1]} in
-      return $ (i1 ++ i2 ++ [binOpMod], r1)
+      moveDividend = IMOV {assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t1)),
+                  src = [t1], dst = [0]}
+      moveDivisor = IMOV {assem = MC_ (ARM.MOV AL) R1 (R (RTEMP t2)),
+                  src = [t2], dst = [1]}
+      modInstr = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel),
+                  src = [0, 1], dst = [1]} in
+      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, modInstr], 1)
 
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
