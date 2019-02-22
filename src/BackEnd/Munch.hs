@@ -13,8 +13,8 @@ import BackEnd.Frame as Frame
 -- REGISTER SAVE??
 -- SYSTEM FUNCTION CALLS?
 -- fix the built in functions
--- assembly for the messages
 -- special name for functions & built-ins in order to decide stack
+-- STRING ASSIGNMENT?
 optimsedMunch stm = do
   m <- munchStm stm
   return $ optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
@@ -26,10 +26,10 @@ bopToCBS bop
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
 munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
-munchExp (CALL (NAME "println") e) = do
-  (i, t) <- munchExp (CALL (NAME "print") e)
+munchExp (CALL (NAME "println") es) = do
+  ls <- mapM (liftM fst.munchExp) es
   let ln = ILABEL { assem = LAB "p_print_ln", lab = ["p_print_ln"]}
-  return (i++[ln], t)
+  return ((concat ls)++[ln], dummy)
 
 munchExp (CALL (NAME "print") e) = undefined
 --NEED TYPE OF THIS e
@@ -309,6 +309,10 @@ munchBuiltInFuncFrag (PROC stm frame) = do
   let push = IMOV {assem = STACK_ (ARM.PUSH AL) [LR], dst = [], src = [-2]}
       pop = IMOV {assem = STACK_ (ARM.POP AL) [PC], dst = [-1], src = []}
   return (push : munch ++ [pop])
+
+munchDataFrag :: Fragment -> State TranslateState [ASSEM.Instr]
+munchDataFrag (STRING label str)
+  = return [ILABEL {assem = (M label (length str) str), lab = [label]}]
 
 -------------------- Utilities ---------------------
 condIR = [IR.EQ, IR.LT, IR.LE, IR.GT, IR.GE, IR.NE]

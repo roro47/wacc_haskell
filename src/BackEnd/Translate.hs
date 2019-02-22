@@ -293,6 +293,20 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "<=" -> return $ condition LE exps'
     "==" -> return $ condition EQ exps'
     "!=" -> return $ condition NE exps'
+    "skip" -> undefined
+    "read" -> undefined
+    "free" -> undefined
+    "print" -> translatePrint t exps'
+    "println" -> translatePrintln t exps'
+    "newpair" -> translateNewPair t exps'
+    "fst" -> undefined
+    "snd" -> undefined
+    "!" -> undefined
+    "#pos" -> undefined
+    "#neg" -> undefined
+    "len" -> undefined
+    "ord" -> undefined
+    "chr" -> undefined
     otherwise -> fail "not predicted situation"
  where binexp bop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
@@ -300,6 +314,54 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
        condition rop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
           Cx (\label1 label2 -> CJUMP rop exp1 exp2 label1 label2)
+
+translatePrint :: Type -> [Exp] -> State TranslateState IExp
+translatePrint TInt exps = return $ Ex $ CALL (NAME "p_print_int") exps
+translatePrint TBool exps = return $ Ex $ CALL (NAME "p_print_bool") exps
+translatePrint TChar exps = return $ Ex $ CALL (NAME "p_print_string") exps
+translatePrint TStr exps = return $ Ex $ CALL (NAME "p_print_string") exps
+translatePrint (TArray TChar) exps = return $ Ex $ CALL (NAME "p_print_string") exps
+translatePrint _ exps = return $ Ex $ CALL (NAME "p_print_reference" ) exps
+-- Array & Pair
+
+translatePrintln :: Type -> [Exp] -> State TranslateState IExp
+translatePrintln t exps = do
+  print <- translatePrint t exps
+  unexPrint <- unEx print
+  return $ Ex $ CALL (NAME "p_print_ln") [unexPrint]
+
+{-
+ BL MALLOC required here:
+ take R0 as a parameter of malloc size
+ return the address of malloc in R0
+-}
+--nil frag?? -- no, handled by qemu
+-- treat null as consti 0??
+translateNewPair :: Type -> [Exp] -> State TranslateState IExp
+translateNewPair (TPair t1 t2) exps = undefined
+--PLAN : get the length of t1 t2
+
+-- normal ones ---
+-- 6   LDR r0, =8
+-- 7		BL malloc
+-- 8		MOV r4, r0  -- store the pair address in r4
+-- 9		LDR r5, =10 -- malloc fst
+-- 10		LDR r0, =4
+-- 11		BL malloc
+-- 12		STR r5, [r0]  -- store the content in heap addr in r0
+-- 13		STR r0, [r4] -- store the fst addr in pair addr
+-- 14		LDR r5, =3  -- malloc snd
+-- 15		LDR r0, =4
+-- 16		BL malloc
+-- 17		STR r5, [r0] -- store the content in heap addr for snd
+-- 18		STR r0, [r4, #4] -- store the snd addr in pair addr
+-- 19		STR r4, [sp]  -- put pair address on stack
+
+-- ref pair is null
+-- nul --
+-- 15		LDR r4, =0
+-- 16		STR r4, [sp]
+-- 17		LDR r4, [sp]
 
 -- turn IExp to Exp
 unEx :: IExp -> State TranslateState Exp
@@ -343,8 +405,6 @@ escape TBool = False
 escape TStr = False
 escape TChar = False
 escape _ = True
-
--- For lily and audrey
 
 -- can not be type here need an expr
 translateLen :: Exp -> State TranslateState IExp
@@ -397,8 +457,8 @@ translateFree e = do
 --pre: FRAGMENT TRANSLATES CAN ONLY BE CALLED AFTER VISITING THE WHOLE TREE
 -- AND CAN ONLY BE CALLED ONCE EACH
 
-translateRead :: Type -> State TranslateState ()
-translateRead t = do
+fragRead :: Type -> State TranslateState ()
+fragRead t = do
   msg <- newDataLabel
   temp0 <- newTemp
   temp1 <- newTemp
@@ -415,10 +475,10 @@ translateRead t = do
         addFragment (Frame.PROC statement (f t))
 
 
-translateFreePair :: State TranslateState ()
+fragFreePair :: State TranslateState ()
 -- pair: new fragment
 -- pre: Includes throw run time error and print
-translateFreePair = do
+fragFreePair = do
   msg <- newDataLabel
   temp <- newTemp
   addFragment (Frame.STRING msg "NullReferenceError: dereference a null reference\n\0")
@@ -435,8 +495,8 @@ translateFreePair = do
           addFragment (Frame.PROC statement frame)
 
 
-translatePrint :: Type -> State TranslateState ()
-translatePrint TStr = do
+fragPrint :: Type -> State TranslateState ()
+fragPrint TStr = do
   temp0 <- newTemp
   temp1 <- newTemp
   temp2 <- newTemp
@@ -456,9 +516,9 @@ translatePrint TStr = do
        statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 (SEQ s6 s7))))) in
          addFragment (Frame.PROC statement frame)
 
-translatePrint TChar = translatePrint TStr
+fragPrint TChar = fragPrint TStr
 
-translatePrint TInt = do
+fragPrint TInt = do
  msg <- newDataLabel
  temp0 <- newTemp
  temp1 <- newTemp
@@ -475,7 +535,7 @@ translatePrint TInt = do
      statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 s6)))) in
         addFragment (Frame.PROC statement frame)
 
-translatePrint TBool = do
+fragPrint TBool = do
   msg0 <- newDataLabel
   msg1 <- newDataLabel
   temp1 <- newTemp
@@ -493,8 +553,8 @@ translatePrint TBool = do
       statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
         addFragment (Frame.PROC statement frame)
 
-translatePrintln :: Type -> State TranslateState ()
-translatePrintln _ = do
+fragPrintln :: Type -> State TranslateState ()
+fragPrintln _ = do
  msg <- newDataLabel
  temp <- newTemp
  addFragment (Frame.STRING msg "\0")
@@ -510,13 +570,13 @@ translatePrintln _ = do
 
 data ErrorType = RunTime | Overflow | ArrayBound
 
-translateError :: ErrorType -> State TranslateState ()
+fragError :: ErrorType -> State TranslateState ()
 
 --   p_throw_runtime_error:
 -- 70		BL p_print_string
 -- 71		MOV r0, #-1
 -- 72		BL exit
-translateError RunTime = do
+fragError RunTime = do
  temp <- newTemp
 
  let reg0 = TEMP temp
@@ -531,7 +591,7 @@ translateError RunTime = do
  -- p_throw_overflow_error:
  -- 67		LDR r0, =msg_2
  -- 68		BL p_throw_runtime_error
-translateError Overflow = do
+fragError Overflow = do
  msg <- newDataLabel
  temp <- newTemp
  addFragment (Frame.STRING msg "OverflowError: the result is too small/large to store in a 4-byte signed-integer.\n\0")
@@ -554,7 +614,7 @@ translateError Overflow = do
 -- 74		BLCS p_throw_runtime_error
 -- 75		POP {pc}
 
--- translateError ArrayBound = do
+-- fragError ArrayBound = do
 --  msg0 <- newDataLabel
 --  msg1 <- newDataLabel
 --  temp0 <- newTemp

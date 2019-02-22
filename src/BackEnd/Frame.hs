@@ -62,6 +62,9 @@ param2 = 2
 param3 :: Temp.Temp
 param3 = 3
 
+dummy :: Temp.Temp
+dummy = -1
+
 -- return a new stack frame
 newFrame :: String -> Frame
 newFrame label = Frame label 0

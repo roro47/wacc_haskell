@@ -94,7 +94,7 @@ data Calc3 = SDIV Cond deriving (Show, Header, Eq)
 data Instr = CBS_ Calc REG REG OP | MC_ Simple REG OP |
              BRANCH_ Branch Lable | C2_ Calc2 REG REG REG REG |
              STACK_ StackOP [REG] | S_ SL REG SLOP2 |
-             C3_ Calc3 REG REG REG | LAB String deriving Eq
+             C3_ Calc3 REG REG REG | LAB String | M String Int String deriving Eq
 
 instance Show Instr where
   show (CBS_ c r1 r2 op) = (show_ c)  ++ (show r1) ++ ", " ++ (show r2) ++ (show op)
@@ -105,6 +105,7 @@ instance Show Instr where
   show (S_ s r1 op) = (show_ s) ++ (show r1) ++ ", " ++ (show op)
   show (C3_ c r1 r2 r3) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
   show (LAB str) = (str ++ ":\n")
+  show (M msg int str) = msg ++ ":\n   .word " ++ (show int) ++ "\n   .ascii " ++ show str ++ "\n"
 
 output_show :: Instr -> String
 output_show instr = (show instr) ++ " | "
