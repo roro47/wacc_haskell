@@ -8,7 +8,7 @@ data LabelAllocator = LabelAllocator Int deriving (Eq, Show)
 
 
 newTempAllocator :: TempAllocator
-newTempAllocator = TempAllocator 0
+newTempAllocator = TempAllocator 16
 
 -- return a new temporary, and a new allocator
 newTemp :: TempAllocator -> (TempAllocator, Temp)

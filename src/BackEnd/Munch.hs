@@ -8,11 +8,9 @@ import Control.Monad.State.Lazy
 import BackEnd.Translate as T
 import BackEnd.Frame as Frame
 
-type MunchExp = ([ASSEM.Instr], Temp)
-
 optimsedMunch stm = do
   m <- munchStm stm
-  return $ preIndexOptimise m
+  return $ optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
 
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
@@ -20,24 +18,53 @@ bopToCBS bop
             (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
-munchExp :: Exp -> State TranslateState (MunchExp)
-munchExp (BINEXP DIV e1 e2) = undefined  -- before  other BINEXP as it cannot be simplified
-munchExp (BINEXP MOD e1 e2) = undefined  -- before  other BINEXP as it need special treatment
+munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
+munchExp (CALL (NAME "println") e) = undefined
+
+munchExp (CALL (NAME "print") e) = undefined
+-- 28		LDRSB r4, [sp]
+-- 29		MOV r0, r4
+-- 30		BL putchar
+
+munchExp (CALL (NAME "read") e) = undefined
+
+
+{- r0 / r1 : result in r0
+  need to check if r0 is divided by zero-}
+munchExp (BINEXP DIV e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  r0 <- newTemp -- dividend
+  r1 <- newTemp --divisor
+  let divLabel = "__aeabi_idiv"
+      binOpDiv = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel), src = [r0, r1], dst = [r0]} in
+      return $ (i1 ++ i2 ++ [binOpDiv], r0)
+
+{- r0 % r1 : result in r1
+  need to check if r0 is divided by zero-}
+munchExp (BINEXP MOD e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  r0 <- newTemp -- dividend
+  r1 <- newTemp --divisor
+  let modLabel = "__aeabi_idivmod"
+      binOpMod = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel), src = [r0, r1], dst = [r1]} in
+      return $ (i1 ++ i2 ++ [binOpMod], r1)
 
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
-munchExp (ESEQ (SEQ cj@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
-  ci <- munchStm cj
+munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
+  cinstr <- munchStm cjump
   state <- get
-  fi <- munchStm false
-  if (length fi == 2) then
+  falseinstr <- munchStm false
+  if (length falseinstr == 2) then
     do
     put state
-    let (fc, fb) = deSeq false
-    condf <- condStm fc
-    brf <- munchStm fb
+    let (fCommand, fBranch) = deSeq false
+    condf <- condStm fCommand
+    branchf <- munchStm fBranch
     state2 <- get
-    ti <- munchStm true
-    if(length ti == 2) then
+    trueinstr <- munchStm true
+    if(length trueinstr == 2) then
       do
       put state2
       condt <- condStm (snd $ deSeq true) -- branch info not needed
@@ -46,12 +73,12 @@ munchExp (ESEQ (SEQ cj@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
     else
       do
       (i, t) <- munchExp e
-      return ((condf (invert rop)) ++ brf ++ ti ++ i, t)
+      return ((condf (invert rop)) ++ branchf ++ trueinstr ++ i, t)
   else
     do
-    ti <- munchStm true
+    trueinstr <- munchStm true
     (i, t) <- munchExp e
-    return (ci ++ fi ++ ti ++ i, t)
+    return (cinstr ++ falseinstr ++ trueinstr ++ i, t)
 
 munchExp (CALL f es) = do
   (fi, ft) <- munchExp f -- assume result returned in fi
@@ -59,14 +86,46 @@ munchExp (CALL f es) = do
   ls <- mapM (liftM fst.munchExp) es
   return (fi ++ concat ls, ft) --NO CALLER / CALLEE SAVE CONVENTION YET!
 
+munchExp (CONSTC chr) = do
+  t <- newTemp
+  let sub = IOPER {assem = CBS_ (ARM.SUB NoSuffix AL) SP SP (IMM 1), src = [13], dst = [13], jump = []}
+  remain <- munchStm (IR.MOV (TEMP t) (CONSTC chr))
+  return $ (sub:remain, t)
+
 munchExp (TEMP t) = return ([],t)
 
 munchExp x = do
   c <- condExp x
   return $ c AL
 
-condExp :: Exp -> State TranslateState (Cond -> MunchExp)
-condExp (BINEXP MUL e1 e2) = do
+lslOP :: Exp -> Exp -> BOp -> Int -> State TranslateState (Cond -> ([ASSEM.Instr], Temp))
+lslOP e1 e2 bop int = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  return $ \c -> (i1 ++ i2 ++ [IOPER {assem = CBS_ (addsubtoCalc bop $ c) (RTEMP t1) (RTEMP t1)
+                  (LSL_ (RTEMP t2) (log2 int)), dst = [t1], src = [t2], jump = []}] , t1)
+
+canlsl bop int = (bop == MINUS || bop == PLUS) && (int == 2 || int == 4 || int == 8)
+
+condExp :: Exp -> State TranslateState (Cond -> ([ASSEM.Instr], Temp))
+-- LSL inside ADD SUB --
+condExp (BINEXP bop (BINEXP MUL e1 (CONSTI int)) e2)
+  | canlsl bop int
+      = lslOP e1 e2 bop int
+
+condExp (BINEXP bop e1 (BINEXP MUL (CONSTI int) e2))
+  | canlsl bop int
+      = lslOP e1 e2 bop int
+
+condExp (BINEXP bop e1 (BINEXP MUL e2 (CONSTI int)))
+  | canlsl bop int
+      = lslOP e1 e2 bop int
+
+condExp (BINEXP bop (BINEXP MUL (CONSTI int) e1) e2)
+  | canlsl bop int
+      = lslOP e1 e2 bop int
+
+condExp (BINEXP MUL e1 e2) = do -- only the lower one is used
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
   tLo <- newTemp
@@ -74,7 +133,8 @@ condExp (BINEXP MUL e1 e2) = do
   return $ \c -> (i1 ++ i2 ++ [IMOV {assem = C2_ (SMULL NoSuffix c) (RTEMP tLo)
                  (RTEMP tHi) (RTEMP t1) (RTEMP t2),
                  src = [t1, t2], dst = [tLo, tHi]}], tLo)
-  -- how to pass two of them ??? need special treatement
+
+condExp (BINEXP bop (CONSTI int) e) = condExp (BINEXP bop e (CONSTI int))
 
 condExp (BINEXP bop e (CONSTI int)) = do
   (i1, t1) <- munchExp e
@@ -91,7 +151,7 @@ condExp (BINEXP bop e1 e2) = do
   let {cbs = bopToCBS bop}
   case cbs of
     Nothing -> fail ""
-    otherwise -> return $ \c -> (i1 ++ [IOPER {assem = CBS_ ((fromJust cbs) NoSuffix c)
+    otherwise -> return $ \c -> (i1 ++ i2 ++ [IOPER {assem = CBS_ ((fromJust cbs) NoSuffix c)
                                 (RTEMP t1) (RTEMP t1) (R $ RTEMP t2),
                                 dst = [t1], src = [t1, t2], jump = []}], t1)
 
@@ -99,19 +159,23 @@ condExp (CONSTI int) = do
   t <- newTemp
   return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int) , dst = [t], src = []}], t)
 
-condExp (CONSTC chr) = do
-  t <- newTemp
-  return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (CHR chr) , dst = [t], src = []}], t)
-
 condExp (NAME l) = do
   t <- newTemp
   return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
 
+
+addsubtoCalc :: BOp -> (Cond -> Calc)
+addsubtoCalc PLUS = (\c -> ARM.ADD NoSuffix c)
+addsubtoCalc MINUS = (\c -> ARM.SUB NoSuffix c)
+
+log2 :: Int -> Int
+log2 2 = 1
+log2 4 = 2
+log2 8 = 3
+
 munchMem :: Exp -> State TranslateState ([ASSEM.Instr], [Int], SLOP2)
 --- PRE-INDEX ---
--- NOT HANDLED AT THIS STAGE; CAN USE PATTER MATCH TO OPTIMISE AFTERWARDS...
--- FOR EXAMPLE: [ADD R1 #4 , STR R4 R1] ==> [STR R4 [R1, #4]!]
--- HANDLED USING preIndexOptimise
+-- HANDLED USING optimise
 
 -- TODO: more simplification allowed here : eval the e if possible to a int....
 ---- IMMEDIATE ----
@@ -127,18 +191,26 @@ munchMem e = do
   return (i, [t], MSG "SLOP2 NOT USED")
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
-preIndexOptimise :: [ASSEM.Instr] -> [ASSEM.Instr]
-preIndexOptimise (s1@(IOPER { assem = (CBS_ (ARM.ADD NoSuffix c) (RTEMP t11) (RTEMP t12) (IMM int))}) :
-                  s2@(IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
-  | t11 == t12 && t22 == t11 && (stackEqualCond c sl)
-        = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) int)),src = [t11], dst = [t12]}
-                : preIndexOptimise remain
-preIndexOptimise (x:xs) = x : (preIndexOptimise xs)
-preIndexOptimise [] = []
+optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
+-- PRE-INDEX --
+optimise ((IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :
+          (IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
+  | (stackEqualCond c sl) && t11 == t12 && t22 == t11
+        = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
+                : optimise remain
+optimise (x:xs) = x : (optimise xs)
+optimise [] = []
 
-stackEqualCond :: Cond -> SL -> Bool
-stackEqualCond c1 (LDR _ c2) = c1 == c2
-stackEqualCond c1 (STR _ c2) = c1 == c2
+stackEqualCond :: Calc -> SL -> Bool
+stackEqualCond (ARM.ADD _ c1) (LDR _ c2) = c1 == c2
+stackEqualCond (ARM.ADD _ c1) (STR _ c2) = c1 == c2
+stackEqualCond (ARM.SUB _ c1) (LDR _ c2) = c1 == c2
+stackEqualCond (ARM.SUB _ c1) (STR _ c2) = c1 == c2
+stackEqualCond _ _ = False
+
+opVal :: Calc -> Int
+opVal (ARM.ADD _ _) = 1
+opVal _ = -1
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 
@@ -156,14 +228,18 @@ munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
+-- Characters includes >1 instructions thus need to be treated specially
+munchStm (IR.MOV e (CONSTC char)) = do
+  (i, t) <- munchExp e
+  let mv = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP t) (CHR char), src = [], dst = [t]}
+      str = IMOV { assem = S_ (ARM.STR B_ AL) (RTEMP t) (Imm SP 0), src = [t, -3], dst = []}
+  return $ i ++ [mv, str]
+
 munchStm x = do
   m <- condStm x
   return $ m AL
 
 condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
-
---- split save load to independent functions if possible to allow SLTYPE
-  --- LDRSB ??? STRB ???? LACK OF ***INFOMATION***
 condStm (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
@@ -193,10 +269,6 @@ condStm (IR.POP e) = do
 condStm (IR.MOV e (CONSTI int)) = do
   (i, t) <- munchExp e
   return (\c -> i ++ [IMOV { assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int), src = [], dst = [t]}])
-
-condStm (IR.MOV e (CONSTC char)) = do
-  (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV { assem = MC_ (ARM.MOV c) (RTEMP t) (CHR char), src = [], dst = [t]}])
 
 condStm (IR.MOV e1 e2) = do
   (i1, t1) <- munchExp e1
@@ -271,4 +343,4 @@ expr = ESEQ (SEQ s_3 (SEQ s_1 s_2)) (TEMP 7)
 -- pre-Index sample --
 assemPre = (IOPER { assem = (CBS_ (ARM.ADD NoSuffix ARM.EQ) (RTEMP 1) (RTEMP 1) (IMM 2)), src = [1], dst = [1], jump = []}) :
            (IMOV { assem = (S_ (ARM.LDR W ARM.EQ) (RTEMP 2) (Imm (RTEMP 1) 0)), src = [2], dst = [1]}) : []
-irPre = IR.MOV (BINEXP PLUS (TEMP 2) (CONSTI 1)) (MEM (TEMP 2))
+irPre = IR.MOV (BINEXP MINUS (TEMP 2) (CONSTI 1)) (MEM (TEMP 2))
