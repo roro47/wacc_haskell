@@ -83,39 +83,55 @@ pushLevel level = do
 popLevel :: State TranslateState ()
 popLevel = do
   state <- get
-  (level:rest) <- verifyLevels $ levels state
-  put $ state { levels = rest }
-  return ()
+  result <- verifyLevels $ levels state
+  case result of
+    (level:rest) -> do
+                    put $ state { levels = rest }
+                    return ()
+    otherwise -> fail "verify level fails"
+
 
 
 allocLocal :: String -> Type -> Bool -> State TranslateState Access
 allocLocal symbol t escape = do
   state <- get
-  (level:rest) <- verifyLevels $ levels state
-  let { frame  = levelFrame level;
-        alloc = tempAlloc state;
-        (frame', access, alloc') = Frame.allocLocal frame t escape alloc;
-        level' = level { levelFrame = frame' }}
-  put $ state { levels = (level':rest), tempAlloc = alloc' }
-  return $ Access frame access
+  result <- verifyLevels $ levels state
+  case result of
+    (level:rest) -> do
+      let { frame  = levelFrame level;
+            alloc = tempAlloc state;
+            (frame', access, alloc') = Frame.allocLocal frame t escape alloc;
+            level' = level { levelFrame = frame' }}
+      put $ state { levels = (level':rest), tempAlloc = alloc' }
+      return $ Access frame access
+    otherwise -> fail "verify level fails"
+
 
 addVarEntry :: String -> Type -> Access -> State TranslateState ()
 addVarEntry symbol t access = do
   state <- get
-  (level:rest) <- verifyLevels $ levels state
-  let { varEntry = VarEntry access t;
-        level' = level { varTable = insert symbol varEntry (varTable level)}}
-  put $ state { levels = (level':rest) }
-  return ()
+  result <- verifyLevels $ levels state
+  case result of
+    (level:rest) -> do
+      let { varEntry = VarEntry access t;
+            level' = level { varTable = insert symbol varEntry (varTable level)}}
+      put $ state { levels = (level':rest) }
+      return ()
+    otherwise -> fail "verify level fails"
+
 
 addFunEntry :: String -> Type -> State TranslateState ()
 addFunEntry symbol t = do
   state <- get
-  (level:rest) <- verifyLevels $ levels state
-  let { funEntry = FunEntry (levelFrame level) symbol t;
-        level' = level { funTable = insert symbol funEntry (funTable level)}}
-  put $ state { levels = (level':rest) }
-  return ()
+  result <- verifyLevels $ levels state
+  case result of
+    (level:rest) -> do
+      let { funEntry = FunEntry (levelFrame level) symbol t;
+            level' = level { funTable = insert symbol funEntry (funTable level)}}
+      put $ state { levels = (level':rest) }
+      return ()
+    otherwise -> fail "verify level fails"
+
 
 addFragment :: Frame.Fragment -> State TranslateState ()
 addFragment frag = do
