@@ -146,3 +146,4 @@ sample5 = STACK_ (POP BackEnd.Instructions.LS) [R1, R2, PC, SP]
 sample6 = C2_ (SMULL S AL) R12 R11 R10 R9
 sample7 = S_ (LDR B_ AL) R9 (PRE R5 3)
 sample8 = BRANCH_ (BL AL) (L_ "__aeabi_idivmod")
+sample9 = MC_ (MOV AL) R1 (R (RTEMP 20))
