@@ -107,7 +107,7 @@ instance Show Instr where
   show (LAB str) = (str ++ ":\n")
 
 output_show :: Instr -> String
-output_show instr = (show instr) ++ " "
+output_show instr = (show instr) ++ " | "
 
 -- Substitute RTEMP to real registers
 normInstr :: Int -> REG -> Instr -> Instr

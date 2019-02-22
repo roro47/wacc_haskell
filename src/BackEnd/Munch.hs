@@ -7,7 +7,14 @@ import Data.Maybe
 import Control.Monad.State.Lazy
 import BackEnd.Translate as T
 import BackEnd.Frame as Frame
-
+--how to know scope ?? when frame is changed ???
+--TODO : difference between b and bl ??
+-- SUFFIX?
+-- REGISTER SAVE??
+-- SYSTEM FUNCTION CALLS?
+-- fix the built in functions
+-- assembly for the messages
+-- special name for functions & built-ins in order to decide stack
 optimsedMunch stm = do
   m <- munchStm stm
   return $ optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
@@ -19,37 +26,48 @@ bopToCBS bop
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
 munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
-munchExp (CALL (NAME "println") e) = undefined
+munchExp (CALL (NAME "println") e) = do
+  (i, t) <- munchExp (CALL (NAME "print") e)
+  let ln = ILABEL { assem = LAB "p_print_ln", lab = ["p_print_ln"]}
+  return (i++[ln], t)
 
 munchExp (CALL (NAME "print") e) = undefined
--- 28		LDRSB r4, [sp]
--- 29		MOV r0, r4
--- 30		BL putchar
+--NEED TYPE OF THIS e
 
 munchExp (CALL (NAME "read") e) = undefined
+--NEED TYPE OF THIS e
 
+-- ********* More built in function calls
 
 {- r0 / r1 : result in r0
   need to check if r0 is divided by zero-}
 munchExp (BINEXP DIV e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  r0 <- newTemp -- dividend
-  r1 <- newTemp --divisor
+  (i1, t1) <- munchExp e1 -- dividend
+  (i2, t2) <- munchExp e2 --divisor
   let divLabel = "__aeabi_idiv"
-      binOpDiv = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel), src = [r0, r1], dst = [r0]} in
-      return $ (i1 ++ i2 ++ [binOpDiv], r0)
+      moveDividend = IMOV {assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t1)),
+                      src = [t1], dst = [0]}
+      moveDivisor = IMOV {assem = MC_ (ARM.MOV AL) R1 (R (RTEMP t2)),
+                      src = [t2], dst = [1]}
+      divInstr = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel),
+                      src = [0, 1], dst = [0]} in
+      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, divInstr], 0)
+
 
 {- r0 % r1 : result in r1
   need to check if r0 is divided by zero-}
 munchExp (BINEXP MOD e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  r0 <- newTemp -- dividend
-  r1 <- newTemp --divisor
+  (i1, t1) <- munchExp e1 -- dividend
+  (i2, t2) <- munchExp e2  --divisor
   let modLabel = "__aeabi_idivmod"
-      binOpMod = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel), src = [r0, r1], dst = [r1]} in
-      return $ (i1 ++ i2 ++ [binOpMod], r1)
+      moveDividend = IMOV {assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t1)),
+                  src = [t1], dst = [0]}
+      moveDivisor = IMOV {assem = MC_ (ARM.MOV AL) R1 (R (RTEMP t2)),
+                  src = [t2], dst = [1]}
+      modInstr = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel),
+                  src = [0, 1], dst = [1]} in
+      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, modInstr], 1)
+
 
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
@@ -81,10 +99,12 @@ munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
     return (cinstr ++ falseinstr ++ trueinstr ++ i, t)
 
 munchExp (CALL f es) = do
-  (fi, ft) <- munchExp f -- assume result returned in fi
-  state <- get
+  (fi, ft) <- munchExp f -- assume result returned in ft
   ls <- mapM (liftM fst.munchExp) es
-  return (fi ++ concat ls, ft) --NO CALLER / CALLEE SAVE CONVENTION YET!
+  let returnVal = IMOV {assem = MC_ (ARM.MOV AL) R0 (R $ RTEMP ft), dst = [0], src = [ft]}
+  return ((concat ls) ++ fi ++ [returnVal], 0) -- returned in reg 0
+
+-- NO CALLER / CALLEE SAVE CONVENTION YET !!
 
 munchExp (CONSTC chr) = do
   t <- newTemp
@@ -108,7 +128,7 @@ lslOP e1 e2 bop int = do
 canlsl bop int = (bop == MINUS || bop == PLUS) && (int == 2 || int == 4 || int == 8)
 
 condExp :: Exp -> State TranslateState (Cond -> ([ASSEM.Instr], Temp))
--- LSL inside ADD SUB --
+-- LSL inside ADD SUB  ** ugly pattern match to avoid run time loop --
 condExp (BINEXP bop (BINEXP MUL e1 (CONSTI int)) e2)
   | canlsl bop int
       = lslOP e1 e2 bop int
@@ -177,7 +197,7 @@ munchMem :: Exp -> State TranslateState ([ASSEM.Instr], [Int], SLOP2)
 --- PRE-INDEX ---
 -- HANDLED USING optimise
 
--- TODO: more simplification allowed here : eval the e if possible to a int....
+-- TODO: more simplification allowed here : eval the expression if possible to a int....
 ---- IMMEDIATE ----
 munchMem (TEMP t) = return ([], [t], Imm (RTEMP t) 0)
 munchMem (BINEXP PLUS (TEMP t) (CONSTI int)) = return ([], [t], Imm (RTEMP t) int)
@@ -260,11 +280,11 @@ condStm (IR.MOV (MEM me) e) = do -- STR
 
 condStm (IR.PUSH e) = do
   (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [t], src = []}]) --sp here or not ??
+  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [13], src = [t]}]) --sp here or not ??
 
 condStm (IR.POP e) = do
   (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.POP c) [RTEMP t], dst = [t], src = []}])
+  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.POP c) [RTEMP t], dst = [t], src = [13]}])
 
 condStm (IR.MOV e (CONSTI int)) = do
   (i, t) <- munchExp e
@@ -340,6 +360,7 @@ s_2 = SEQ (LABEL "eq") (IR.MOV (TEMP 7) (CONSTI 5))
 s_3 = CJUMP IR.GT (CONSTI 1) (CONSTI 2) "eq" "ne"
 expr = ESEQ (SEQ s_3 (SEQ s_1 s_2)) (TEMP 7)
 
+call = CALL (CONSTI 1) [(CONSTI 7)]
 -- pre-Index sample --
 assemPre = (IOPER { assem = (CBS_ (ARM.ADD NoSuffix ARM.EQ) (RTEMP 1) (RTEMP 1) (IMM 2)), src = [1], dst = [1], jump = []}) :
            (IMOV { assem = (S_ (ARM.LDR W ARM.EQ) (RTEMP 2) (Imm (RTEMP 1) 0)), src = [2], dst = [1]}) : []
