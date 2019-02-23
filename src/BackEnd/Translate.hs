@@ -294,13 +294,13 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "==" -> return $ condition EQ exps'
     "!=" -> return $ condition NE exps'
     "skip" -> undefined
-    "read" -> undefined
-    "free" -> undefined
+    "read" -> translateRead t exps'
+    "free" -> translateFree t exps'
     "print" -> translatePrint t exps'
     "println" -> translatePrintln t exps'
     "newpair" -> translateNewPair t exps'
-    "fst" -> undefined
-    "snd" -> undefined
+    "fst" -> translatePairAccess t exps' "fst"
+    "snd" -> translatePairAccess t exps' "snd"
     "!" -> undefined
     "#pos" -> undefined
     "#neg" -> undefined
@@ -315,20 +315,32 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
           Cx (\label1 label2 -> CJUMP rop exp1 exp2 label1 label2)
 
+callp = \s -> (\exprs -> return $ Ex $ CALL (NAME s) exprs)
+
+translateFree :: Type -> [Exp] -> State TranslateState IExp
+translateFree (TPair _ _) exprs = callp "p_free_pair" exprs
+translateFree (TArray _) exprs = callp "#p_free_array" exprs
+translateFree TStr exprs = callp "#p_free_array" exprs
+
+
+translateRead :: Type -> [Exp] -> State TranslateState IExp
+translateRead TInt exps = callp "#p_read_int" exps
+translateRead TChar exps = callp "#p_read_char" exps
+
 translatePrint :: Type -> [Exp] -> State TranslateState IExp
-translatePrint TInt exps = return $ Ex $ CALL (NAME "p_print_int") exps
-translatePrint TBool exps = return $ Ex $ CALL (NAME "p_print_bool") exps
-translatePrint TChar exps = return $ Ex $ CALL (NAME "p_print_string") exps
-translatePrint TStr exps = return $ Ex $ CALL (NAME "p_print_string") exps
-translatePrint (TArray TChar) exps = return $ Ex $ CALL (NAME "p_print_string") exps
-translatePrint _ exps = return $ Ex $ CALL (NAME "p_print_reference" ) exps
+translatePrint TChar exps = callp "#p_putchar" exps
+translatePrint TInt exps = callp "#p_print_int" exps
+translatePrint TBool exps = callp "#p_print_bool" exps
+translatePrint TStr exps = callp "#p_print_string" exps
+translatePrint (TArray TChar) exps = callp "#p_print_string" exps
+translatePrint _ exps = callp "#p_print_reference" exps
 -- Array & Pair
 
 translatePrintln :: Type -> [Exp] -> State TranslateState IExp
 translatePrintln t exps = do
   print <- translatePrint t exps
   unexPrint <- unEx print
-  return $ Ex $ CALL (NAME "p_print_ln") [unexPrint]
+  return $ Ex $ CALL (NAME "#p_print_ln") [unexPrint]
 
 {-
  BL MALLOC required here:
@@ -336,32 +348,26 @@ translatePrintln t exps = do
  return the address of malloc in R0
 -}
 --nil frag?? -- no, handled by qemu
--- treat null as consti 0??
+-- treat null as MEM 0
+-- null is of type void
+
+show' = (Prelude.filter (/= ' ')).show
 translateNewPair :: Type -> [Exp] -> State TranslateState IExp
-translateNewPair (TPair t1 t2) exps = undefined
---PLAN : get the length of t1 t2
+-- ASSUME 2 parameters
+translateNewPair (TPair t1 t2) exps
+  = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
 
--- normal ones ---
--- 6   LDR r0, =8
--- 7		BL malloc
--- 8		MOV r4, r0  -- store the pair address in r4
--- 9		LDR r5, =10 -- malloc fst
--- 10		LDR r0, =4
--- 11		BL malloc
--- 12		STR r5, [r0]  -- store the content in heap addr in r0
--- 13		STR r0, [r4] -- store the fst addr in pair addr
--- 14		LDR r5, =3  -- malloc snd
--- 15		LDR r0, =4
--- 16		BL malloc
--- 17		STR r5, [r0] -- store the content in heap addr for snd
--- 18		STR r0, [r4, #4] -- store the snd addr in pair addr
--- 19		STR r4, [sp]  -- put pair address on stack
+  -- ref pair is null
+  -- nul --
+  -- 15		LDR r4, =0
+  -- 16		STR r4, [sp]
+  -- 17		LDR r4, [sp]
 
--- ref pair is null
--- nul --
--- 15		LDR r4, =0
--- 16		STR r4, [sp]
--- 17		LDR r4, [sp]
+translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
+translatePairAccess (TPair t1 t2) exps str
+  = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
+
+
 
 -- turn IExp to Exp
 unEx :: IExp -> State TranslateState Exp
@@ -428,25 +434,6 @@ translateOrd e = do
   reg <- newTemp
   return ((Nx $ MOV (TEMP reg) e), 1) --STRB hence need to record length
 
-translateFst :: Exp -> Type -> State TranslateState (IExp, Int)
-translateFst e (TPair t1 t2) = do
-  reg <- newTemp
-  let temp = TEMP reg in
-    return  (Nx $ SEQ (MOV temp (MEM e)) (MOV temp (MEM temp)), typeLen t1)
-
-translateSnd :: Exp -> Type -> State TranslateState (IExp, Int)
-translateSnd e (TPair t1 t2) = do
-  reg <- newTemp
-  let temp = TEMP reg
-      sndPos = BINEXP PLUS temp (CONSTI 4) in
-        return ( Nx $ SEQ (MOV temp (MEM e)) (MOV temp (MEM sndPos)), typeLen t2)
-
-
-translateFree :: Exp -> State TranslateState IExp
--- string & array: need no fragmentation
-translateFree e = do
-  reg <- newTemp
-  return (Nx $ SEQ (MOV (TEMP reg) (MEM e)) (JUMP (NAME "free") ["free"]))
 
 -- for built-in function below, need to generate code and
 -- add them to segment list
@@ -456,152 +443,152 @@ translateFree e = do
 -- ***NOT INCLUDING PUSH POP***
 --pre: FRAGMENT TRANSLATES CAN ONLY BE CALLED AFTER VISITING THE WHOLE TREE
 -- AND CAN ONLY BE CALLED ONCE EACH
-
-fragRead :: Type -> State TranslateState ()
-fragRead t = do
-  msg <- newDataLabel
-  temp0 <- newTemp
-  temp1 <- newTemp
-  let  str TInt = "%d\0"
-       str TChar = "%c\0" in
-       addFragment (Frame.STRING msg (str t))
-  let  statement = SEQ (MOV reg1 reg0) (SEQ (MOV reg0 (NAME msg))
-                  (SEQ reg0_plus_4 (JUMP (NAME "scanf") ["scanf"])))
-       reg0 = TEMP temp0
-       reg1 = TEMP temp1
-       reg0_plus_4 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
-       f TInt = Frame.newFrame "p_read_int"
-       f TChar = Frame.newFrame "p_read_char" in
-        addFragment (Frame.PROC statement (f t))
-
-
-fragFreePair :: State TranslateState ()
--- pair: new fragment
--- pre: Includes throw run time error and print
-fragFreePair = do
-  msg <- newDataLabel
-  temp <- newTemp
-  addFragment (Frame.STRING msg "NullReferenceError: dereference a null reference\n\0")
-  let  reg0 = TEMP temp
-       frame = Frame.newFrame "p_free_pair"
-       error_label = "p_throw_runtime_error"
-       statement = SEQ (LABEL "free") (SEQ (PUSH reg0) free_all)
-       check_null_ptr = SEQ (CJUMP EQ (CONSTI 0) (reg0) "error" "free") run_error
-       run_error = SEQ (LABEL "error") (SEQ (MOV reg0 (NAME msg)) (JUMP (NAME error_label) [error_label]))
-       free1 = SEQ (MOV (reg0) (MEM reg0)) bl_free
-       free2 = SEQ (POP reg0) (SEQ (MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))) bl_free)
-       free_all = SEQ free1 (SEQ free2 (SEQ (POP reg0) bl_free))
-       bl_free = JUMP (NAME "free") ["free"] in
-          addFragment (Frame.PROC statement frame)
-
-
-fragPrint :: Type -> State TranslateState ()
-fragPrint TStr = do
-  temp0 <- newTemp
-  temp1 <- newTemp
-  temp2 <- newTemp
-  msg <- newDataLabel
-  addFragment (Frame.STRING msg "%.*s\0")
-  let  reg0 = TEMP temp0
-       reg1 = TEMP temp1
-       reg2 = TEMP temp2
-       frame = Frame.newFrame "p_print_string"
-       s1 = MOV reg1 (MEM reg0)
-       s2 = MOV reg2 (BINEXP PLUS reg0 (CONSTI 4))
-       s3 = MOV reg0 (NAME msg)
-       s4 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
-       s5 = JUMP (NAME "printf") ["printf"]
-       s6 = MOV reg0 (CONSTI 0)
-       s7 = JUMP (NAME "fflush") ["fflush"]
-       statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 (SEQ s6 s7))))) in
-         addFragment (Frame.PROC statement frame)
-
-fragPrint TChar = fragPrint TStr
-
-fragPrint TInt = do
- msg <- newDataLabel
- temp0 <- newTemp
- temp1 <- newTemp
- addFragment (Frame.STRING msg "%d\0")
- let reg0 = TEMP temp1
-     reg1 = TEMP temp1
-     frame = Frame.newFrame "p_print_int"
-     s1 = MOV reg1 reg0
-     s2 = MOV reg0 (NAME msg)
-     s3 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
-     s4 = JUMP (NAME "printf") ["printf"]
-     s5 = MOV reg0 (CONSTI 0)
-     s6 = JUMP (NAME "fflush") ["fflush"]
-     statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 s6)))) in
-        addFragment (Frame.PROC statement frame)
-
-fragPrint TBool = do
-  msg0 <- newDataLabel
-  msg1 <- newDataLabel
-  temp1 <- newTemp
-  addFragment (Frame.STRING msg0 "false\0")
-  addFragment (Frame.STRING msg1 "true\0")
-  let reg0 = TEMP temp1
-      frame = Frame.newFrame "p_print_bool"
-      s1 = CJUMP NE reg0 (CONSTI 0) "ne" "eq"
-      s_ne = SEQ (LABEL "ne") (MOV reg0 (NAME msg0))
-      s_eq = SEQ (LABEL "eq") (MOV reg0 (NAME msg1))
-      s2 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
-      s3 = JUMP (NAME "printf") ["printf"]
-      s4 = MOV reg0 (CONSTI 0)
-      s5 = JUMP (NAME "fflush") ["fflush"]
-      statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
-        addFragment (Frame.PROC statement frame)
-
-fragPrintln :: Type -> State TranslateState ()
-fragPrintln _ = do
- msg <- newDataLabel
- temp <- newTemp
- addFragment (Frame.STRING msg "\0")
- let reg0 = TEMP temp
-     frame = Frame.newFrame "p_print_ln"
-     s1 = MOV reg0 (NAME msg)
-     s2 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
-     s3 = JUMP (NAME "puts") ["puts"]
-     s4 = MOV reg0 (CONSTI 0)
-     s5 = JUMP (NAME "fflush") ["fflush"]
-     statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
-       addFragment (Frame.PROC statement frame)
-
-data ErrorType = RunTime | Overflow | ArrayBound
-
-fragError :: ErrorType -> State TranslateState ()
-
---   p_throw_runtime_error:
--- 70		BL p_print_string
--- 71		MOV r0, #-1
--- 72		BL exit
-fragError RunTime = do
- temp <- newTemp
-
- let reg0 = TEMP temp
-     frame = Frame.newFrame "p_throw_runtime_error:\n\0"
-     s1 = JUMP (NAME "p_print_string") ["p_print_string"]
-     s2 = MOV reg0 (CONSTI (-1))
-     s_exit = JUMP (NAME "exit") ["exit"]
-     statement = SEQ (SEQ s1 s2) s_exit in
-       addFragment (Frame.PROC statement frame)
-
-
- -- p_throw_overflow_error:
- -- 67		LDR r0, =msg_2
- -- 68		BL p_throw_runtime_error
-fragError Overflow = do
- msg <- newDataLabel
- temp <- newTemp
- addFragment (Frame.STRING msg "OverflowError: the result is too small/large to store in a 4-byte signed-integer.\n\0")
-
- let reg0 = TEMP temp
-     frame = Frame.newFrame "p_throw_overflow_error:\n\0"
-     s1 = MOV reg0 (NAME msg)
-     runTimeError = JUMP (NAME "p_throw_runtime_error:\n\0") ["p_throw_runtime_error:\n\0"]
-     statement = SEQ s1 runTimeError in
-       addFragment (Frame.PROC statement frame)
+--
+-- fragRead :: Type -> State TranslateState ()
+-- fragRead t = do
+--   msg <- newDataLabel
+--   temp0 <- newTemp
+--   temp1 <- newTemp
+--   let  str TInt = "%d\0"
+--        str TChar = "%c\0" in
+--        addFragment (Frame.STRING msg (str t))
+--   let  statement = SEQ (MOV reg1 reg0) (SEQ (MOV reg0 (NAME msg))
+--                   (SEQ reg0_plus_4 (JUMP (NAME "scanf") ["scanf"])))
+--        reg0 = TEMP temp0
+--        reg1 = TEMP temp1
+--        reg0_plus_4 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+--        f TInt = Frame.newFrame "p_read_int"
+--        f TChar = Frame.newFrame "p_read_char" in
+--         addFragment (Frame.PROC statement (f t))
+--
+--
+-- fragFreePair :: State TranslateState ()
+-- -- pair: new fragment
+-- -- pre: Includes throw run time error and print
+-- fragFreePair = do
+--   msg <- newDataLabel
+--   temp <- newTemp
+--   addFragment (Frame.STRING msg "NullReferenceError: dereference a null reference\n\0")
+--   let  reg0 = TEMP temp
+--        frame = Frame.newFrame "p_free_pair"
+--        error_label = "p_throw_runtime_error"
+--        statement = SEQ (LABEL "free") (SEQ (PUSH reg0) free_all)
+--        check_null_ptr = SEQ (CJUMP EQ (CONSTI 0) (reg0) "error" "free") run_error
+--        run_error = SEQ (LABEL "error") (SEQ (MOV reg0 (NAME msg)) (JUMP (NAME error_label) [error_label]))
+--        free1 = SEQ (MOV (reg0) (MEM reg0)) bl_free
+--        free2 = SEQ (POP reg0) (SEQ (MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))) bl_free)
+--        free_all = SEQ free1 (SEQ free2 (SEQ (POP reg0) bl_free))
+--        bl_free = JUMP (NAME "free") ["free"] in
+--           addFragment (Frame.PROC statement frame)
+--
+--
+-- fragPrint :: Type -> State TranslateState ()
+-- fragPrint TStr = do
+--   temp0 <- newTemp
+--   temp1 <- newTemp
+--   temp2 <- newTemp
+--   msg <- newDataLabel
+--   addFragment (Frame.STRING msg "%.*s\0")
+--   let  reg0 = TEMP temp0
+--        reg1 = TEMP temp1
+--        reg2 = TEMP temp2
+--        frame = Frame.newFrame "p_print_string"
+--        s1 = MOV reg1 (MEM reg0)
+--        s2 = MOV reg2 (BINEXP PLUS reg0 (CONSTI 4))
+--        s3 = MOV reg0 (NAME msg)
+--        s4 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+--        s5 = JUMP (NAME "printf") ["printf"]
+--        s6 = MOV reg0 (CONSTI 0)
+--        s7 = JUMP (NAME "fflush") ["fflush"]
+--        statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 (SEQ s6 s7))))) in
+--          addFragment (Frame.PROC statement frame)
+--
+-- fragPrint TChar = fragPrint TStr
+--
+-- fragPrint TInt = do
+--  msg <- newDataLabel
+--  temp0 <- newTemp
+--  temp1 <- newTemp
+--  addFragment (Frame.STRING msg "%d\0")
+--  let reg0 = TEMP temp1
+--      reg1 = TEMP temp1
+--      frame = Frame.newFrame "p_print_int"
+--      s1 = MOV reg1 reg0
+--      s2 = MOV reg0 (NAME msg)
+--      s3 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+--      s4 = JUMP (NAME "printf") ["printf"]
+--      s5 = MOV reg0 (CONSTI 0)
+--      s6 = JUMP (NAME "fflush") ["fflush"]
+--      statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 (SEQ s5 s6)))) in
+--         addFragment (Frame.PROC statement frame)
+--
+-- fragPrint TBool = do
+--   msg0 <- newDataLabel
+--   msg1 <- newDataLabel
+--   temp1 <- newTemp
+--   addFragment (Frame.STRING msg0 "false\0")
+--   addFragment (Frame.STRING msg1 "true\0")
+--   let reg0 = TEMP temp1
+--       frame = Frame.newFrame "p_print_bool"
+--       s1 = CJUMP NE reg0 (CONSTI 0) "ne" "eq"
+--       s_ne = SEQ (LABEL "ne") (MOV reg0 (NAME msg0))
+--       s_eq = SEQ (LABEL "eq") (MOV reg0 (NAME msg1))
+--       s2 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+--       s3 = JUMP (NAME "printf") ["printf"]
+--       s4 = MOV reg0 (CONSTI 0)
+--       s5 = JUMP (NAME "fflush") ["fflush"]
+--       statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
+--         addFragment (Frame.PROC statement frame)
+--
+-- fragPrintln :: Type -> State TranslateState ()
+-- fragPrintln _ = do
+--  msg <- newDataLabel
+--  temp <- newTemp
+--  addFragment (Frame.STRING msg "\0")
+--  let reg0 = TEMP temp
+--      frame = Frame.newFrame "p_print_ln"
+--      s1 = MOV reg0 (NAME msg)
+--      s2 = MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
+--      s3 = JUMP (NAME "puts") ["puts"]
+--      s4 = MOV reg0 (CONSTI 0)
+--      s5 = JUMP (NAME "fflush") ["fflush"]
+--      statement = SEQ s1 (SEQ s2 (SEQ s3 (SEQ s4 s5))) in
+--        addFragment (Frame.PROC statement frame)
+--
+-- data ErrorType = RunTime | Overflow | ArrayBound
+--
+-- fragError :: ErrorType -> State TranslateState ()
+--
+-- --   p_throw_runtime_error:
+-- -- 70		BL p_print_string
+-- -- 71		MOV r0, #-1
+-- -- 72		BL exit
+-- fragError RunTime = do
+--  temp <- newTemp
+--
+--  let reg0 = TEMP temp
+--      frame = Frame.newFrame "p_throw_runtime_error:\n\0"
+--      s1 = JUMP (NAME "p_print_string") ["p_print_string"]
+--      s2 = MOV reg0 (CONSTI (-1))
+--      s_exit = JUMP (NAME "exit") ["exit"]
+--      statement = SEQ (SEQ s1 s2) s_exit in
+--        addFragment (Frame.PROC statement frame)
+--
+--
+--  -- p_throw_overflow_error:
+--  -- 67		LDR r0, =msg_2
+--  -- 68		BL p_throw_runtime_error
+-- fragError Overflow = do
+--  msg <- newDataLabel
+--  temp <- newTemp
+--  addFragment (Frame.STRING msg "OverflowError: the result is too small/large to store in a 4-byte signed-integer.\n\0")
+--
+--  let reg0 = TEMP temp
+--      frame = Frame.newFrame "p_throw_overflow_error:\n\0"
+--      s1 = MOV reg0 (NAME msg)
+--      runTimeError = JUMP (NAME "p_throw_runtime_error:\n\0") ["p_throw_runtime_error:\n\0"]
+--      statement = SEQ s1 runTimeError in
+--        addFragment (Frame.PROC statement frame)
 
 -- p_check_array_bounds:
 -- 67		PUSH {lr}

@@ -7,6 +7,8 @@ import Data.Maybe
 import Control.Monad.State.Lazy
 import BackEnd.Translate as T
 import BackEnd.Frame as Frame
+import Data.List
+import BackEnd.Builtin
 --how to know scope ?? when frame is changed ???
 --TODO : difference between b and bl ??
 -- SUFFIX?
@@ -26,18 +28,31 @@ bopToCBS bop
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
 munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
-munchExp (CALL (NAME "println") es) = do
+munchExp (CALL (NAME "#println") es) = do
   ls <- mapM (liftM fst.munchExp) es
-  let ln = ILABEL { assem = LAB "p_print_ln", lab = ["p_print_ln"]}
+  let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "#p_print_ln"),
+                  src = [], dst = [], jump = ["#p_print_ln"]}
   return ((concat ls)++[ln], dummy)
 
-munchExp (CALL (NAME "print") e) = undefined
---NEED TYPE OF THIS e
+munchExp (CALL (NAME "#p_putchar") [e]) = do
+  (i, t) <- munchExp e
+  let mv = move_to_r t 0
+      putchar = ljumpt_to_label "putchar"
+  return (i ++ [mv, putchar], dummy)
 
-munchExp (CALL (NAME "read") e) = undefined
---NEED TYPE OF THIS e
+munchExp (CALL (NAME n) [e])
+  | "#p_" `isPrefixOf` n = do
+    (i, t) <- munchExp e
+    return  (i++ [(move_to_r t 0), (ljumpt_to_label n)], dummy)
 
--- ********* More built in function calls
+munchExp (CALL (NAME n) e)
+  | "#fst" `isPrefixOf` n = accessPair True fst e
+  | "#snd" `isPrefixOf` n = accessPair False snd e
+  | "#newpair " `isPrefixOf` n = createPair fst snd e
+    where
+      ls = words n
+      fst = (ls !! 1)
+      snd = (ls !! 2)
 
 {- r0 / r1 : result in r0
   need to check if r0 is divided by zero-}
@@ -45,14 +60,11 @@ munchExp (BINEXP DIV e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2 --divisor
   let divLabel = "__aeabi_idiv"
-      moveDividend = IMOV {assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t1)),
-                      src = [t1], dst = [0]}
-      moveDivisor = IMOV {assem = MC_ (ARM.MOV AL) R1 (R (RTEMP t2)),
-                      src = [t2], dst = [1]}
+      moveDividend = move_to_r t1 0
+      moveDivisor = move_to_r t2 1
       divInstr = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel),
                       src = [0, 1], dst = [0]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, divInstr], 0)
-
 
 {- r0 % r1 : result in r1
   need to check if r0 is divided by zero-}
@@ -60,10 +72,8 @@ munchExp (BINEXP MOD e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2  --divisor
   let modLabel = "__aeabi_idivmod"
-      moveDividend = IMOV {assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t1)),
-                  src = [t1], dst = [0]}
-      moveDivisor = IMOV {assem = MC_ (ARM.MOV AL) R1 (R (RTEMP t2)),
-                  src = [t2], dst = [1]}
+      moveDividend = move_to_r t1 0
+      moveDivisor = move_to_r t2 1
       modInstr = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel),
                   src = [0, 1], dst = [1]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, modInstr], 1)
@@ -101,16 +111,10 @@ munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
 munchExp (CALL f es) = do
   (fi, ft) <- munchExp f -- assume result returned in ft
   ls <- mapM (liftM fst.munchExp) es
-  let returnVal = IMOV {assem = MC_ (ARM.MOV AL) R0 (R $ RTEMP ft), dst = [0], src = [ft]}
+  let returnVal = move_to_r ft 0
   return ((concat ls) ++ fi ++ [returnVal], 0) -- returned in reg 0
 
 -- NO CALLER / CALLEE SAVE CONVENTION YET !!
-
-munchExp (CONSTC chr) = do
-  t <- newTemp
-  let sub = IOPER {assem = CBS_ (ARM.SUB NoSuffix AL) SP SP (IMM 1), src = [13], dst = [13], jump = []}
-  remain <- munchStm (IR.MOV (TEMP t) (CONSTC chr))
-  return $ (sub:remain, t)
 
 munchExp (TEMP t) = return ([],t)
 
@@ -179,9 +183,28 @@ condExp (CONSTI int) = do
   t <- newTemp
   return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int) , dst = [t], src = []}], t)
 
+condExp (CONSTC chr) = do
+-- should delete comment part --  handled in translate in decleare??
+--   t <- newTemp
+--   let sub = IOPER {assem = CBS_ (ARM.SUB NoSuffix AL) SP SP (IMM 1), src = [13], dst = [13], jump = []}
+--   remain <- munchStm (IR.MOV (TEMP t) (CONSTC chr))
+--   return $ (sub:remain, t)
+  t <- newTemp
+  return $ \c -> ([IMOV {assem = S_ (LDR B_ c) (RTEMP t) (CHR_ chr), dst = [t], src = []}], t)
+
 condExp (NAME l) = do
   t <- newTemp
   return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
+
+condExp (MEM (CONSTI i)) = do
+  newt <- newTemp
+  return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP newt) (NUM i) , dst = [], src = [newt]}], newt)
+
+condExp (MEM m) = do
+  (i, t) <- munchExp m
+  newt <- newTemp
+  return $ \c -> (i ++ [IMOV {assem = S_ (ARM.LDR W c) (RTEMP newt) (Imm (RTEMP t) 0)
+                        , dst = [t], src = [newt]}], newt)
 
 
 addsubtoCalc :: BOp -> (Cond -> Calc)
@@ -248,12 +271,13 @@ munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
--- Characters includes >1 instructions thus need to be treated specially
-munchStm (IR.MOV e (CONSTC char)) = do
-  (i, t) <- munchExp e
-  let mv = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP t) (CHR char), src = [], dst = [t]}
-      str = IMOV { assem = S_ (ARM.STR B_ AL) (RTEMP t) (Imm SP 0), src = [t, -3], dst = []}
-  return $ i ++ [mv, str]
+-- should delete
+-- -- Characters includes >1 instructions thus need to be treated specially
+-- munchStm (IR.MOV e (CONSTC char)) = do
+--   (i, t) <- munchExp e
+--   let mv = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP t) (CHR char), src = [], dst = [t]}
+--       str = IMOV { assem = S_ (ARM.STR B_ AL) (RTEMP t) (Imm SP 0), src = [t, -3], dst = []}
+--   return $ i ++ [mv, str]
 
 munchStm x = do
   m <- condStm x
@@ -290,14 +314,10 @@ condStm (IR.MOV e (CONSTI int)) = do
   (i, t) <- munchExp e
   return (\c -> i ++ [IMOV { assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int), src = [], dst = [t]}])
 
-condStm (IR.MOV e1 e2) = do
+condStm (IR.MOV e1 e2) = do  --In which sequence ?
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
-  return (\c -> i1 ++ i2 ++ [ IMOV { assem = MC_ (ARM.MOV c) (RTEMP t1) (R (RTEMP t2)),
-                                     src = [t2], dst = [t1]}])
-
-condStm (JUMP (NAME l) ls) = do
-  return (\c -> [IOPER {assem = BRANCH_ (ARM.BL c) (L_ l), dst = [], src = [], jump = [l]}])
+  return (\c -> i1 ++ i2 ++ [move_to_r t2 t1])
 
 condStm (JUMP e ls) = do
   (i, t) <- munchExp e
@@ -313,6 +333,46 @@ munchBuiltInFuncFrag (PROC stm frame) = do
 munchDataFrag :: Fragment -> State TranslateState [ASSEM.Instr]
 munchDataFrag (STRING label str)
   = return [ILABEL {assem = (M label (length str) str), lab = [label]}]
+
+oneByte :: String -> Bool
+oneByte "TBool" = True
+oneByte "TChar" = True
+oneByte _ = False
+
+createPair :: String -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
+-- pre : exps contains only two param
+createPair s1 s2 exps = do
+  (i1, t1) <- munchExp (exps !! 0)
+  (i2, t2) <- munchExp (exps !! 1)
+  tadddr <- newTemp -- pair addr
+  let suffix1 = if (oneByte s1) then B_ else W
+      suffix2 = if (oneByte s2) then B_ else W
+      ld8 = IMOV { assem = (S_ (LDR W AL) R0 (NUM 8)), src = [], dst = [0]}
+      ld4 = IMOV { assem = (S_ (LDR W AL) R0 (NUM 4)), src = [], dst = [0]}
+      malloc = IOPER { assem = BRANCH_ (BL AL) (L_ "malloc"), src = [0], dst = [0], jump = ["malloc"]}
+      strPairAddr = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP tadddr) (R R0), src = [0], dst = [tadddr]}
+      savefst = IMOV { assem = (S_ (STR suffix1 AL) (RTEMP t1) (Imm R0 0)), src = [t1, 0], dst = []}
+      savesnd = IMOV { assem = (S_ (STR suffix2 AL) (RTEMP t2) (Imm R0 0)), src = [t2, 0], dst = []}
+      strfstaddr = IMOV { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 0)), src = [tadddr, 0], dst = []}
+      strsndaddr = IMOV { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 4)), src = [tadddr, 0], dst = []}
+      strpaironstack= IMOV { assem = (S_ (STR W AL) (RTEMP tadddr) (Imm (RTEMP 13) 0)), src = [t1, 13], dst = [0]}
+  return ([ld8, malloc, strPairAddr] ++ i1 ++ [ld4, malloc, savefst, strfstaddr]
+           ++ i2 ++ [ld4, malloc, savesnd, strpaironstack], Frame.fp)
+
+accessPair :: Bool -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
+accessPair isfst typestr [e] = do
+  (i, t) <- munchExp e
+  let one = oneByte typestr
+      offset = if isfst then 0 else 4
+      getpaddr = move_to_r t 0
+      check = IOPER { assem = BRANCH_ (BL AL) (L_ "p_check_null_pointer")
+                      , src = [0], dst = [], jump = ["p_check_null_pointer"]}
+      s1 = IMOV {assem = (S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) offset)), src = [t], dst = [t]}
+      s2_suffix = if one then SB else W
+      s2 = IMOV {assem = (S_ (LDR s2_suffix AL) (RTEMP t) (Imm (RTEMP t) 0)), src = [t], dst = [t]}
+      s3_suffix = if one then B_ else W
+      s3 = IMOV {assem = (S_ (STR s3_suffix AL) (RTEMP t) (Imm (RTEMP 13) 0)), src = [t, 13], dst = []}
+  return (i ++ [getpaddr, check, s1, s2, s3], 13)
 
 -------------------- Utilities ---------------------
 condIR = [IR.EQ, IR.LT, IR.LE, IR.GT, IR.GE, IR.NE]
