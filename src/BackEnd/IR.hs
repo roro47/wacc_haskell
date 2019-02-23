@@ -47,6 +47,7 @@ instance Treeable Stm where
     Node "CJUMP" [Node (show rop) [toTree e1, toTree e2],
                   Node label1 [], Node label2 []]
   toTree (LABEL label) = Node "LABEL" [Node label []]
+  toTree (SEQ s1 s2) = Node "SEQ" [toTree s1, toTree s2]
   toTree NOP = Node "NOP" []
 
 instance Show Exp where
