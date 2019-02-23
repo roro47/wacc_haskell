@@ -28,8 +28,8 @@ p_print_bool = do
   addFragment (Frame.STRING falsemsg "false\0")
   return $[pushlr,
           cmp_r0,
-          IMOV {assem = S_ (LDR W ARM.NE) R0 (MSG truemsg), src = [], dst = [0]},
-          ldeq_msg_toR0 falsemsg]
+          ld_cond_msg_toR0 truemsg ARM.NE,
+          ld_cond_msg_toR0 falsemsg ARM.EQ]
           ++ end
 
 
@@ -57,17 +57,16 @@ p_check_null_pointer = do
   let s = "p_throw_runtime_error"
   return $[pushlr,
           cmp_r0,
-          ldeq_msg_toR0 msg,
-          IOPER {assem = BRANCH_ (BL ARM.EQ) (L_ s),
-                 src = [0], dst = [], jump = [s]},
+          ld_cond_msg_toR0 msg ARM.EQ,
+          ljump_cond s ARM.EQ,
           poppc]
 
 p_throw_runtime_error :: State TranslateState [ASSEM.Instr]
 p_throw_runtime_error = do
   let s = "p_print_string"
-  return [jumpt_to_label s,
+  return [jump_to_label s,
           IMOV {assem = MC_ (ARM.MOV AL) R0 (IMM (-1)), src = [], dst = [0]},
-          jumpt_to_label "exit"]
+          jump_to_label "exit"]
 
 p_read_int :: State TranslateState [ASSEM.Instr]
 p_read_int = p_read "%d\0"
@@ -82,7 +81,7 @@ p_read str =  do
           move_to_r 0 1,
           ld_msg_toR0 msg,
           r0_add4,
-          ljumpt_to_label "scanf",
+          ljump_to_label "scanf",
           poppc]
 
 p_free_pair :: State TranslateState [ASSEM.Instr]
@@ -93,36 +92,71 @@ p_free_pair = do
   addFragment (Frame.STRING msg str)
   return [pushlr,
           cmp_r0,
-          ldeq_msg_toR0 msg,
-          IOPER {assem = BRANCH_ (BL ARM.EQ) (L_ runTimeError),
-                 src = [0], dst = [], jump = [runTimeError]},
+          ld_cond_msg_toR0 msg ARM.EQ,
+          ljump_cond runTimeError ARM.EQ,
           IOPER { assem = STACK_ (PUSH AL) [R0], src = [0], dst = [Frame.fp], jump = []},
           IMOV {assem = S_ (LDR W AL) R0 (Imm R0 0), src = [0], dst = [0]},
-          ljumpt_to_label "free",
+          ljump_to_label "free",
           IMOV {assem = S_ (LDR W AL) R0 (Imm (RTEMP Frame.fp) 0), src = [Frame.fp], dst = [0]},
           IMOV {assem = S_ (LDR W AL) R0 (Imm R0 4), src = [0], dst = [0]},
-          ljumpt_to_label "free",
+          ljump_to_label "free",
           IOPER { assem = STACK_ (POP AL) [R0], src = [Frame.fp], dst = [Frame.fp, 0], jump = []},
-          ljumpt_to_label "free",
-          poppc
-          ]
+          ljump_to_label "free",
+          poppc]
 
+{-How to handle array access in translate && munch? -}
+p_check_array_bounds :: State TranslateState [ASSEM.Instr]
+p_check_array_bounds = do
+  msgneg <- newDataLabel
+  msgover <- newDataLabel
+  t <- newTemp -- r1
+  addFragment (Frame.STRING msgneg "ArrayIndexOutOfBoundsError: negative index\n\0")
+  addFragment (Frame.STRING msgover "ArrayIndexOutOfBoundsError: index too large\n\0")
+  return [pushlr,
+          cmp_r0,
+          ld_cond_msg_toR0 msgneg ARM.LT,
+          ljump_cond "p_throw_runtime_error" ARM.LT,
+          IMOV {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0), src = [t], dst = [0]},
+          cmp_r0,
+          ld_cond_msg_toR0 msgover ARM.CS,
+          ljump_cond "p_throw_runtime_error" ARM.CS,
+          poppc]
 
+{- where to call ? -}
+p_throw_overflow_error :: State TranslateState [ASSEM.Instr]
+p_throw_overflow_error = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg $ "OverflowError: the result is too small/large"
+                                   ++ " to store in a 4-byte signed-integer.\n")
+  return [ld_msg_toR0 msg, ljump_to_label "BL p_throw_runtime_error"]
+
+{- where to call ? -}
+p_check_divide_by_zero :: State TranslateState [ASSEM.Instr]
+p_check_divide_by_zero = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg "DivideByZeroError: divide or modulo by zero\n\0")
+  return [pushlr,
+          IOPER {assem = MC_ (CMP AL) R1 (IMM 0), src = [1], dst = [], jump = []},
+          ld_cond_msg_toR0 msg ARM.EQ,
+          ljump_cond "p_throw_runtime_error" ARM.EQ,
+          poppc]
 
 {- Short handed representations for assembly -}
 move_to_r t r = IMOV {assem = MC_ (ARM.MOV AL) (RTEMP r) (R (RTEMP t)), src = [t], dst = [r]}
 add_label = \s -> ILABEL { assem = LAB s, lab = [s]}
+
+ljump_cond = \s -> (\c -> IOPER {assem = BRANCH_ (BL c) (L_ s),
+                               src = [0], dst = [], jump = [s]})
 --BL that takes r0 as param and no returns
-ljumpt_to_label = \s -> IOPER {assem = BRANCH_ (BL AL) (L_ s),
-                               src = [0], dst = [], jump = [s]}
+ljump_to_label = \s -> (ljump_cond s AL)
 --BL that takes no param and no returns
-jumpt_to_label = \s -> IOPER {assem = BRANCH_ (BL AL) (L_ s),
+jump_to_label = \s -> IOPER {assem = BRANCH_ (BL AL) (L_ s),
                                src = [], dst = [], jump = [s]}
 r0_add4 = IOPER { assem = CBS_ (ADD NoSuffix AL) R0 R0 (IMM 4), src = [0], dst = [0], jump = []}
 r0_clear = IMOV {assem = MC_ (ARM.MOV AL) R0 (IMM 0), src = [], dst = [0]}
 pushlr = IOPER { assem = STACK_ (PUSH AL) [LR], src = [Frame.ra], dst = [Frame.fp], jump = []}
 poppc = IOPER { assem = STACK_ (POP AL) [PC], src = [Frame.pc, Frame.fp], dst = [Frame.fp], jump = []}
-end = [r0_add4, ljumpt_to_label "printf", r0_clear, ljumpt_to_label "fflush", poppc]
+end = [r0_add4, ljump_to_label "printf", r0_clear, ljump_to_label "fflush", poppc]
 ld_msg_toR0 = \msg -> IMOV {assem = S_ (LDR W AL) R0 (MSG msg), src = [], dst = [0]}
-ldeq_msg_toR0 = \msg -> IMOV {assem = S_ (LDR W ARM.EQ) R0 (MSG msg), src = [], dst = [0]}
+ld_cond_msg_toR0 = \msg -> (\c -> IMOV {assem = S_ (LDR W c) R0 (MSG msg), src = [], dst = [0]})
 cmp_r0 = IOPER {assem = MC_ (CMP AL) R0 (IMM 0), src = [0], dst = [], jump = []}

@@ -37,13 +37,13 @@ munchExp (CALL (NAME "#println") es) = do
 munchExp (CALL (NAME "#p_putchar") [e]) = do
   (i, t) <- munchExp e
   let mv = move_to_r t 0
-      putchar = ljumpt_to_label "putchar"
+      putchar = ljump_to_label "putchar"
   return (i ++ [mv, putchar], dummy)
 
 munchExp (CALL (NAME n) [e])
   | "#p_" `isPrefixOf` n = do
     (i, t) <- munchExp e
-    return  (i++ [(move_to_r t 0), (ljumpt_to_label n)], dummy)
+    return  (i++ [(move_to_r t 0), (ljump_to_label n)], dummy)
 
 munchExp (CALL (NAME n) e)
   | "#fst" `isPrefixOf` n = accessPair True fst e

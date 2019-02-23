@@ -19,7 +19,7 @@ data SLType = B_ | SB | H | SH | W deriving (Generic, Eq) -- only saw sb in ref 
 data SLOP2 = MSG String | PRE REG Int {-| POST REG Int-} | Imm REG Int | NUM Int | CHR_ Char deriving Eq-- IF int is zero dont show
 
 {- Cond not included here :  HS/CS LO/CC because I don't knwo which to use-}
-data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | AL
+data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | CS |AL
             deriving (Generic, Eq)
 
 instance GShow Cond
