@@ -274,6 +274,12 @@ translateExprF (Ann (StringLiter s) _) = do
   addFragment $ Frame.STRING label s
   return $ Ex (NAME label)
 
+translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
+  i <- getVarEntry id
+  e <- mapM translateExprF exps
+  e' <- mapM unEx e
+  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):i:e'))
+
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
   exps <- mapM translateExprF exprs

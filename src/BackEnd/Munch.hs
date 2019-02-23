@@ -14,11 +14,11 @@ import FrontEnd.SemanticAnalyzer
 --how to know scope ?? when frame is changed ???
 --TODO : difference between b and bl ??
 -- REGISTER SAVE??
--- array access out of bounds?
 -- STRING ASSIGNMENT?
 optimsedMunch stm = do
   m <- munchStm stm
-  return $ optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
+  let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
+  return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
 
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
@@ -31,6 +31,20 @@ justret e = do
 
 munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
 munchExp (CALL (NAME "#retVal") [e]) = justret e
+
+munchExp (CALL (NAME "#arrayelem") [(CONSTI size), ident, pos]) = do
+  (ii, it) <- munchExp ident
+  (pi, pt) <- munchExp pos
+  let op = if size == 1 then (R (RTEMP pt)) else (LSL_ (RTEMP pt) 2)
+      m0 = move_to_r pt 0
+      m1 = move_to_r it 1
+      bl = IOPER {assem = BRANCH_ (BL AL) (L_ "p_check_array_bounds"),
+                  src = [0, 1], dst = [], jump = ["p_check_array_bounds"]}
+      skiplen = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP it) (RTEMP it) (IMM 4),
+                       src = [it], dst = [it], jump = []}
+      topos = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP it) (RTEMP it) op,
+                       src = [it, pt], dst = [it], jump = []}
+  return (ii ++ pi ++ [m0, m1, bl, skiplen, topos], it)
 
 munchExp (CALL (NAME "#neg") [e]) = do
   (i, t) <- munchExp e
@@ -154,6 +168,20 @@ munchExp (BINEXP MINUS e1 e2) = do
                   src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return (i1++i2++[subs, br], t1)
 
+munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  tLo <- newTemp
+  tHi <- newTemp
+  let smull = IMOV {assem = C2_ (SMULL NoSuffix AL) (RTEMP tLo)
+                    (RTEMP tHi) (RTEMP t1) (RTEMP t2),
+                    src = [t1, t2], dst = [tLo, tHi]}
+      cmp = IOPER {assem = MC_ (CMP AL) (RTEMP tHi) (ASR_ (RTEMP tLo) 31),
+                   src = [tHi, tLo], dst = [], jump = []}
+      throw = IOPER {assem = BRANCH_ (BL ARM.NE) (L_ "p_throw_overflow_error"),
+                   src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
+
 munchExp x = do
   c <- condExp x
   return $ c AL
@@ -184,21 +212,6 @@ condExp (BINEXP bop e1 (BINEXP MUL e2 (CONSTI int)))
 condExp (BINEXP bop (BINEXP MUL (CONSTI int) e1) e2)
   | canlsl bop int
       = lslOP e1 e2 bop int
-
-condExp (BINEXP MUL e1 e2) = do -- only the lower one is used
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  tLo <- newTemp
-  tHi <- newTemp
-  let smull = IMOV {assem = C2_ (SMULL NoSuffix c) (RTEMP tLo)
-                    (RTEMP tHi) (RTEMP t1) (RTEMP t2),
-                    src = [t1, t2], dst = [tLo, tHi]}
-      cmp = IOPER {assem = MC_ (CMP AL) (RTEMP tHi) (ASR_ (RTEMP tLo) 31),
-                   src = [tHi, tLo], dst = [], jump = []}
-      throw = IOPER {assem = BRANCH_ (BL NE) (L_ "p_throw_overflow_error"),
-                   src = [], dst = [], jump = ["p_throw_overflow_error"]}
-  return $ \c -> (i1 ++ i2 ++ [smull, cmp, throw], tLo)
-
 
 condExp (BINEXP bop (CONSTI int) e) = condExp (BINEXP bop e (CONSTI int))
 
@@ -301,7 +314,7 @@ opVal _ = -1
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 
-munchStm (LABEL label) = return [ILABEL {assem = LAB label, lab = [label]}]
+munchStm (LABEL label) = return [ILABEL {assem = LAB label, lab = label}]
 
 munchStm (SEQ s1 s2) = do
   l1 <- munchStm s1
@@ -384,7 +397,7 @@ munchBuiltInFuncFrag (PROC stm frame) = do
 
 munchDataFrag :: Fragment -> State TranslateState [ASSEM.Instr]
 munchDataFrag (STRING label str)
-  = return [ILABEL {assem = (M label (length str) str), lab = [label]}]
+  = return [ILABEL {assem = (M label (length str) str), lab = label}]
 
 oneByte :: String -> Bool
 oneByte "TBool" = True
@@ -440,12 +453,14 @@ deSeq :: Stm -> (Stm, Stm)
 deSeq (SEQ s1 s2) = (s1, s2)
 
 showStm stm = do
+  putStrLn ""
   munch <- evalState (optimsedMunch stm) translateState
-  return $ munch
+  putStrLn ""
+  return $ ()
 
 showExp exp = do
   munch <- evalState (munchExp exp) translateState
-  return munch
+  return (munch)
 
 -- munch file = do
 --   ast <- parseFile file

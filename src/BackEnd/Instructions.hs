@@ -111,7 +111,7 @@ instance Show Instr where
   show (M msg int str) = msg ++ ":\n   .word " ++ (show int) ++ "\n   .ascii " ++ show str ++ "\n"
 
 output_show :: Instr -> String
-output_show instr = (show instr) ++ " | "
+output_show instr = (show instr)
 
 -- Substitute RTEMP to real registers
 normInstr :: Int -> REG -> Instr -> Instr
