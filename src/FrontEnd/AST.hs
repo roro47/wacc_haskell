@@ -156,7 +156,7 @@ instance Show (Type) where
   show Void = "Void"
   show (TFunc _ ts t) = "TFunc (" ++ show t ++ ") " ++
     "(" ++ intersperse ',' (concat $ map show ts) ++ ")"
-  show None = ""
+  show None = "\DEL"
   show T = "T"
 
 instance Show (Ident a) where
