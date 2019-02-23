@@ -2,7 +2,7 @@ module BackEnd.Frame where
 
 import FrontEnd.AST
 import BackEnd.Temp as Temp
-import BackEnd.IR 
+import BackEnd.IR
 
 data Frame = Frame { frameName :: String,
                      frameSize :: Int }
@@ -16,7 +16,6 @@ data Fragment = PROC Stm Frame
               | STRING Temp.Label String
               deriving (Eq, Show)
 
-
 charSize :: Int
 charSize = 1
 
@@ -27,7 +26,7 @@ addrSize :: Int
 addrSize = 4
 
 typeSize :: Type -> Int
-typeSize t = 
+typeSize t =
  case t of
    TInt -> intSize
    TChar -> charSize
@@ -63,6 +62,9 @@ param2 = 2
 param3 :: Temp.Temp
 param3 = 3
 
+dummy :: Temp.Temp
+dummy = -1
+
 -- return a new stack frame
 newFrame :: String -> Frame
 newFrame label = Frame label 0
@@ -73,7 +75,7 @@ allocLocal :: Frame -> Type -> Bool -> Temp.TempAllocator ->
               (Frame, Access, Temp.TempAllocator)
 allocLocal frame t escape tempAlloc =
   case escape of
-    True -> (frame { frameSize = offset }, InFrame (-offset), tempAlloc ) 
+    True -> (frame { frameSize = offset }, InFrame (-offset), tempAlloc )
     False -> (frame, InReg temp, tempAlloc')
   where (tempAlloc', temp) = newTemp tempAlloc
         offset = (frameSize frame) + allocSize

@@ -1,5 +1,5 @@
 module BackEnd.IR where
-
+import Prelude hiding(NE, EQ, GT, GE, LT, LE)
 import BackEnd.Temp as Temp
 
 data Exp = CONSTI Int              -- constant int
@@ -19,19 +19,23 @@ data Stm = MOV Exp Exp -- move values to address or register
          | CJUMP ROp Exp Exp Temp.Label Temp.Label
          | SEQ Stm Stm -- sequence of statement
          | LABEL Temp.Label -- target of jump
+         | PUSH Exp
+         | POP Exp
          | NOP
           deriving (Eq, Show)
 
-data BOp = PLUS
-         | MINUS
-         | MUL
-         | DIV
-         | AND
-         | OR
-         | LSHIFT
-         | RSHIFT
-         | MOD
+--         IR    ARM type
+data BOp = PLUS --CALC1
+         | MINUS --CALC1
+         | MUL --CALC2
+         | DIV --CALC3
+         | AND --CALC1
+         | OR  --CALC1
+         | LSHIFT --SHIFT
+         | RSHIFT --SHIFT
+         | MOD  --hand written
          deriving (Eq, Show)
+
 data ROp = EQ
          | NE
          | LT
