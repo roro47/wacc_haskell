@@ -35,6 +35,7 @@ library
       BackEnd.FlowGraph
       BackEnd.MakeGraph
       BackEnd.Liveness
+      BackEnd.Canon
       FrontEnd.AST
       FrontEnd.Lexer
       FrontEnd.Parser
