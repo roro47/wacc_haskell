@@ -61,6 +61,7 @@ library
     , generic-deriving
     , algebraic-graphs
     , containers
+    , pretty-tree
   default-language: Haskell2010
 
 executable compile

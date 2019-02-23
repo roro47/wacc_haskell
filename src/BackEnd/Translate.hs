@@ -187,10 +187,22 @@ translateFile file = do
   let { exp = evalState (translateProgramF ast') newTranslateState }
   return (show exp)
 
+translate :: ProgramF () -> State TranslateState Stm
+translate program = do
+  program' <- translateProgramF program 
+  stm <- unNx program'
+  return stm
 
 translateProgramF :: ProgramF () -> State TranslateState IExp
 translateProgramF (Ann (Program fs stms) _) = translateStatListF stms
-
+{-
+translateFuncF :: FuncF () -> State TranslateState IExp
+translateFuncF (Ann (Func t id params) _) = do
+  pushLevel
+  let { params' = map stripParam params }
+  
+  where stripParam (Ann (Param t (Ann (Ident s) _)) _) = (t, s)
+-}
 translateStatListF :: StatListF () -> State TranslateState IExp
 translateStatListF (Ann (StatList stms) _) = do
   stms' <- mapM translateStatF stms
