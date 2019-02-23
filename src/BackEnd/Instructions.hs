@@ -10,7 +10,7 @@ import BackEnd.Temp
 data REG = PC | LR | SP | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
            R11 | R12 | RTEMP Temp deriving (Show, Eq)
 --- PC = 15 LR = 14 SP = 13
-data OP =  R REG | IMM Int | CHR Char | LSL_ REG Int deriving Eq
+data OP =  R REG | IMM Int | CHR Char | LSL_ REG Int | ASR_ REG Int deriving Eq
 -- immediate values need to be restricted size
 -- LSL values need to be 1, 2 or 3
 data Lable = L_ String | R_ REG deriving Eq
@@ -50,6 +50,7 @@ instance Show OP where
   show (R reg) = ", " ++ show reg
   show (CHR chr) = ", #" ++ show chr
   show (LSL_ reg int) = ", " ++ show reg ++ ", LSL #" ++ show int
+  show (ASR_ reg int) = ", " ++ show reg ++ ", ASR #" ++ show int
 -- since op is always at the end of an assembly I included the spaces and comma here
 
 instance Show Suffix where

@@ -22,8 +22,7 @@ optimsedMunch stm = do
 
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
-  = lookup bop [(IR.PLUS, ARM.ADD), (IR.MINUS, ARM.SUB),
-            (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
+  = lookup bop [(IR.PLUS, ARM.ADD), (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
 justret e = do
@@ -146,6 +145,15 @@ munchExp (CALL f es) = do
 
 munchExp (TEMP t) = return ([],t)
 
+munchExp (BINEXP MINUS e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  let subs = IOPER {assem = CBS_ (SUB S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
+                    src = [t1, t2], dst = [t1], jump = []}
+      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                  src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return (i1++i2++[subs, br], t1)
+
 munchExp x = do
   c <- condExp x
   return $ c AL
@@ -182,9 +190,15 @@ condExp (BINEXP MUL e1 e2) = do -- only the lower one is used
   (i2, t2) <- munchExp e2
   tLo <- newTemp
   tHi <- newTemp
-  return $ \c -> (i1 ++ i2 ++ [IMOV {assem = C2_ (SMULL NoSuffix c) (RTEMP tLo)
-                 (RTEMP tHi) (RTEMP t1) (RTEMP t2),
-                 src = [t1, t2], dst = [tLo, tHi]}], tLo)
+  let smull = IMOV {assem = C2_ (SMULL NoSuffix c) (RTEMP tLo)
+                    (RTEMP tHi) (RTEMP t1) (RTEMP t2),
+                    src = [t1, t2], dst = [tLo, tHi]}
+      cmp = IOPER {assem = MC_ (CMP AL) (RTEMP tHi) (ASR_ (RTEMP tLo) 31),
+                   src = [tHi, tLo], dst = [], jump = []}
+      throw = IOPER {assem = BRANCH_ (BL NE) (L_ "p_throw_overflow_error"),
+                   src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return $ \c -> (i1 ++ i2 ++ [smull, cmp, throw], tLo)
+
 
 condExp (BINEXP bop (CONSTI int) e) = condExp (BINEXP bop e (CONSTI int))
 
@@ -437,8 +451,8 @@ showExp exp = do
 --   ast <- parseFile file
 --   ast' <- analyzeAST ast
 --   let (ir, state) = runState (translateProgramF ast') translateState
-  -- m <- evalState (munchStm ir) state  -something wrong with ir
-  -- putStrLn $ show munch
+--   m <- evalState (munchStm ir) state  -something wrong with ir
+--   putStrLn $ show munch
 
 translateState = TranslateState { levels = [],
                                   dataFrags = [],
