@@ -83,7 +83,8 @@ class Show a => Header a where
 
 data Calc = ADD Suffix Cond | SUB Suffix Cond | AND Suffix Cond |
             EOR Suffix Cond | ORR Suffix Cond | LSL Suffix Cond |
-            ASR Suffix Cond | LSR Suffix Cond | ROR Suffix Cond
+            ASR Suffix Cond | LSR Suffix Cond | ROR Suffix Cond |
+            RSB Suffix Cond
             deriving (Show, Header, Eq)
 data Simple = CMP Cond | MOV Cond deriving (Show, Header, Eq)
 data Branch = B Cond | BL Cond deriving (Show, Header, Eq)

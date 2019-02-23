@@ -4,6 +4,8 @@ import Prelude hiding (LT, EQ, GT, seq)
 import Control.Monad.State.Lazy
 import Data.HashMap as HashMap hiding (map)
 import FrontEnd.AST
+import FrontEnd.Parser
+import FrontEnd.SemanticAnalyzer
 import qualified BackEnd.Frame as Frame
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
@@ -33,6 +35,23 @@ data TranslateState = TranslateState { levels :: [Level],
 data IExp = Ex Exp
           | Nx Stm
           | Cx (Temp.Label -> Temp.Label -> Stm)
+
+instance Show IExp where
+  show (Ex e) = "Ex " ++ show e
+  show (Nx s) = "Nx " ++ show s
+  show (Cx f) = "Cx " ++ show (f "_" "_")
+
+newTranslateState :: TranslateState
+newTranslateState = TranslateState { levels = [],
+                                     dataFrags = [],
+                                     procFrags = [],
+                                     tempAlloc = Temp.newTempAllocator,
+                                     controlLabelAlloc = Temp.newLabelAllocator,
+                                     dataLabelAlloc = Temp.newLabelAllocator,
+                                     frameLabelAlloc = Temp.newLabelAllocator}
+
+
+
 
 seq :: [Stm] -> Stm
 seq (stm:stms) = SEQ stm (seq stms)
@@ -161,6 +180,13 @@ getVarEntry symbol = do
         f mem level =
           MEM $ BINEXP PLUS (CONSTI $ Frame.frameSize $ levelFrame level) mem
 
+translateFile :: String -> IO (String)
+translateFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let { exp = evalState (translateProgramF ast') newTranslateState }
+  return (show exp)
+
 
 translateProgramF :: ProgramF () -> State TranslateState IExp
 translateProgramF (Ann (Program fs stms) _) = translateStatListF stms
@@ -231,6 +257,11 @@ translateStatF (Ann (Subroutine stms) _) = do
   popLevel
   return $ stms'
 
+translateStatF (Ann (FuncStat f) _) = do
+  f' <- translateFuncAppF f
+  f'' <- unNx f'
+  return $ Nx f''
+
 translateExprF :: ExprF () -> State TranslateState IExp
 translateExprF (Ann (IntLiter i) _) = return $ Ex (CONSTI i)
 translateExprF (Ann (BoolLiter b) _) =
@@ -261,10 +292,13 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
                 (f temp (index+1) elemSize exps)
 
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
-translateExprF (Ann (IdentExpr id) _) = do
+translateExprF (Ann (IdentExpr id) (_, t)) = do
   let { Ann (Ident symbol) _ = id }
   exp <- getVarEntry symbol
-  return $ Ex exp
+  case t of
+    TChar -> return $ Ex (CALL (NAME "#oneByte") [exp])
+    TBool -> return $ Ex (CALL (NAME "#oneByte") [exp])
+    otherwise -> return $ Ex exp
 
 translateExprF (Ann (FuncExpr f) _) = translateFuncAppF f
 
@@ -294,7 +328,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "<=" -> return $ condition LE exps'
     "==" -> return $ condition EQ exps'
     "!=" -> return $ condition NE exps'
-    "skip" -> undefined
+    "skip" -> callp "#skip" []
     "read" -> translateRead t exps'
     "free" -> translateFree t exps'
     "print" -> translatePrint t exps'
@@ -302,12 +336,12 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "newpair" -> translateNewPair t exps'
     "fst" -> translatePairAccess t exps' "fst"
     "snd" -> translatePairAccess t exps' "snd"
-    "!" -> undefined
-    "#pos" -> undefined
-    "#neg" -> undefined
-    "len" -> undefined
-    "ord" -> undefined
-    "chr" -> undefined
+    "!" -> callp "#!" exps'
+    "#pos" -> callp "#retval" exps'
+    "#neg" -> callp "#neg" exps'
+    "len" -> callp "#len" exps'
+    "ord" -> callp "#retVal" exps'
+    "chr" -> callp "#retVal" exps'
     otherwise -> fail "not predicted situation"
  where binexp bop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
@@ -361,8 +395,6 @@ translateNewPair (TPair t1 t2) exps
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
 translatePairAccess (TPair t1 t2) exps str
   = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
-
-
 
 -- turn IExp to Exp
 unEx :: IExp -> State TranslateState Exp

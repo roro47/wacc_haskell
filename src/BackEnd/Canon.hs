@@ -60,6 +60,7 @@ basicBlocks [] = do
 
 
 traceSchedule :: [[Stm]] -> Temp.Label -> [Stm]
+traceSchedule = undefined
 
 
 -- test whether two statements commute or not

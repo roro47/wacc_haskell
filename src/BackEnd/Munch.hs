@@ -27,7 +27,34 @@ bopToCBS bop
             (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
 
+justret e = do
+  (i, t) <- munchExp e
+  return (i , t)
+
 munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
+munchExp (CALL (NAME "#retVal") [e]) = justret e
+
+munchExp (CALL (NAME "#neg") [e]) = do
+  (i, t) <- munchExp e
+  let rsbs = IOPER { assem = CBS_ (RSB S AL) (RTEMP t) (RTEMP t) (IMM 0),
+                     src = [t], dst = [t], jump = []}
+      check = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                     src = [], dst = [], jump =["p_throw_overflow_error"] }
+  return (i ++ [rsbs, check] , t)
+
+munchExp (CALL (NAME "#!") [e]) = do
+  (i, t) <- munchExp e
+  return (i ++ [IOPER {assem = CBS_ (EOR NoSuffix AL) (RTEMP t) (RTEMP t)(IMM 1),
+                       src = [t], dst = [t], jump = []}], t)
+
+
+munchExp (CALL (NAME "#len") [e]) = do
+  (i, t) <- munchExp e
+  return (i ++ [IMOV {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
+                       src = [t], dst = [t]}], t)
+
+
+munchExp (CALL (NAME "#skip") _) = return ([], dummy)
 munchExp (CALL (NAME "#println") es) = do
   ls <- mapM (liftM fst.munchExp) es
   let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "#p_print_ln"),
@@ -204,6 +231,13 @@ condExp (MEM (CONSTI i)) = do
   newt <- newTemp
   return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP newt) (NUM i) , dst = [], src = [newt]}], newt)
 
+--load a byte from sp
+condExp (CALL (NAME "#oneByte") [exp]) = do
+  (i, t) <- munchExp exp
+  newt <- newTemp
+  return $ \c -> (i ++ [IMOV {assem = S_ (ARM.LDR SB c) (RTEMP newt) (Imm (RTEMP t) 0)
+                        , dst = [t], src = [newt]}], newt)
+
 condExp (MEM m) = do
   (i, t) <- munchExp m
   newt <- newTemp
@@ -275,36 +309,46 @@ munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
--- should delete
--- -- Characters includes >1 instructions thus need to be treated specially
--- munchStm (IR.MOV e (CONSTC char)) = do
---   (i, t) <- munchExp e
---   let mv = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP t) (CHR char), src = [], dst = [t]}
---       str = IMOV { assem = S_ (ARM.STR B_ AL) (RTEMP t) (Imm SP 0), src = [t, -3], dst = []}
---   return $ i ++ [mv, str]
+munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
+   ret <- suffixStm (IR.MOV e (MEM me))
+   return $ ret AL SB
+
+munchStm (IR.MOV (CALL (NAME "#oneByte") [MEM me]) e) = do
+   ret <- suffixStm (IR.MOV (MEM me) e)
+   return $ ret AL B_
 
 munchStm x = do
   m <- condStm x
   return $ m AL
 
-condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
-condStm (IR.MOV e (MEM me)) = do -- LDR
+-- ALLOW the suffix of a load / store to change
+suffixStm :: Stm -> State TranslateState (Cond -> SLType -> [ASSEM.Instr])
+suffixStm (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
   if null l then
-    return (\c -> i ++ [IMOV { assem = S_ (ARM.LDR W c) (RTEMP t) op, src = ts, dst = [t]}])
+    return (\c -> ( \suff -> i ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) op, src = ts, dst = [t]}]))
   else
     let s = head ts in
-    return (\c -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR W c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}])
+    return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
 
-condStm (IR.MOV (MEM me) e) = do -- STR
+suffixStm (IR.MOV (MEM me) e) = do -- STR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
   if null l then
-    return (\c -> i ++ [IMOV { assem = S_ (ARM.STR W c) (RTEMP t) op, src = ts, dst = [t]}])
+    return (\c -> (\suff -> i ++ [IMOV { assem = S_ (ARM.STR suff c) (RTEMP t) op, src = ts, dst = [t]}]))
   else
     let s = head ts in
-    return (\c -> i ++ l ++ [IMOV { assem = S_ (ARM.STR W c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}])
+    return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.STR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
+
+condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
+condStm ir@(IR.MOV e (MEM me)) = do
+  ret <- suffixStm ir
+  return (\c -> ret c W)
+
+condStm ir@(IR.MOV (MEM me) e) = do
+  ret <- suffixStm ir
+  return (\c -> ret c W)
 
 condStm (IR.PUSH e) = do
   (i, t) <- munchExp e

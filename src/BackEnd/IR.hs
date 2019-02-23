@@ -10,7 +10,6 @@ data Exp = CONSTI Int              -- constant int
          | MEM Exp          -- memory address at exp
          | CALL Exp [Exp]   -- Call function address [values]
          | ESEQ Stm Exp     -- evaluated for side effect
-         | NOEXP
            deriving (Eq, Show)
 
 data Stm = MOV Exp Exp -- move values to address or register
