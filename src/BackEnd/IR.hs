@@ -14,11 +14,11 @@ data Exp = CONSTI Int              -- constant int
 
 data Stm = MOV Exp Exp -- move values to address or register
          | JUMP Exp [Temp.Label]  -- Jump: expression to evaluate, list of possible jump destination
+         | PUSH Exp
+         | POP Exp
          | CJUMP ROp Exp Exp Temp.Label Temp.Label
          | SEQ Stm Stm -- sequence of statement
          | LABEL Temp.Label -- target of jump
-         | PUSH Exp
-         | POP Exp
          | NOP
           deriving (Eq, Show)
 

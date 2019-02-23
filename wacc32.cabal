@@ -31,7 +31,10 @@ library
       BackEnd.IR
       BackEnd.Temp
       BackEnd.Translate
-      BackEnd.Translate2
+      BackEnd.Instructions
+      BackEnd.FlowGraph
+      BackEnd.MakeGraph
+      BackEnd.Liveness
       FrontEnd.AST
       FrontEnd.Lexer
       FrontEnd.Parser
@@ -54,6 +57,9 @@ library
     , regex-base
     , regex-compat
     , regex-posix
+    , generic-deriving
+    , algebraic-graphs
+    , containers
   default-language: Haskell2010
 
 executable compile
