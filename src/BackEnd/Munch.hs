@@ -62,6 +62,8 @@ munchExp (BINEXP DIV e1 e2) = do
   let divLabel = "__aeabi_idiv"
       moveDividend = move_to_r t1 0
       moveDivisor = move_to_r t2 1
+      check = IMOV {assem = BRANCH_ (BL AL) (L_ "p_check_divide_by_zero"),
+                    src = [0, 1], dst = []}
       divInstr = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel),
                       src = [0, 1], dst = [0]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, divInstr], 0)
@@ -74,6 +76,8 @@ munchExp (BINEXP MOD e1 e2) = do
   let modLabel = "__aeabi_idivmod"
       moveDividend = move_to_r t1 0
       moveDivisor = move_to_r t2 1
+      check = IMOV {assem = BRANCH_ (BL AL) (L_ "p_check_divide_by_zero"),
+                    src = [0, 1], dst = []}
       modInstr = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel),
                   src = [0, 1], dst = [1]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, modInstr], 1)

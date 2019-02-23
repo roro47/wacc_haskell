@@ -8,6 +8,7 @@ import qualified BackEnd.Frame as Frame
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
 
+-- where to put array index bound??
 
 data Access = Access Frame.Frame Frame.Access deriving (Eq, Show)
 
@@ -357,12 +358,6 @@ translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 translateNewPair (TPair t1 t2) exps
   = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
 
-  -- ref pair is null
-  -- nul --
-  -- 15		LDR r4, =0
-  -- 16		STR r4, [sp]
-  -- 17		LDR r4, [sp]
-
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
 translatePairAccess (TPair t1 t2) exps str
   = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
@@ -412,27 +407,27 @@ escape TStr = False
 escape TChar = False
 escape _ = True
 
--- can not be type here need an expr
-translateLen :: Exp -> State TranslateState IExp
--- assume n is msg_ or any array address
-translateLen arr = do
-  reg <- newTemp
-  let temp = TEMP reg in
-    return (Nx $ SEQ (MOV temp (MEM arr)) (MOV temp (MEM temp)))
-
-translateChr :: Exp -> State TranslateState IExp
-translateChr t@(TEMP temp) = do
-  return (Nx $ PUSH t)
-translateChr m = do
-  reg <- newTemp
-  return (Nx $ SEQ (MOV (TEMP reg) m) (PUSH (TEMP reg))) -- memory or int
-
--- not a fraction
-translateOrd :: Exp -> State TranslateState (IExp, Int)
---pre: e is (CONST Char)
-translateOrd e = do
-  reg <- newTemp
-  return ((Nx $ MOV (TEMP reg) e), 1) --STRB hence need to record length
+-- -- can not be type here need an expr
+-- translateLen :: Exp -> State TranslateState IExp
+-- -- assume n is msg_ or any array address
+-- translateLen arr = do
+--   reg <- newTemp
+--   let temp = TEMP reg in
+--     return (Nx $ SEQ (MOV temp (MEM arr)) (MOV temp (MEM temp)))
+--
+-- translateChr :: Exp -> State TranslateState IExp
+-- translateChr t@(TEMP temp) = do
+--   return (Nx $ PUSH t)
+-- translateChr m = do
+--   reg <- newTemp
+--   return (Nx $ SEQ (MOV (TEMP reg) m) (PUSH (TEMP reg))) -- memory or int
+--
+-- -- not a fraction
+-- translateOrd :: Exp -> State TranslateState (IExp, Int)
+-- --pre: e is (CONST Char)
+-- translateOrd e = do
+--   reg <- newTemp
+--   return ((Nx $ MOV (TEMP reg) e), 1) --STRB hence need to record length
 
 
 -- for built-in function below, need to generate code and
