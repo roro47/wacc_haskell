@@ -9,13 +9,12 @@ import BackEnd.Translate as T
 import BackEnd.Frame as Frame
 import Data.List
 import BackEnd.Builtin
+import FrontEnd.Parser
+import FrontEnd.SemanticAnalyzer
 --how to know scope ?? when frame is changed ???
 --TODO : difference between b and bl ??
--- SUFFIX?
 -- REGISTER SAVE??
--- SYSTEM FUNCTION CALLS?
--- fix the built in functions
--- special name for functions & built-ins in order to decide stack
+-- array access out of bounds?
 -- STRING ASSIGNMENT?
 optimsedMunch stm = do
   m <- munchStm stm
@@ -47,14 +46,13 @@ munchExp (CALL (NAME "#!") [e]) = do
   return (i ++ [IOPER {assem = CBS_ (EOR NoSuffix AL) (RTEMP t) (RTEMP t)(IMM 1),
                        src = [t], dst = [t], jump = []}], t)
 
-
 munchExp (CALL (NAME "#len") [e]) = do
   (i, t) <- munchExp e
   return (i ++ [IMOV {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
                        src = [t], dst = [t]}], t)
 
-
 munchExp (CALL (NAME "#skip") _) = return ([], dummy)
+
 munchExp (CALL (NAME "#println") es) = do
   ls <- mapM (liftM fst.munchExp) es
   let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "#p_print_ln"),
@@ -108,7 +106,6 @@ munchExp (BINEXP MOD e1 e2) = do
       modInstr = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel),
                   src = [0, 1], dst = [1]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, modInstr], 1)
-
 
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
@@ -215,11 +212,6 @@ condExp (CONSTI int) = do
   return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int) , dst = [t], src = []}], t)
 
 condExp (CONSTC chr) = do
--- should delete comment part --  handled in translate in decleare??
---   t <- newTemp
---   let sub = IOPER {assem = CBS_ (ARM.SUB NoSuffix AL) SP SP (IMM 1), src = [13], dst = [13], jump = []}
---   remain <- munchStm (IR.MOV (TEMP t) (CONSTC chr))
---   return $ (sub:remain, t)
   t <- newTemp
   return $ \c -> ([IMOV {assem = S_ (LDR B_ c) (RTEMP t) (CHR_ chr), dst = [t], src = []}], t)
 
@@ -321,7 +313,7 @@ munchStm x = do
   m <- condStm x
   return $ m AL
 
--- ALLOW the suffix of a load / store to change
+-- ALLOW the suffix + cond of a load / store to change
 suffixStm :: Stm -> State TranslateState (Cond -> SLType -> [ASSEM.Instr])
 suffixStm (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
@@ -374,9 +366,7 @@ condStm (JUMP e ls) = do
 munchBuiltInFuncFrag :: Fragment -> State TranslateState [ASSEM.Instr]
 munchBuiltInFuncFrag (PROC stm frame) = do
   munch <- munchStm stm
-  let push = IMOV {assem = STACK_ (ARM.PUSH AL) [LR], dst = [], src = [-2]}
-      pop = IMOV {assem = STACK_ (ARM.POP AL) [PC], dst = [-1], src = []}
-  return (push : munch ++ [pop])
+  return (pushlr : munch ++ [poppc])
 
 munchDataFrag :: Fragment -> State TranslateState [ASSEM.Instr]
 munchDataFrag (STRING label str)
@@ -443,6 +433,13 @@ showExp exp = do
   munch <- evalState (munchExp exp) translateState
   return munch
 
+-- munch file = do
+--   ast <- parseFile file
+--   ast' <- analyzeAST ast
+--   let (ir, state) = runState (translateProgramF ast') translateState
+  -- m <- evalState (munchStm ir) state  -something wrong with ir
+  -- putStrLn $ show munch
+
 translateState = TranslateState { levels = [],
                                   dataFrags = [],
                                   procFrags = [],
@@ -477,3 +474,7 @@ call = CALL (CONSTI 1) [(CONSTI 7)]
 assemPre = (IOPER { assem = (CBS_ (ARM.ADD NoSuffix ARM.EQ) (RTEMP 1) (RTEMP 1) (IMM 2)), src = [1], dst = [1], jump = []}) :
            (IMOV { assem = (S_ (ARM.LDR W ARM.EQ) (RTEMP 2) (Imm (RTEMP 1) 0)), src = [2], dst = [1]}) : []
 irPre = IR.MOV (BINEXP MINUS (TEMP 2) (CONSTI 1)) (MEM (TEMP 2))
+
+--load/store 1 byte sample
+load1b = (IR.MOV (TEMP 2) (CALL (NAME "#oneByte") [MEM (CONSTI 1)]))
+store1b = (IR.MOV (CALL (NAME "#oneByte") [MEM (CONSTI 1)]) (TEMP 2))
