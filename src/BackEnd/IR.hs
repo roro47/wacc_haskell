@@ -19,11 +19,33 @@ data Stm = MOV Exp Exp -- move values to address or register
          | JUMP Exp [Temp.Label]  -- Jump: expression to evaluate, list of possible jump destination
          | PUSH Exp
          | POP Exp
+         | EXP Exp
          | CJUMP ROp Exp Exp Temp.Label Temp.Label
          | SEQ Stm Stm -- sequence of statement
          | LABEL Temp.Label -- target of jump
          | NOP
           deriving (Eq)
+
+cleanStmExp (BINEXP bop e1 e2) =
+  BINEXP bop (cleanStmExp e1) (cleanStmExp e2)
+
+cleanStmExp (MEM exp) = MEM (cleanStmExp exp)
+cleanStmExp (CALL e1 es) = CALL (cleanStmExp e1) (map cleanStmExp es)
+cleanStmExp (ESEQ stm e) = ESEQ (cleanStm stm) (cleanStmExp e)
+cleanStmExp e = e
+
+
+cleanStm (SEQ NOP NOP) = NOP
+cleanStm (SEQ s1 NOP) = cleanStm s1
+cleanStm (SEQ NOP s2) = cleanStm s2
+cleanStm s@(SEQ s1 s2)
+  | s1' == NOP || s2' == NOP = cleanStm $ SEQ s1' s2'
+  | s1' /= s1 || s2' /= s2 = cleanStm $ SEQ s1' s2'
+  | otherwise = SEQ s1' s2'
+  where s1' = cleanStm s1
+        s2' = cleanStm s2
+cleanStm s = s
+
 
 class Treeable a where
   toTree :: a -> Tree String
@@ -33,7 +55,7 @@ instance Treeable Exp where
   toTree (CONSTC c) = Node ("CONSTC " ++ show c) []
   toTree (NAME l) = Node ("NAME " ++ show l) []
   toTree (TEMP t) = Node ("TEMP " ++ show t) []
-  toTree (BINEXP bop e1 e2) = Node (show bop) [toTree e1, toTree e2]
+  toTree (BINEXP bop e1 e2) = Node "BINEXP" [Node (show bop) [], toTree e1, toTree e2]
   toTree (MEM e) = Node ("MEM" ) [toTree e]
   toTree (CALL e es) = Node ("CALL ") ([toTree e] ++ map toTree es)
   toTree (ESEQ s e) = Node ("ESEQ") [toTree s, toTree e]
@@ -51,10 +73,10 @@ instance Treeable Stm where
   toTree NOP = Node "NOP" []
 
 instance Show Exp where
-  show e = drawVerticalTree $ toTree e
+  show e = drawVerticalTreeWith 1 $ toTree e
 
 instance Show Stm where
-  show stm = drawVerticalTree $ toTree stm
+  show stm = drawVerticalTreeWith 1 $ toTree stm
 
     
 --         IR    ARM type

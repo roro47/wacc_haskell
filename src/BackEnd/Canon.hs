@@ -40,14 +40,17 @@ testDoStm :: Stm -> IO Stm
 testDoStm stm = do
   let { (stm', s) = runState (doStm stm) newCanonState }
   return stm'
-  
+
+testDoExp :: Exp -> IO Exp
+testDoExp exp = do
+  let { ((stm,exp'), s) = runState (doExp exp) newCanonState }
+  return $ ESEQ stm exp'
 
 transform :: Stm -> State CanonState [Stm]
 transform stm = do
   stms <- linearize stm
   blocks <- basicBlocks stms
-  return $ traceSchedule $ fst blocks
-  
+  return $ traceSchedule $ fst blocks 
 
 newTemp :: State CanonState Temp.Temp
 newTemp = do
@@ -131,7 +134,7 @@ traceSchedule'' block@((LABEL label):rest) blockTable markTable
 commute :: Exp -> Stm -> Bool
 commute (CONSTI _) _ = True
 commute (CONSTC _) _ = True
-commute _ NOP = False
+commute _ NOP = True
 commute _ _ = False
 
 isESEQ :: Exp -> Bool
@@ -148,19 +151,19 @@ reorder (exp:rest) = do
   if commute exps' stm2'
   then return (SEQ stm' stm2', (exps':exps2'))
   else newTemp >>= \temp ->
-       return (SEQ stm' (SEQ (MOV (TEMP temp) exps') stm2'),
+       return (cleanStm $ SEQ stm' (SEQ (MOV (TEMP temp) exps') stm2'),
                (TEMP temp):exps2')
 reorder [] = return (NOP, [])
 
 reorderStm :: [Exp] -> ([Exp] -> Stm) -> State CanonState Stm
 reorderStm exps build = do
   (stm, exps') <- reorder exps
-  return $ SEQ stm (build exps')
+  return $ cleanStm $ SEQ stm (build exps')
 
 reorderExp :: [Exp] -> ([Exp] -> Exp) -> State CanonState (Stm, Exp)
 reorderExp exps build = do
   (stm', exps') <- reorder exps
-  return (stm', build exps')
+  return (cleanStm $ stm', build exps')
 
 doStm :: Stm -> State CanonState Stm
 doStm (MOV (TEMP t) b)
@@ -178,9 +181,9 @@ doStm (CJUMP rop e1 e2 label1 label2)
 doStm (SEQ stm1 stm2) = do
   stm1' <- doStm stm1
   stm2' <- doStm stm2
-  return $ SEQ stm1' stm2'
+  return $ cleanStm $ SEQ stm1' stm2'
 
-doStm stm = return stm
+doStm stm = return $ cleanStm $ stm
 
 doExp :: Exp -> State CanonState (Stm, Exp)
 doExp (BINEXP bop e1 e2)
@@ -195,9 +198,10 @@ doExp (CALL e es)
 doExp (ESEQ stm e) = do
   stm' <- doStm stm
   (stm'', e') <- doExp e
-  return (SEQ stm' stm'', e')
+  return (cleanStm $ SEQ stm' stm'', e')
 
 doExp e = reorderExp [] (\_ -> e)
+
 
 t0 = TEMP 0
 t1 = TEMP 1
@@ -208,5 +212,10 @@ e1 = CONSTI 1
 s1 = MOV t1 t2
 s2 = MOV t2 t0
   
-testDoStm1 :: Stm
-testDoStm1 = MOV t0 (ESEQ s1 (ESEQ s2 e1))
+testESEQ1 = ESEQ NOP (ESEQ NOP e1)
+testESEQ2 = ESEQ NOP (ESEQ s1 e1)
+testESEQ3 = BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)
+testESEQ4 = BINEXP PLUS (CONSTI 1) (ESEQ (MOV (TEMP 23) (TEMP 90)) (CONSTI 79))
+testESEQ5 = BINEXP PLUS (MEM (CONSTI 23)) (ESEQ (MOV (TEMP 0) (TEMP 1)) (CONSTI 29))
+
+
