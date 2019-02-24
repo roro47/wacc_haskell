@@ -60,7 +60,7 @@ translateFile file = do
 
 translate :: ProgramF () -> State TranslateState Stm
 translate program = do
-  program' <- translateProgramF program 
+  program' <- translateProgramF program
   stm' <- unNx program'
   return $ cleanStm stm'
 

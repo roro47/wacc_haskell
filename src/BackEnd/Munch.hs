@@ -316,6 +316,10 @@ opVal _ = -1
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 
+munchStm (EXP e) = do
+  (i, t) <- munchExp e
+  return i
+
 munchStm (LABEL label) = return [ILABEL {assem = LAB label, lab = label}]
 
 munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
@@ -370,14 +374,6 @@ condStm ir@(IR.MOV e (MEM me)) = do
 condStm ir@(IR.MOV (MEM me) e) = do
   ret <- suffixStm ir
   return (\c -> ret c W)
-
-condStm (IR.PUSH e) = do
-  (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [13], src = [t]}]) --sp here or not ??
-
-condStm (IR.POP e) = do
-  (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.POP c) [RTEMP t], dst = [t], src = [13]}])
 
 condStm (IR.MOV e (CONSTI int)) = do
   (i, t) <- munchExp e
@@ -497,12 +493,6 @@ translateState = TranslateState { levels = [],
                                   dataLabelAlloc = newLabelAllocator,
                                   frameLabelAlloc = newLabelAllocator}
 
-
-
-s_1 = SEQ (IR.PUSH (TEMP 7)) (JUMP (NAME "something") ["something"])
-s_2 = SEQ (LABEL "eq") (IR.MOV (TEMP 7) (CONSTI 5))
-s_3 = CJUMP IR.GT (CONSTI 1) (CONSTI 2) "eq" "ne"
-expr = ESEQ (SEQ s_3 (SEQ s_1 s_2)) (TEMP 7)
 
 call = CALL (CONSTI 1) [(CONSTI 7)]
 -- pre-Index sample --
