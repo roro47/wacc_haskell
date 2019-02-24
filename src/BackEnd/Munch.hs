@@ -23,7 +23,7 @@ optimsedMunch stm = do
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
   = lookup bop [(IR.PLUS, ARM.ADD), (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
-            (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR)]
+            (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR), (IR.MINUS, ARM.SUB)]
 
 justret e = do
   (i, t) <- munchExp e
@@ -159,15 +159,6 @@ munchExp (CALL f es) = do
 
 munchExp (TEMP t) = return ([],t)
 
-munchExp (BINEXP MINUS e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  let subs = IOPER {assem = CBS_ (SUB S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
-                    src = [t1, t2], dst = [t1], jump = []}
-      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
-                  src = [], dst = [], jump = ["p_throw_overflow_error"]}
-  return (i1++i2++[subs, br], t1)
-
 munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
@@ -181,6 +172,21 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
       throw = IOPER {assem = BRANCH_ (BL ARM.NE) (L_ "p_throw_overflow_error"),
                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
+
+{-danger !!-}
+munchExp x@(BINEXP MINUS e1 (CONSTI i)) -- allow for irpre
+  | i < 32 = do
+    c <- condExp x
+    return $ c AL
+-- Now cannot match irpre
+munchExp (BINEXP MINUS e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  let subs = IOPER {assem = CBS_ (SUB S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
+                    src = [t1, t2], dst = [t1], jump = []}
+      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return (i1++i2++[subs, br], t1)
 
 munchExp x = do
   c <- condExp x
@@ -316,6 +322,14 @@ munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out con
 
 munchStm (LABEL label) = return [ILABEL {assem = LAB label, lab = label}]
 
+munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
+   ret <- suffixStm (IR.MOV e (MEM me))
+   return $ ret AL SB
+
+munchStm (IR.MOV (CALL (NAME "#oneByte") [MEM me]) e) = do
+   ret <- suffixStm (IR.MOV (MEM me) e)
+   return $ ret AL B_
+
 munchStm (SEQ s1 s2) = do
   l1 <- munchStm s1
   l2 <- munchStm s2
@@ -327,14 +341,6 @@ munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
   let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [], src = [t1, t2], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
-
-munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
-   ret <- suffixStm (IR.MOV e (MEM me))
-   return $ ret AL SB
-
-munchStm (IR.MOV (CALL (NAME "#oneByte") [MEM me]) e) = do
-   ret <- suffixStm (IR.MOV (MEM me) e)
-   return $ ret AL B_
 
 munchStm x = do
   m <- condStm x

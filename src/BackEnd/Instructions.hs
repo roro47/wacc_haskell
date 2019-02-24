@@ -8,7 +8,7 @@ import Data.Char
 import BackEnd.Temp
 
 data REG = PC | LR | SP | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
-           R11 | R12 | RTEMP Temp deriving (Show, Eq)
+           R11 | R12 | RTEMP Temp deriving (Generic, Eq)
 --- PC = 15 LR = 14 SP = 13
 data OP =  R REG | IMM Int | CHR Char | LSL_ REG Int | ASR_ REG Int deriving Eq
 -- immediate values need to be restricted size
@@ -23,6 +23,11 @@ data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | CS |AL
             deriving (Generic, Eq)
 
 instance GShow Cond
+
+instance GShow REG
+
+instance Show REG where
+  show r = map toLower (gshow r)
 
 instance Show Lable where
   show (L_ x) = x
