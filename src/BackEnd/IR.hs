@@ -17,8 +17,6 @@ data Exp = CONSTI Int              -- constant int
 
 data Stm = MOV Exp Exp -- move values to address or register
          | JUMP Exp [Temp.Label]  -- Jump: expression to evaluate, list of possible jump destination
-         | PUSH Exp
-         | POP Exp
          | EXP Exp
          | CJUMP ROp Exp Exp Temp.Label Temp.Label
          | SEQ Stm Stm -- sequence of statement
@@ -63,8 +61,6 @@ instance Treeable Exp where
 instance Treeable Stm where
   toTree (MOV e1 e2) = Node "MOV" [toTree e1, toTree e2]
   toTree (JUMP e labels) = Node "JUMP" ([toTree e] ++ map (\l -> Node l []) labels)
-  toTree (PUSH e) = Node "PUSH" [toTree e]
-  toTree (POP e) = Node "POP" [toTree e]
   toTree (CJUMP rop e1 e2 label1 label2) =
     Node "CJUMP" [Node (show rop) [toTree e1, toTree e2],
                   Node label1 [], Node label2 []]
