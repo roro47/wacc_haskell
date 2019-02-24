@@ -169,11 +169,6 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
 
-{-danger !!-}
-munchExp x@(BINEXP MINUS e1 (CONSTI i)) -- allow for irpre
-  | i < 32 = do
-    c <- condExp x
-    return $ c AL
 -- Now cannot match irpre
 munchExp (BINEXP MINUS e1 e2) = do
   (i1, t1) <- munchExp e1
@@ -484,14 +479,6 @@ optimsedMunch stm = do
   m <- munchStm stm
   let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
   return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
-
-translateState = TranslateState { levels = [],
-                                  dataFrags = [],
-                                  procFrags = [],
-                                  Translate.tempAlloc = newTempAllocator,
-                                  Translate.controlLabelAlloc = newLabelAllocator,
-                                  dataLabelAlloc = newLabelAllocator,
-                                  frameLabelAlloc = newLabelAllocator}
 
 
 call = CALL (CONSTI 1) [(CONSTI 7)]
