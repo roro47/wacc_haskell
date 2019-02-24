@@ -78,7 +78,7 @@ instance Show Exp where
 instance Show Stm where
   show stm = drawVerticalTreeWith 1 $ toTree stm
 
-    
+
 --         IR    ARM type
 data BOp = PLUS --CALC1
          | MINUS --CALC1

@@ -192,6 +192,19 @@ getVarEntry symbol = do
         f mem level =
           MEM $ BINEXP PLUS (CONSTI $ Frame.frameSize $ levelFrame level) mem
 
+translateFile :: String -> IO (String)
+translateFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let { exp = evalState (translateProgramF ast') newTranslateState }
+  return (show exp)
+
+translate :: ProgramF () -> State TranslateState Stm
+translate program = do
+  program' <- translateProgramF program
+  stm <- unNx program'
+  return stm
+
 translateProgramF :: ProgramF () -> State TranslateState IExp
 translateProgramF (Ann (Program fs stms) _) = translateStatListF stms
 {-
@@ -199,7 +212,7 @@ translateFuncF :: FuncF () -> State TranslateState IExp
 translateFuncF (Ann (Func t id params) _) = do
   pushLevel
   let { params' = map stripParam params }
-  
+
   where stripParam (Ann (Param t (Ann (Ident s) _)) _) = (t, s)
 -}
 translateStatListF :: StatListF () -> State TranslateState IExp
@@ -284,6 +297,12 @@ translateExprF (Ann (StringLiter s) _) = do
   label <- newDataLabel
   addFragment $ Frame.STRING label s
   return $ Ex (NAME label)
+
+translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
+  i <- getVarEntry id
+  e <- mapM translateExprF exps
+  e' <- mapM unEx e
+  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):i:e'))
 
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do

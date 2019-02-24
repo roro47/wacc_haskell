@@ -143,7 +143,7 @@ p_check_divide_by_zero = do
 
 {- Short handed representations for assembly -}
 move_to_r t r = IMOV {assem = MC_ (ARM.MOV AL) (RTEMP r) (R (RTEMP t)), src = [t], dst = [r]}
-add_label = \s -> ILABEL { assem = LAB s, lab = [s]}
+add_label = \s -> ILABEL { assem = LAB s, lab = s}
 
 ljump_cond = \s -> (\c -> IOPER {assem = BRANCH_ (BL c) (L_ s),
                                src = [0], dst = [], jump = [s]})

@@ -104,7 +104,7 @@ bLabel ((LABEL label):_) = label
 traceSchedule :: [[Stm]] -> [Stm]
 traceSchedule blocks = traceSchedule' blocks blockTable markTable
   where markTable = HashMap.empty
-        blockTable = foldl addBlock HashMap.empty blocks 
+        blockTable = foldl addBlock HashMap.empty blocks
         addBlock acc b = insert (bLabel b) b acc
 
 traceSchedule' [] _ _ = []
@@ -113,7 +113,7 @@ traceSchedule' (block:rest) blockTable markTable
  where (trace, markTable') =
          traceSchedule'' block blockTable markTable
        rest' =
-         filter (\b -> not $ member (bLabel b) markTable') rest 
+         filter (\b -> not $ member (bLabel b) markTable') rest
 
 traceSchedule'' block@((LABEL label):rest) blockTable markTable
   | unMarkedSucc /= [] = (block ++ trace, markTable'')

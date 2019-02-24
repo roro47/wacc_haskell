@@ -8,9 +8,9 @@ import Data.Char
 import BackEnd.Temp
 
 data REG = PC | LR | SP | R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 |
-           R11 | R12 | RTEMP Temp deriving (Show, Eq)
+           R11 | R12 | RTEMP Temp deriving (Generic, Eq)
 --- PC = 15 LR = 14 SP = 13
-data OP =  R REG | IMM Int | CHR Char | LSL_ REG Int deriving Eq
+data OP =  R REG | IMM Int | CHR Char | LSL_ REG Int | ASR_ REG Int deriving Eq
 -- immediate values need to be restricted size
 -- LSL values need to be 1, 2 or 3
 data Lable = L_ String | R_ REG deriving Eq
@@ -23,6 +23,11 @@ data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | CS |AL
             deriving (Generic, Eq)
 
 instance GShow Cond
+
+instance GShow REG
+
+instance Show REG where
+  show r = map toLower (gshow r)
 
 instance Show Lable where
   show (L_ x) = x
@@ -50,6 +55,7 @@ instance Show OP where
   show (R reg) = ", " ++ show reg
   show (CHR chr) = ", #" ++ show chr
   show (LSL_ reg int) = ", " ++ show reg ++ ", LSL #" ++ show int
+  show (ASR_ reg int) = ", " ++ show reg ++ ", ASR #" ++ show int
 -- since op is always at the end of an assembly I included the spaces and comma here
 
 instance Show Suffix where
@@ -110,7 +116,7 @@ instance Show Instr where
   show (M msg int str) = msg ++ ":\n   .word " ++ (show int) ++ "\n   .ascii " ++ show str ++ "\n"
 
 output_show :: Instr -> String
-output_show instr = (show instr) ++ " | "
+output_show instr = (show instr)
 
 -- Substitute RTEMP to real registers
 normInstr :: Int -> REG -> Instr -> Instr
