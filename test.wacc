@@ -1,0 +1,4 @@
+begin
+  char a = 'a';
+  int b = ord a
+end
