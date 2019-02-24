@@ -199,7 +199,7 @@ translateProgramF (Ann (Program fs stms) _) = do
   stm <- translateStatListF stms
   popLevel
   return stm
-  
+
 {-
 translateFuncF :: FuncF () -> State TranslateState IExp
 translateFuncF (Ann (Func t id params) _) = do
@@ -359,7 +359,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "free" -> translateFree t exps'
     "print" -> translatePrint t exps'
     "println" -> translatePrintln t exps'
-    "newpair" -> translateNewPair t exps'
+    "newpair" -> translateNewPair t exps' --this t is none??? need type info
     "fst" -> translatePairAccess t exps' "fst"
     "snd" -> translatePairAccess t exps' "snd"
     "!" -> callp "#!" exps'
@@ -417,6 +417,8 @@ translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 -- ASSUME 2 parameters
 translateNewPair (TPair t1 t2) exps
   = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
+
+translateNewPair _ _ = undefined
 
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
 translatePairAccess (TPair t1 t2) exps str

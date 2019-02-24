@@ -116,6 +116,13 @@ munchExp (BINEXP MOD e1 e2) = do
                   src = [0, 1], dst = [1]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, modInstr], 1)
 
+--load a byte from sp
+munchExp (CALL (NAME "#oneByte") [exp]) = do
+  (i, t) <- munchExp exp
+  newt <- newTemp
+  return (i ++ [IMOV {assem = S_ (ARM.LDR SB AL) (RTEMP newt) (Imm (RTEMP t) 0)
+                      , dst = [t], src = [newt]}], newt)
+
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
   cinstr <- munchStm cjump
@@ -247,13 +254,6 @@ condExp (MEM (CONSTI i)) = do
   newt <- newTemp
   return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP newt) (NUM i) , dst = [], src = [newt]}], newt)
 
---load a byte from sp
-condExp (CALL (NAME "#oneByte") [exp]) = do
-  (i, t) <- munchExp exp
-  newt <- newTemp
-  return $ \c -> (i ++ [IMOV {assem = S_ (ARM.LDR SB c) (RTEMP newt) (Imm (RTEMP t) 0)
-                        , dst = [t], src = [newt]}], newt)
-
 condExp (MEM m) = do
   (i, t) <- munchExp m
   newt <- newTemp
@@ -383,6 +383,8 @@ condStm (JUMP e ls) = do
   (i, t) <- munchExp e
   return (\c -> [IOPER {assem = BRANCH_ (ARM.B c) (R_ (RTEMP t)), dst = [], src = [], jump = []}])
 
+condStm (NOP) = return $ \c -> []
+
 munchBuiltInFuncFrag :: Fragment -> State TranslateState [ASSEM.Instr]
 munchBuiltInFuncFrag (PROC stm frame) = do
   munch <- munchStm stm
@@ -459,7 +461,8 @@ munch file = do
   putStrLn ""
   ast <- parseFile file
   ast' <- analyzeAST ast
-  let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+  let
+      (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
       canonState = CanonState { C.tempAlloc = Translate.tempAlloc s,
                                 C.controlLabelAlloc = Translate.controlLabelAlloc s};
       stms = evalState (transform stm) canonState
