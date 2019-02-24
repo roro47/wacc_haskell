@@ -447,12 +447,12 @@ deSeq (SEQ s1 s2) = (s1, s2)
 
 showStm stm = do
   putStrLn ""
-  munch <- evalState (optimsedMunch stm) translateState
+  munch <- evalState (optimsedMunch stm) Translate.newTranslateState
   putStrLn ""
   return $ ()
 
 showExp exp = do
-  munch <- evalState (munchExp exp) translateState
+  munch <- evalState (munchExp exp) Translate.newTranslateState
   return (munch)
 
 munch file = do
