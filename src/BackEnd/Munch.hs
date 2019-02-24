@@ -465,6 +465,7 @@ showExp exp = do
   return (munch)
 
 munch file = do
+  putStrLn ""
   ast <- parseFile file
   ast' <- analyzeAST ast
   let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
@@ -474,13 +475,8 @@ munch file = do
       ms = evalState (munchmany stms) s
       out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
   mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
-
-
--- munch file = do
---   stms <- munchhelper file
---   ms <- evalState (munchmany stms)
---   let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
---   return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
+  putStrLn ""
+  return ()
 
 munchmany [] = return []
 munchmany (x:xs) = do
