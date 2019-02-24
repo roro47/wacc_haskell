@@ -220,10 +220,12 @@ analyzeStatF (Ann s@(Declare declareT symbol rhs) (pos, none)) =
   lookUpSymbolCurrScope symbol >>= \maybeT ->
     case maybeT of
       Just (_, pos') -> throwError $ declaredError symbol pos pos'
-      otherwise -> do rhs' <- analyzeExprF rhs
-                      match err rhs' [declareT]
-                      addSymbol symbol declareT pos
-                      return $ Ann (Declare declareT symbol rhs') (pos, none)
+      otherwise -> do
+        rhs' <- analyzeExprF rhs
+        let { (Ann e (posRHS, _)) = rhs'; rhs'' = Ann e (posRHS, declareT) }
+        match err rhs' [declareT]
+        addSymbol symbol declareT pos
+        return $ Ann (Declare declareT symbol rhs'') (pos, none)
    where err = "Assign wrong type of value in declaration"
 
 analyzeStatF (Ann (Assign lhs rhs) ann@(pos, none)) = do

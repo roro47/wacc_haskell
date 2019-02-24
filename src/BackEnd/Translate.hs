@@ -193,7 +193,13 @@ getVarEntry symbol = do
           MEM $ BINEXP PLUS (CONSTI $ Frame.frameSize $ levelFrame level) mem
 
 translateProgramF :: ProgramF () -> State TranslateState IExp
-translateProgramF (Ann (Program fs stms) _) = translateStatListF stms
+translateProgramF (Ann (Program fs stms) _) = do
+  level <- newLevel
+  pushLevel level
+  stm <- translateStatListF stms
+  popLevel
+  return stm
+  
 {-
 translateFuncF :: FuncF () -> State TranslateState IExp
 translateFuncF (Ann (Func t id params) _) = do
@@ -211,12 +217,15 @@ translateStatListF (Ann (StatList stms) _) = do
 translateStatF :: StatF () -> State TranslateState IExp
 translateStatF (Ann (Declare t id expr) _) = do
   let { Ann (Ident symbol) _ = id }
-  access <- allocLocal symbol t (escape t)
+  access <- allocLocal symbol t True
   exp <- translateExprF expr
-  let { mem = accessToMem access }
+  let { mem = accessToMem access; -- if access through fp
+        mem' = MEM $ TEMP Frame.sp } -- access through sp
   addVarEntry symbol t access
   exp' <- unEx exp
-  return $ Nx (MOV mem exp')
+  return $ Nx (SEQ adjustSP (MOV mem' exp'))
+  where adjustSP =
+          MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI $ Frame.typeSize t))
 
 translateStatF (Ann (Assign expr1 expr2) _) = do
   exp1 <- translateExprF expr1
@@ -234,7 +243,7 @@ translateStatF (Ann (Exit expr) _) = do
   exp <- translateExprF expr
   exp' <- unEx exp
   temp <- newTemp
-  return $ Nx (MOV (TEMP temp) (Frame.externalCall "exit" [exp']))
+  return $ Nx (EXP (Frame.externalCall "exit" [exp']))
 
 translateStatF (Ann (If expr stms1 stms2) _) = do
   exp <- translateExprF expr
@@ -300,7 +309,7 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
         (TArray elemT) = t;
         elemSize = Frame.typeSize elemT;
         call = Frame.externalCall "malloc" [CONSTI (arrayLen*elemSize + Frame.intSize)];
-        moveElem = f (TEMP temp) 0 elemSize exps' }
+        moveElem = f (TEMP temp) 0 elemSize (exps' ++ [CONSTI arrayLen]) }
   return $ Ex (ESEQ (SEQ (MOV (TEMP temp) call) moveElem) (TEMP temp))
   where f temp index elemSize [exp]
           = MOV (BINEXP PLUS temp (CONSTI (elemSize * index))) exp
@@ -345,7 +354,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "<=" -> return $ condition LE exps'
     "==" -> return $ condition EQ exps'
     "!=" -> return $ condition NE exps'
-    "skip" -> callp "#skip" []
+    "skip" -> return $ Nx NOP
     "read" -> translateRead t exps'
     "free" -> translateFree t exps'
     "print" -> translatePrint t exps'

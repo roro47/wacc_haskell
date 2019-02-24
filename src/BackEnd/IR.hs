@@ -36,12 +36,14 @@ cleanStmExp e = e
 cleanStm (SEQ NOP NOP) = NOP
 cleanStm (SEQ s1 NOP) = cleanStm s1
 cleanStm (SEQ NOP s2) = cleanStm s2
+  {-
 cleanStm s@(SEQ s1 s2)
   | s1' == NOP || s2' == NOP = cleanStm $ SEQ s1' s2'
   | s1' /= s1 || s2' /= s2 = cleanStm $ SEQ s1' s2'
   | otherwise = SEQ s1' s2'
   where s1' = cleanStm s1
         s2' = cleanStm s2
+-}
 cleanStm s = s
 
 
@@ -52,7 +54,10 @@ instance Treeable Exp where
   toTree (CONSTI i) = Node ("CONSTI " ++ show i) []
   toTree (CONSTC c) = Node ("CONSTC " ++ show c) []
   toTree (NAME l) = Node ("NAME " ++ show l) []
-  toTree (TEMP t) = Node ("TEMP " ++ show t) []
+  toTree (TEMP t)
+    | t == 11 = Node ("FP (r11)") []
+    | t == 13 = Node ("SP (r13)") []
+    | otherwise = Node ("TEMP " ++ show t) []
   toTree (BINEXP bop e1 e2) = Node "BINEXP" [Node (show bop) [], toTree e1, toTree e2]
   toTree (MEM e) = Node ("MEM" ) [toTree e]
   toTree (CALL e es) = Node ("CALL ") ([toTree e] ++ map toTree es)
@@ -65,6 +70,7 @@ instance Treeable Stm where
     Node "CJUMP" [Node (show rop) [toTree e1, toTree e2],
                   Node label1 [], Node label2 []]
   toTree (LABEL label) = Node "LABEL" [Node label []]
+  toTree (EXP exp) = Node "EXP" [toTree exp]
   toTree (SEQ s1 s2) = Node "SEQ" [toTree s1, toTree s2]
   toTree NOP = Node "NOP" []
 

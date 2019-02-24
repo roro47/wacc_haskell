@@ -19,6 +19,9 @@ data Fragment = PROC Stm Frame
 charSize :: Int
 charSize = 1
 
+boolSize :: Int
+boolSize = 1
+
 intSize :: Int
 intSize = 4
 
@@ -30,6 +33,7 @@ typeSize t =
  case t of
    TInt -> intSize
    TChar -> charSize
+   TBool -> boolSize
    TArray _ -> addrSize
    TPair _ _ -> addrSize
    _ -> undefined
@@ -39,7 +43,10 @@ pc = 15
 
 -- frame pointer register
 fp :: Temp.Temp
-fp = 13
+fp = 11
+
+sp :: Temp.Temp
+sp = 13
 
 -- link register, store return address
 ra :: Temp.Temp
@@ -79,12 +86,6 @@ allocLocal frame t escape tempAlloc =
     False -> (frame, InReg temp, tempAlloc')
   where (tempAlloc', temp) = newTemp tempAlloc
         offset = (frameSize frame) + allocSize
-        allocSize = case t of
-                      TInt -> intSize
-                      TChar -> charSize
-                      TArray _ -> addrSize
-                      TPair _ _ -> addrSize
-                      _ -> undefined
-
+        allocSize = typeSize t
 externalCall :: String -> [Exp] -> Exp
 externalCall sysFunc args = CALL (NAME sysFunc) args
