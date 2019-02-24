@@ -480,7 +480,6 @@ optimsedMunch stm = do
   let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
   return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
 
-
 call = CALL (CONSTI 1) [(CONSTI 7)]
 -- pre-Index sample --
 assemPre = (IOPER { assem = (CBS_ (ARM.ADD NoSuffix ARM.EQ) (RTEMP 1) (RTEMP 1) (IMM 2)), src = [1], dst = [1], jump = []}) :
