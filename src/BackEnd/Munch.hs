@@ -5,21 +5,17 @@ import BackEnd.Assem as ASSEM
 import BackEnd.Temp hiding (newTemp, newDataLabel)
 import Data.Maybe
 import Control.Monad.State.Lazy
-import BackEnd.Translate as T
+import BackEnd.Translate as Translate
 import BackEnd.Frame as Frame
 import Data.List
 import BackEnd.Builtin
 import FrontEnd.Parser
+import BackEnd.Canon as C hiding (newTemp)
 import FrontEnd.SemanticAnalyzer
 --how to know scope ?? when frame is changed ???
 --TODO : difference between b and bl ??
 -- REGISTER SAVE??
 -- STRING ASSIGNMENT?
-optimsedMunch stm = do
-  m <- munchStm stm
-  let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
-  return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
-
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
   = lookup bop [(IR.PLUS, ARM.ADD), (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
@@ -468,35 +464,43 @@ showExp exp = do
   munch <- evalState (munchExp exp) translateState
   return (munch)
 
+munch file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+      canonState = CanonState { C.tempAlloc = Translate.tempAlloc s,
+                                C.controlLabelAlloc = Translate.controlLabelAlloc s};
+      stms = evalState (transform stm) canonState
+      ms = evalState (munchmany stms) s
+      out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
+  mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
+
+
 -- munch file = do
---   ast <- parseFile file
---   ast' <- analyzeAST ast
---   let (ir, state) = runState (translateProgramF ast') translateState
---   m <- evalState (munchStm ir) state  -something wrong with ir
---   putStrLn $ show munch
+--   stms <- munchhelper file
+--   ms <- evalState (munchmany stms)
+--   let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
+--   return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
+
+munchmany [] = return []
+munchmany (x:xs) = do
+  m <- munchStm x
+  ms <- munchmany xs
+  return $ (m++ms)
+
+optimsedMunch stm = do
+  m <- munchStm stm
+  let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
+  return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
 
 translateState = TranslateState { levels = [],
                                   dataFrags = [],
                                   procFrags = [],
-                                  tempAlloc = newTempAllocator,
-                                  controlLabelAlloc = newLabelAllocator,
+                                  Translate.tempAlloc = newTempAllocator,
+                                  Translate.controlLabelAlloc = newLabelAllocator,
                                   dataLabelAlloc = newLabelAllocator,
                                   frameLabelAlloc = newLabelAllocator}
 
---- a sample ----
-reg0 = TEMP 23
-reg1 = TEMP 24
-msg0 = "0"
-msg1 = "1"
-frame = Frame.newFrame "p_print_bool"
-s1 = CJUMP IR.NE reg0 (CONSTI 0) "ne" "eq"
-s_ne = SEQ (LABEL "ne") (IR.MOV reg0 (NAME msg0))
-s_eq = SEQ (LABEL "eq") (IR.MOV reg0 (NAME msg1))
-s2 = IR.MOV reg0 (BINEXP PLUS reg0 (CONSTI 4))
-s3 = JUMP (NAME "printf") ["printf"]
-s4 = IR.MOV reg0 (CONSTI 0)
-s5 = JUMP (NAME "fflush") ["fflush"]
-statement = SEQ (SEQ s1 (SEQ s_ne s_eq)) (SEQ s2 (SEQ s3 (SEQ s4 s5)))
 
 
 s_1 = SEQ (IR.PUSH (TEMP 7)) (JUMP (NAME "something") ["something"])
