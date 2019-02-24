@@ -3,6 +3,8 @@ module BackEnd.Canon where
 
 import Control.Monad.State.Lazy
 import Data.HashMap as HashMap hiding (map, filter)
+import FrontEnd.Parser
+import FrontEnd.SemanticAnalyzer
 import qualified BackEnd.Translate as Translate
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
@@ -11,6 +13,41 @@ data CanonState =
   CanonState { tempAlloc :: Temp.TempAllocator,
                controlLabelAlloc :: Temp.LabelAllocator}
     deriving (Eq, Show)
+
+
+testCanonFile :: String -> IO [Stm]
+testCanonFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+        canonState = CanonState { tempAlloc = Translate.tempAlloc s,
+                                  controlLabelAlloc = Translate.controlLabelAlloc s};
+        stms = evalState (transform stm) canonState }
+  return stms
+
+
+newCanonState :: CanonState
+newCanonState = CanonState { tempAlloc = Temp.newTempAllocator,
+                             controlLabelAlloc = Temp.newLabelAllocator }
+
+testCanon :: Stm -> IO [Stm]
+testCanon stm = do
+  let { (trace, s) = runState (transform stm) newCanonState }
+  return trace
+
+
+testDoStm :: Stm -> IO Stm
+testDoStm stm = do
+  let { (stm', s) = runState (doStm stm) newCanonState }
+  return stm'
+  
+
+transform :: Stm -> State CanonState [Stm]
+transform stm = do
+  stms <- linearize stm
+  blocks <- basicBlocks stms
+  return $ traceSchedule $ fst blocks
+  
 
 newTemp :: State CanonState Temp.Temp
 newTemp = do
@@ -87,8 +124,8 @@ traceSchedule'' block@((LABEL label):rest) blockTable markTable
         succs block =
           case last block of
             JUMP _ labels -> labels
-            CJUMP _ _ _ label1 label2 -> [label1, label2]
-
+            CJUMP _ _ _ label1 label2 -> [label2, label1]
+    
 
 -- test whether two statements commute or not
 commute :: Exp -> Stm -> Bool
@@ -161,3 +198,15 @@ doExp (ESEQ stm e) = do
   return (SEQ stm' stm'', e')
 
 doExp e = reorderExp [] (\_ -> e)
+
+t0 = TEMP 0
+t1 = TEMP 1
+t2 = TEMP 2
+
+e1 = CONSTI 1
+
+s1 = MOV t1 t2
+s2 = MOV t2 t0
+  
+testDoStm1 :: Stm
+testDoStm1 = MOV t0 (ESEQ s1 (ESEQ s2 e1))
