@@ -197,7 +197,7 @@ getVarEntry symbol = do
   (VarEntry (Access frame access) t) <- find' (levels state)
   case access of
     Frame.InReg temp -> return $ TEMP temp
-    Frame.InFrame offset -> do 
+    Frame.InFrame offset -> do
       let { prevLevels = takeWhile notFound (levels state);
             offset' = foldl f offset prevLevels }
       return $ MEM (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset'))
@@ -207,7 +207,7 @@ getVarEntry symbol = do
           case find (\l -> not $ notFound l) levels of
             Just level -> return $ (varTable level) ! symbol
             otherwise -> fail "not found expected var entry"
-            
+
         notFound level =
           case HashMap.lookup symbol (varTable level) of
             Just (VarEntry _ _) -> False
@@ -253,10 +253,7 @@ translateStatF (Ann (Declare t id expr) _) = do
         mem' = MEM $ TEMP Frame.sp } -- access through sp
   addVarEntry symbol t access
   exp' <- unEx exp
-  case t of
-    TChar -> return $ Nx (SEQ adjustSP (MOV (CALL (NAME "#oneByte") [mem]) exp'))
-    TBool -> return $ Nx (SEQ adjustSP (MOV (CALL (NAME "#oneByte") [mem]) exp'))
-    otherwise -> return $ Nx (SEQ adjustSP (MOV mem exp'))
+  return $ Nx (SEQ adjustSP (MOV mem exp'))
   where adjustSP =
           MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI $ Frame.typeSize t))
 
@@ -407,8 +404,8 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
                       e' <- unEx e;
                       return $ Nx (EXP e') }
     "newpair" -> translateNewPair (TPair (inputTs !! 0) (inputTs !! 1)) exps'
-    "fst" -> translatePairAccess (inputTs !! 0) exps' "fst"
-    "snd" -> translatePairAccess (inputTs !! 1) exps' "snd"
+    "fst" -> translatePairAccess ret exps' "fst"
+    "snd" -> translatePairAccess ret exps' "snd"
     "!" -> callp "#!" exps'
     "#pos" -> return $ Ex (head exps')
     "#neg" -> do
@@ -420,6 +417,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "chr" -> callp "#retVal" exps'
     otherwise -> fail "not predicted situation"
  where (TFunc _ inputTs _) = t
+       (TFunc  _ _ ret ) = t
        binexp bop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
            Ex $ BINEXP bop exp1 exp2
@@ -482,11 +480,14 @@ translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 translateNewPair (TPair t1 t2) exps
   = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
 
-translateNewPair _ _ = undefined
+translateNewPair t _ = undefined
 
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
-translatePairAccess (TPair t1 t2) exps str
-  = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
+-- translatePairAccess (TPair t1 t2) exps str
+--   = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
+-- translatePairAccess t _ _ = fail $ show t
+translatePairAccess t exps str
+  = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t) )) exps
 
 -- turn IExp to Exp
 unEx :: IExp -> State TranslateState Exp

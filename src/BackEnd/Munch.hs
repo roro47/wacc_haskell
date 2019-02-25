@@ -74,8 +74,8 @@ munchExp (CALL (NAME "#skip") _) = return ([], dummy)
 
 munchExp (CALL (NAME "#println") es) = do
   ls <- mapM (liftM fst.munchExp) es
-  let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "#p_print_ln"),
-                  src = [], dst = [], jump = ["#p_print_ln"]}
+  let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "p_print_ln"),
+                  src = [], dst = [], jump = ["p_print_ln"]}
   return ((concat ls)++[ln], dummy)
 
 munchExp (CALL (NAME "#p_putchar") [e]) = do
@@ -98,27 +98,24 @@ munchExp (CALL (NAME "exit") [e]) = do
                        dst = [0] },
                 exit ], dummy)
     otherwise -> do
-      (i, t) <- munchExp e
-      let mv = move_to_r t 0
-      return (i ++ [mv, exit], dummy)
-
+      mv <- munchStm (IR.MOV (TEMP 0) e)
+      return (mv ++ [exit], dummy)
 
 munchExp (CALL (NAME n) [e])
   | "#p_" `isPrefixOf` n = do
     (i, t) <- munchExp e
-    return  (i++ [(move_to_r t 0), (ljump_to_label n)], dummy)
+    return  (i++ [(move_to_r t 0), (ljump_to_label (drop 1 n))], dummy)
 
 munchExp (CALL (NAME n) e)
-  | "#fst" `isPrefixOf` n = accessPair True fst e
-  | "#snd" `isPrefixOf` n = accessPair False snd e
+  | "#fst" `isPrefixOf` n = accessPair True n e
+  | "#snd" `isPrefixOf` n = accessPair False n e
   | "#newpair " `isPrefixOf` n = createPair fst snd e
     where
       ls = words n
       fst = (ls !! 1)
       snd = (ls !! 2)
 
-{- r0 / r1 : result in r0
-  need to check if r0 is divided by zero-}
+{- r0 / r1 : result in r0 -}
 munchExp (BINEXP DIV e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2 --divisor
@@ -131,8 +128,7 @@ munchExp (BINEXP DIV e1 e2) = do
                       src = [0, 1], dst = [0]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, divInstr], 0)
 
-{- r0 % r1 : result in r1
-  need to check if r0 is divided by zero-}
+{- r0 % r1 : result in r1 -}
 munchExp (BINEXP MOD e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2  --divisor
@@ -181,6 +177,11 @@ munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
     (i, t) <- munchExp e
     return (cinstr ++ falseinstr ++ trueinstr ++ i, t)
 
+munchExp (ESEQ stm e) = do
+  ls <- munchStm stm
+  (i, t) <- munchExp e
+  return (ls++i, t)
+
 munchExp (CALL f es) = do
   (fi, ft) <- munchExp f -- assume result returned in ft
   ls <- mapM (liftM fst.munchExp) es
@@ -205,6 +206,7 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
 
+-- our stack implementation is different ???
 -- UNCOMMENT AFTER SP handled
 -- munchExp (BINEXP MINUS (TEMP 13) (CONSTI i)) = do
 --   return ([IOPER {assem = CBS_ (SUB NoSuffix AL) (SP) (SP) (IMM i), src = [13], dst = [13],
@@ -213,26 +215,6 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
 -- munchExp (BINEXP PLUS (TEMP 13) (CONSTI i)) = do
 --   return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (SP) (SP) (IMM i), src = [13], dst = [13],
 --                  jump = []}], 13)
-
--- Now cannot match irpre
-munchExp (BINEXP MINUS e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  let subs = IOPER {assem = CBS_ (SUB S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
-                    src = [t1, t2], dst = [t1], jump = []}
-      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
-                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
-  return (i1++i2++[subs, br], t1)
-
-  -- Now cannot match irpre
-munchExp (BINEXP PLUS e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  let subs = IOPER {assem = CBS_ (ADD S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
-                    src = [t1, t2], dst = [t1], jump = []}
-      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
-                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
-  return (i1++i2++[subs, br], t1)
 
 munchExp x = do
   c <- condExp x
@@ -276,6 +258,26 @@ condExp (BINEXP bop e (CONSTI int)) = do
                                 (RTEMP t1) (RTEMP t1) (IMM int),
                                 dst = [t1], src = [t1], jump = []}], t1)
 
+-- Now cannot match irpre
+condExp (BINEXP MINUS e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  let subs = IOPER {assem = CBS_ (SUB S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
+                    src = [t1, t2], dst = [t1], jump = []}
+      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return $ \c -> (i1++i2++[subs, br], t1)
+
+  -- Now cannot match irpre
+condExp (BINEXP PLUS e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  let subs = IOPER {assem = CBS_ (ADD S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
+                    src = [t1, t2], dst = [t1], jump = []}
+      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return $ \c -> (i1++i2++[subs, br], t1)
+
 condExp (BINEXP bop e1 e2) = do
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
@@ -307,7 +309,6 @@ condExp (MEM m) = do
   newt <- newTemp
   return $ \c -> (i ++ [IMOV {assem = S_ (ARM.LDR W c) (RTEMP newt) (Imm (RTEMP t) 0)
                         , dst = [t], src = [newt]}], newt)
-
 
 addsubtoCalc :: BOp -> (Cond -> Calc)
 addsubtoCalc PLUS = (\c -> ARM.ADD NoSuffix c)
@@ -360,22 +361,6 @@ opVal _ = -1
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 
-munchStm (IR.PUSH (TEMP t)) = do
-  return [IOPER { assem = STACK_ (ARM.PUSH AL) [RTEMP t],
-                  src = [t],
-                  dst = [],
-                  jump = [] }]
-
-munchStm (IR.POP (TEMP t)) = do
-  return [IOPER { assem = STACK_ (ARM.POP AL) [RTEMP t],
-                  src = [],
-                  dst = [t],
-                  jump = [] } ]
-
-munchStm (EXP e) = do
-  (i, t) <- munchExp e
-  return i
-
 munchStm (LABEL label) = return [ILABEL {assem = LAB label, lab = label}]
 
 -- moving stack pointer don't need to check overflow
@@ -385,14 +370,14 @@ munchStm (IR.MOV (TEMP 13) (BINEXP bop (TEMP 13) (CONSTI offset))) = do
                   src = [Frame.sp],
                   dst = [Frame.sp],
                   jump = [] } ]
-  
+
 munchStm (IR.MOV (TEMP 11) (BINEXP bop (TEMP 11) (CONSTI offset))) = do
   let op = if bop == MINUS then SUB else ADD
   return [IOPER { assem = CBS_ (op NoSuffix AL) SP SP (IMM offset),
                   src = [Frame.fp],
                   dst = [Frame.fp],
                   jump = [] } ]
-    
+
 munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
    ret <- suffixStm (IR.MOV e (MEM me))
    return $ ret AL SB
@@ -412,6 +397,10 @@ munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
   let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [], src = [t1, t2], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
+
+munchStm (EXP e) = do
+  (i, t) <- munchExp e
+  return i
 
 munchStm x = do
   m <- condStm x
