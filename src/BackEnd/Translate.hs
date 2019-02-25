@@ -385,8 +385,8 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
                       e' <- unEx e;
                       return $ Nx (EXP e') }
     "newpair" -> translateNewPair (TPair (inputTs !! 0) (inputTs !! 1)) exps'
-    "fst" -> translatePairAccess (inputTs !! 0) exps' "fst"
-    "snd" -> translatePairAccess (inputTs !! 1) exps' "snd"
+    "fst" -> translatePairAccess ret exps' "fst"
+    "snd" -> translatePairAccess ret exps' "snd"
     "!" -> callp "#!" exps'
     "#pos" -> return $ Ex (head exps')
     "#neg" -> do
@@ -398,6 +398,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "chr" -> callp "#retVal" exps'
     otherwise -> fail "not predicted situation"
  where (TFunc _ inputTs _) = t
+       (TFunc  _ _ ret ) = t
        binexp bop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
            Ex $ BINEXP bop exp1 exp2
@@ -447,11 +448,14 @@ translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 translateNewPair (TPair t1 t2) exps
   = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
 
-translateNewPair _ _ = undefined
+translateNewPair t _ = undefined
 
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
-translatePairAccess (TPair t1 t2) exps str
-  = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
+-- translatePairAccess (TPair t1 t2) exps str
+--   = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
+-- translatePairAccess t _ _ = fail $ show t
+translatePairAccess t exps str
+  = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t) )) exps
 
 -- turn IExp to Exp
 unEx :: IExp -> State TranslateState Exp

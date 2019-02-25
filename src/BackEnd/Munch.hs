@@ -104,8 +104,8 @@ munchExp (CALL (NAME n) [e])
     return  (i++ [(move_to_r t 0), (ljump_to_label (drop 1 n))], dummy)
 
 munchExp (CALL (NAME n) e)
-  | "#fst" `isPrefixOf` n = accessPair True fst e
-  | "#snd" `isPrefixOf` n = accessPair False snd e
+  | "#fst" `isPrefixOf` n = accessPair True n e
+  | "#snd" `isPrefixOf` n = accessPair False n e
   | "#newpair " `isPrefixOf` n = createPair fst snd e
     where
       ls = words n
