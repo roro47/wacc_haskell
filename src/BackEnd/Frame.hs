@@ -50,8 +50,8 @@ sp :: Temp.Temp
 sp = 13
 
 -- link register, store return address
-ra :: Temp.Temp
-ra  = 14
+lr :: Temp.Temp
+lr  = 14
 
 -- function return value register
 rv :: Temp.Temp
