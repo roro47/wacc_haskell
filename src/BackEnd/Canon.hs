@@ -81,7 +81,7 @@ newControlLabel = do
 linearize :: Stm -> State CanonState [Stm]
 linearize stm = do
   stm' <- doStm stm
-  return $ linear stm' []
+  return $ filter (/= NOP) $ linear stm' []
   where  linear :: Stm -> [Stm] -> [Stm]
          linear (SEQ a b) list = linear a (linear b list)
          linear s list = s:list
@@ -89,7 +89,7 @@ linearize stm = do
 basicBlocks :: [Stm] -> State CanonState ([[Stm]], Temp.Label)
 basicBlocks [] = do
   label <- newControlLabel
-  return $ ([[LABEL label, JUMP (CONSTI 1) [label]]], label)
+  return $ ([[LABEL label]], label)
 basicBlocks (l@(LABEL label):rest) = do
   let { (block, rest') = break (\e -> isEND e) rest }
   if rest' == [] || isLABEL (head rest')
@@ -138,6 +138,7 @@ traceSchedule'' block@((LABEL label):rest) blockTable markTable
           traceSchedule'' nextBlock blockTable markTable'
         succs block =
           case last block of
+            LABEL _ -> []
             JUMP _ labels -> labels
             CJUMP _ _ _ label1 label2 -> [label2, label1]
     

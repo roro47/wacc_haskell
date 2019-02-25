@@ -22,6 +22,24 @@ data SLOP2 = MSG String | PRE REG Int {-| POST REG Int-} | Imm REG Int | NUM Int
 data Cond = EQ | NE | MI | PL | VS | VC | HI | LS | GE | LT | GT | LE | CS |AL
             deriving (Generic, Eq)
 
+data Calc = ADD Suffix Cond | SUB Suffix Cond | AND Suffix Cond |
+            EOR Suffix Cond | ORR Suffix Cond | LSL Suffix Cond |
+            ASR Suffix Cond | LSR Suffix Cond | ROR Suffix Cond |
+            RSB Suffix Cond
+            deriving (Show, Header, Eq)
+data Simple = CMP Cond | MOV Cond deriving (Show, Header, Eq)
+data Branch = B Cond | BL Cond deriving (Show, Header, Eq)
+data StackOP = PUSH Cond | POP Cond deriving (Show, Header, Eq)
+data Calc2 = SMULL Suffix Cond deriving (Show, Header, Eq)
+data SL = LDR SLType Cond | STR SLType Cond deriving (Show, Header, Eq)
+data Calc3 = SDIV Cond deriving (Show, Header, Eq)
+
+data Instr = CBS_ Calc REG REG OP | MC_ Simple REG OP |
+             BRANCH_ Branch Lable | C2_ Calc2 REG REG REG REG |
+             STACK_ StackOP [REG] | S_ SL REG SLOP2 |
+             C3_ Calc3 REG REG REG | LAB String | M String Int String deriving Eq
+
+
 instance GShow Cond
 
 instance GShow REG
@@ -86,23 +104,6 @@ instance Show SLOP2 where
 class Show a => Header a where
   show_ :: a -> String
   show_ a = (filter (not.isSpace) (show a)) ++ " "
-
-data Calc = ADD Suffix Cond | SUB Suffix Cond | AND Suffix Cond |
-            EOR Suffix Cond | ORR Suffix Cond | LSL Suffix Cond |
-            ASR Suffix Cond | LSR Suffix Cond | ROR Suffix Cond |
-            RSB Suffix Cond
-            deriving (Show, Header, Eq)
-data Simple = CMP Cond | MOV Cond deriving (Show, Header, Eq)
-data Branch = B Cond | BL Cond deriving (Show, Header, Eq)
-data StackOP = PUSH Cond | POP Cond deriving (Show, Header, Eq)
-data Calc2 = SMULL Suffix Cond deriving (Show, Header, Eq)
-data SL = LDR SLType Cond | STR SLType Cond deriving (Show, Header, Eq)
-data Calc3 = SDIV Cond deriving (Show, Header, Eq)
-
-data Instr = CBS_ Calc REG REG OP | MC_ Simple REG OP |
-             BRANCH_ Branch Lable | C2_ Calc2 REG REG REG REG |
-             STACK_ StackOP [REG] | S_ SL REG SLOP2 |
-             C3_ Calc3 REG REG REG | LAB String | M String Int String deriving Eq
 
 instance Show Instr where
   show (CBS_ c r1 r2 op) = (show_ c)  ++ (show r1) ++ ", " ++ (show r2) ++ (show op)
