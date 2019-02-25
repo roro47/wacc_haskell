@@ -6,7 +6,7 @@ import BackEnd.Temp hiding (newTemp, newDataLabel)
 import Data.Maybe
 import Control.Monad.State.Lazy
 import BackEnd.Translate as Translate
-import BackEnd.Frame as Frame 
+import BackEnd.Frame as Frame
 import Data.List
 import BackEnd.Builtin
 import FrontEnd.Parser
@@ -81,13 +81,13 @@ munchExp (CALL (NAME "exit") [e]) = do
       return ([ IMOV { assem = MC_ (ARM.MOV AL) R0 (IMM n),
                       src = [],
                       dst = [0] },
-                exit ], dummy) 
+                exit ], dummy)
     TEMP t ->
       return ([ IMOV { assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t)),
                        src = [t],
                        dst = [0] },
                 exit ], dummy)
-    otherwise -> do                       
+    otherwise -> do
       mv <- munchStm (IR.MOV (TEMP 0) e)
       return (mv ++ [exit], dummy)
 
@@ -168,6 +168,11 @@ munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
     trueinstr <- munchStm true
     (i, t) <- munchExp e
     return (cinstr ++ falseinstr ++ trueinstr ++ i, t)
+
+munchExp (ESEQ stm e) = do
+  ls <- munchStm stm
+  (i, t) <- munchExp e
+  return (ls++i, t)
 
 munchExp (CALL f es) = do
   (fi, ft) <- munchExp f -- assume result returned in ft
@@ -352,14 +357,14 @@ munchStm (IR.MOV (TEMP 13) (BINEXP bop (TEMP 13) (CONSTI offset))) = do
                   src = [Frame.sp],
                   dst = [Frame.sp],
                   jump = [] } ]
-  
+
 munchStm (IR.MOV (TEMP 11) (BINEXP bop (TEMP 11) (CONSTI offset))) = do
   let op = if bop == MINUS then SUB else ADD
   return [IOPER { assem = CBS_ (op NoSuffix AL) SP SP (IMM offset),
                   src = [Frame.fp],
                   dst = [Frame.fp],
                   jump = [] } ]
-    
+
 munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
    ret <- suffixStm (IR.MOV e (MEM me))
    return $ ret AL SB
@@ -528,7 +533,7 @@ munch file = do
       ms = evalState (munchmany stms) s
       substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
       out = filter (\x -> not $ containsDummy x) substitute
-      totalOut = map show (concat dataFrags) ++ (map show out)  
+      totalOut = map show (concat dataFrags) ++ (map show out)
   mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) totalOut
   putStrLn ""
   return ()
