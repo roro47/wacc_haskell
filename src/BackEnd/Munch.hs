@@ -88,9 +88,8 @@ munchExp (CALL (NAME "exit") [e]) = do
                        dst = [0] },
                 exit ], dummy)
     otherwise -> do                       
-      (i, t) <- munchExp e
-      let mv = move_to_r t 0
-      return (i ++ [mv, exit], dummy)
+      mv <- munchStm (IR.MOV (TEMP 0) e)
+      return (mv ++ [exit], dummy)
 
 munchExp (CALL (NAME n) [e])
   | "#p_" `isPrefixOf` n = do
@@ -353,7 +352,14 @@ munchStm (IR.MOV (TEMP 13) (BINEXP bop (TEMP 13) (CONSTI offset))) = do
                   src = [Frame.sp],
                   dst = [Frame.sp],
                   jump = [] } ]
-
+  
+munchStm (IR.MOV (TEMP 11) (BINEXP bop (TEMP 11) (CONSTI offset))) = do
+  let op = if bop == MINUS then SUB else ADD
+  return [IOPER { assem = CBS_ (op NoSuffix AL) SP SP (IMM offset),
+                  src = [Frame.fp],
+                  dst = [Frame.fp],
+                  jump = [] } ]
+    
 munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
    ret <- suffixStm (IR.MOV e (MEM me))
    return $ ret AL SB
@@ -442,9 +448,9 @@ munchBuiltInFuncFrag (PROC stm frame) = do
   munch <- munchStm stm
   return (pushlr : munch ++ [poppc])
 
-munchDataFrag :: Fragment -> State TranslateState [ASSEM.Instr]
+munchDataFrag :: Fragment -> [ASSEM.Instr]
 munchDataFrag (STRING label str)
-  = return [ILABEL {assem = (M label (length str) str), lab = label}]
+  = [ILABEL {assem = (M label (length str) str), lab = label}]
 
 oneByte :: String -> Bool
 oneByte "TBool" = True
@@ -514,14 +520,16 @@ munch file = do
   ast <- parseFile file
   ast' <- analyzeAST ast
   let
-      (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+      (stm, s) = runState (Translate.translate ast') Translate.newTranslateState
+      dataFrags = map munchDataFrag (Translate.dataFrags s)
       canonState = CanonState { C.tempAlloc = Translate.tempAlloc s,
                                 C.controlLabelAlloc = Translate.controlLabelAlloc s};
       stms = evalState (transform stm) canonState
       ms = evalState (munchmany stms) s
       substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
       out = filter (\x -> not $ containsDummy x) substitute
-  mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
+      totalOut = map show (concat dataFrags) ++ (map show out)  
+  mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) totalOut
   putStrLn ""
   return ()
 

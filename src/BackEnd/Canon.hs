@@ -182,8 +182,10 @@ doStm :: Stm -> State CanonState Stm
 doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)
 
-doStm (MOV (MEM e) b)
-  = reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
+doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b) = do
+  if isOneLayer e1 && isOneLayer e2 && isOneLayer b
+  then return stm
+  else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
 
 doStm (JUMP e labels)
   = reorderStm [e] (\(e:_) -> JUMP e labels)
@@ -198,9 +200,30 @@ doStm (SEQ stm1 stm2) = do
 
 doStm stm = return $ cleanStm $ stm
 
+isOneLayer (CONSTI _) = True
+isOneLayer (CONSTC _) = True
+isOneLayer (TEMP _) = True
+isOneLayer (MEM _) = True
+isOneLayer (NAME _) = True
+isOneLayter _ = False
+
+
 doExp :: Exp -> State CanonState (Stm, Exp)
-doExp (BINEXP bop e1 e2)
-  = reorderExp [e1, e2] (\(e1:e2:_) -> BINEXP bop e1 e2)
+doExp exp@(MEM e@(BINEXP bop e1 e2)) = do
+--  if isOneLayer e1 && isOneLayer e2
+ return (NOP, exp)
+--  else reorderExp [e] (\(e:_) -> MEM e)
+
+doExp exp@(BINEXP bop e1 e2) = do
+  if isOneLayer e1 && isOneLayer e2
+  then return (NOP, exp)
+  else reorderExp [e1, e2] (\(e1:e2:_) -> BINEXP bop e1 e2) 
+ where isOneLayer (CONSTI _) = True
+       isOneLayer (CONSTC _) = True
+       isOneLayer (TEMP _) = True
+       isOneLayer (MEM _) = True
+       isOneLayer (NAME _) = True
+       isOneLayter _ = False
 
 doExp (MEM e)
   = reorderExp [e] (\(e:_) -> MEM e)

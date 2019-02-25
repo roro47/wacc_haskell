@@ -17,10 +17,10 @@ data Fragment = PROC Stm Frame
               deriving (Eq, Show)
 
 charSize :: Int
-charSize = 1
+charSize = 4
 
 boolSize :: Int
-boolSize = 1
+boolSize = 4
 
 intSize :: Int
 intSize = 4

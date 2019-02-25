@@ -238,7 +238,10 @@ translateStatF (Ann (Declare t id expr) _) = do
         mem' = MEM $ TEMP Frame.sp } -- access through sp
   addVarEntry symbol t access
   exp' <- unEx exp
-  return $ Nx (SEQ adjustSP (MOV mem exp'))
+  case t of
+    TChar -> return $ Nx (SEQ adjustSP (MOV (CALL (NAME "#oneByte") [mem]) exp'))
+    TBool -> return $ Nx (SEQ adjustSP (MOV (CALL (NAME "#oneByte") [mem]) exp'))
+    otherwise -> return $ Nx (SEQ adjustSP (MOV mem exp'))
   where adjustSP =
           MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI $ Frame.typeSize t))
 
