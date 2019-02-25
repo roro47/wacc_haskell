@@ -40,7 +40,6 @@ library
       BackEnd.Munch
       BackEnd.Temp
       BackEnd.Translate
-      BackEnd.Builtin
       FrontEnd.AST
       FrontEnd.Lexer
       FrontEnd.Parser

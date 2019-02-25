@@ -68,6 +68,8 @@ instance Treeable Stm where
                   Node label1 [], Node label2 []]
   toTree (LABEL label) = Node "LABEL" [Node label []]
   toTree (EXP exp) = Node "EXP" [toTree exp]
+  toTree (PUSH exp) = Node "PUSH" [toTree exp]
+  toTree (POP exp) = Node "POP" [toTree exp]
   toTree (SEQ s1 s2) = Node "SEQ" [toTree s1, toTree s2]
   toTree NOP = Node "NOP" []
 
