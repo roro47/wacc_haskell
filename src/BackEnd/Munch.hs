@@ -388,6 +388,12 @@ munchStm (SEQ s1 s2) = do
   l2 <- munchStm s2
   return $ l1 ++ l2
 
+munchStm (CJUMP rop e1 (CONSTI i) t f) = do -- ASSUME CANONICAL
+  (i1, t1) <- munchExp e1
+  let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (IMM i), dst = [], src = [t1], jump = []}
+      jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
+  return $ i1 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
+
 munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
