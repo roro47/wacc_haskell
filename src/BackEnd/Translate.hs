@@ -1,6 +1,7 @@
 module BackEnd.Translate where
 
 import Prelude hiding (LT, EQ, GT, seq)
+import Data.List hiding (insert)
 import Control.Monad.State.Lazy
 import Data.HashMap as HashMap hiding (map)
 import FrontEnd.AST
@@ -39,6 +40,7 @@ data IExp = Ex Exp
 instance Show IExp where
   show (Ex e) = "Ex " ++ show e
   show (Nx s) = "Nx " ++ show s
+
   show (Cx f) = "Cx " ++ show (f "_" "_")
 
 newTranslateState :: TranslateState
@@ -60,7 +62,7 @@ translateFile file = do
 
 translate :: ProgramF () -> State TranslateState Stm
 translate program = do
-  program' <- translateProgramF program
+  program' <- translateProgramF program 
   stm' <- unNx program'
   return $ cleanStm stm'
 
@@ -180,17 +182,30 @@ accessToMem (Access _ access) =
     Frame.InReg tmp -> TEMP tmp
 
 -- obtain how to access a variable
+-- TODO : need more modification to make it look better
 getVarEntry :: String -> State TranslateState Exp
 getVarEntry symbol = do
   state <- get
-  let { mem = foldl f (TEMP Frame.fp) (takeWhile notFound $ levels state) }
-  return mem
-  where notFound level =
+  (VarEntry (Access frame access) t) <- find' (levels state)
+  case access of
+    Frame.InReg temp -> return $ TEMP temp
+    Frame.InFrame offset -> do 
+      let { prevLevels = takeWhile notFound (levels state);
+            offset' = foldl f offset prevLevels }
+      return $ MEM (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset'))
+
+  where find' :: [Level] -> State TranslateState EnvEntry
+        find' levels =
+          case find (\l -> not $ notFound l) levels of
+            Just level -> return $ (varTable level) ! symbol
+            otherwise -> fail "not found expected var entry"
+            
+        notFound level =
           case HashMap.lookup symbol (varTable level) of
             Just (VarEntry _ _) -> False
             otherwise -> True
-        f mem level =
-          MEM $ BINEXP PLUS (CONSTI $ Frame.frameSize $ levelFrame level) mem
+        f :: Int -> Level -> Int
+        f offset level = offset + Frame.frameSize (levelFrame level)
 
 translateProgramF :: ProgramF () -> State TranslateState IExp
 translateProgramF (Ann (Program fs stms) _) = do
@@ -223,7 +238,7 @@ translateStatF (Ann (Declare t id expr) _) = do
         mem' = MEM $ TEMP Frame.sp } -- access through sp
   addVarEntry symbol t access
   exp' <- unEx exp
-  return $ Nx (SEQ adjustSP (MOV mem' exp'))
+  return $ Nx (SEQ adjustSP (MOV mem exp'))
   where adjustSP =
           MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI $ Frame.typeSize t))
 
@@ -312,9 +327,9 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
         moveElem = f (TEMP temp) 0 elemSize (exps' ++ [CONSTI arrayLen]) }
   return $ Ex (ESEQ (SEQ (MOV (TEMP temp) call) moveElem) (TEMP temp))
   where f temp index elemSize [exp]
-          = MOV (BINEXP PLUS temp (CONSTI (elemSize * index))) exp
+          = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index)))) exp
         f temp index elemSize (exp:exps)
-          = SEQ (MOV (BINEXP PLUS temp (CONSTI (elemSize*index))) exp)
+          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize*index)))) exp)
                 (f temp (index+1) elemSize exps)
 
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
@@ -327,6 +342,8 @@ translateExprF (Ann (IdentExpr id) (_, t)) = do
     otherwise -> return $ Ex exp
 
 translateExprF (Ann (FuncExpr f) _) = translateFuncAppF f
+translateExprF (Ann Null _) = return $ Ex $ MEM (CONSTI 0)
+
 
 translateFuncAppF :: FuncAppF () -> State TranslateState IExp
 translateFuncAppF f@(Ann (FuncApp t id exprs) _) = do
@@ -355,21 +372,30 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "==" -> return $ condition EQ exps'
     "!=" -> return $ condition NE exps'
     "skip" -> return $ Nx NOP
-    "read" -> translateRead t exps'
-    "free" -> translateFree t exps'
-    "print" -> translatePrint t exps'
-    "println" -> translatePrintln t exps'
-    "newpair" -> translateNewPair t exps'
-    "fst" -> translatePairAccess t exps' "fst"
-    "snd" -> translatePairAccess t exps' "snd"
+    "read" -> do { e <- translateRead (head inputTs) exps';
+                   e' <- unEx e;
+                   return $ Nx (EXP e') }
+    "free" -> do { e <- translateFree (head inputTs) exps';
+                   e' <- unEx e;
+                   return $ Nx (EXP e') }
+    "print" -> do { e <- translatePrint (head inputTs) exps';
+                    e' <- unEx e;
+                    return $ Nx (EXP e') }
+    "println" -> do { e <- translatePrintln (head inputTs) exps';
+                      e' <- unEx e;
+                      return $ Nx (EXP e') }
+    "newpair" -> translateNewPair (TPair (inputTs !! 0) (inputTs !! 1)) exps'
+    "fst" -> translatePairAccess (inputTs !! 0) exps' "fst"
+    "snd" -> translatePairAccess (inputTs !! 1) exps' "snd"
     "!" -> callp "#!" exps'
-    "#pos" -> callp "#retval" exps'
+    "#pos" -> return $ Ex $ head exps'
     "#neg" -> callp "#neg" exps'
     "len" -> callp "#len" exps'
     "ord" -> callp "#retVal" exps'
     "chr" -> callp "#retVal" exps'
     otherwise -> fail "not predicted situation"
- where binexp bop exps =
+ where (TFunc _ inputTs _) = t
+       binexp bop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
            Ex $ BINEXP bop exp1 exp2
        condition rop exps =
@@ -394,7 +420,7 @@ translatePrint TInt exps = callp "#p_print_int" exps
 translatePrint TBool exps = callp "#p_print_bool" exps
 translatePrint TStr exps = callp "#p_print_string" exps
 translatePrint (TArray TChar) exps = callp "#p_print_string" exps
-translatePrint _ exps = callp "#p_print_reference" exps
+translatePrint t exps = callp "#p_print_reference" exps
 -- Array & Pair
 
 translatePrintln :: Type -> [Exp] -> State TranslateState IExp

@@ -1,6 +1,6 @@
 module BackEnd.Canon where
 
-
+import Prelude hiding (EQ)
 import Control.Monad.State.Lazy
 import Data.HashMap as HashMap hiding (map, filter)
 import FrontEnd.Parser
@@ -41,6 +41,17 @@ testDoStm stm = do
   let { (stm', s) = runState (doStm stm) newCanonState }
   return stm'
 
+testLinearize :: Stm -> IO [Stm]
+testLinearize stm = do
+  let { (stm', s) = runState (linearize stm) newCanonState }
+  return $ filter (/= NOP) stm'
+
+testBasicBlocks :: [Stm] -> IO [[Stm]]
+testBasicBlocks stms = do
+  let { (blocks, s) =
+        runState (basicBlocks stms >>= \(bs,_) -> return bs) newCanonState }
+  return blocks
+
 testDoExp :: Exp -> IO Exp
 testDoExp exp = do
   let { ((stm,exp'), s) = runState (doExp exp) newCanonState }
@@ -76,13 +87,18 @@ linearize stm = do
          linear s list = s:list
 
 basicBlocks :: [Stm] -> State CanonState ([[Stm]], Temp.Label)
+basicBlocks [] = do
+  label <- newControlLabel
+  return $ ([[LABEL label, JUMP (CONSTI 1) [label]]], label)
 basicBlocks (l@(LABEL label):rest) = do
-  let { (block, rest') = break (\e -> not $ isEND e) rest }
-  (restBlock, nextLabel) <- basicBlocks rest'
-  if length block == 0 || isLABEL (last block)
-  then return (((l:block) ++ [JUMP (CONSTI 1) [nextLabel]]):restBlock
-               , label)
-  else return ((l:block):restBlock, label)
+  let { (block, rest') = break (\e -> isEND e) rest }
+  if rest' == [] || isLABEL (head rest')
+  then do
+    (restBlock1, nextLabel1) <- basicBlocks rest'
+    return (((l:block) ++ [JUMP (CONSTI 1) [nextLabel1]]):restBlock1, label)
+  else do
+    (restBlock2, _) <- basicBlocks $ tail rest'
+    return (((l:block) ++ [head rest']):restBlock2, label)
  where isJUMP (JUMP _ _) = True
        isJUMP _ = False
        isCJUMP (CJUMP _ _ _ _ _) = True
@@ -94,10 +110,6 @@ basicBlocks (l@(LABEL label):rest) = do
 basicBlocks stms@(stm:rest) = do
   label <- newControlLabel
   basicBlocks ((LABEL label):stms)
-basicBlocks [] = do
-  label <- newControlLabel
-  return $ ([[LABEL label, JUMP (CONSTI 1) [label]]], label)
-
 
 bLabel ((LABEL label):_) = label
 
@@ -121,7 +133,7 @@ traceSchedule'' block@((LABEL label):rest) blockTable markTable
   where nextBlock = blockTable ! (head unMarkedSucc)
         markTable' = insert label 1 markTable
         unMarkedSucc =
-          filter (\l -> not $ member l markTable) (succs block)
+          filter (\l -> not $ member l markTable') (succs block)
         (trace, markTable'') =
           traceSchedule'' nextBlock blockTable markTable'
         succs block =
@@ -211,7 +223,12 @@ e1 = CONSTI 1
 
 s1 = MOV t1 t2
 s2 = MOV t2 t0
-  
+
+
+label1 = "label1"
+label2 = "label2"
+label3 = "label3"
+
 testESEQ1 = ESEQ NOP (ESEQ NOP e1)
 testESEQ2 = ESEQ NOP (ESEQ s1 e1)
 testESEQ3 = BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)
@@ -219,3 +236,30 @@ testESEQ4 = BINEXP PLUS (CONSTI 1) (ESEQ (MOV (TEMP 23) (TEMP 90)) (CONSTI 79))
 testESEQ5 = BINEXP PLUS (MEM (CONSTI 23)) (ESEQ (MOV (TEMP 0) (TEMP 1)) (CONSTI 29))
 
 
+testLinear1 = SEQ (MOV t0 t1) (MOV t0 t2)
+testLinear2 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t0 t1) (CONSTI 1))) 
+testLinear3 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t2 (CONSTI 1)) t2))
+testLinear4 = SEQ (MOV t0 t1) (MOV t0 (BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)))
+testLinear5 = SEQ (MOV t0 t1) (MOV t0 testESEQ4)
+testLinear6 = SEQ (MOV t0 t1) (MOV t0 testESEQ5)
+
+
+testBasicBlocks1 = []
+testBasicBlocks2 = [LABEL label1,
+                    MOV t0 t1,
+                    JUMP (CONSTI 1) [label1]]
+testBasicBlocks3 = [LABEL label1,
+                    MOV t0 t1,
+                    LABEL label2,
+                    MOV t2 t0,
+                    JUMP (CONSTI 1) [label2]]
+testBasicBlocks4 = [LABEL label1,
+                    MOV t0 t1,
+                    CJUMP EQ (CONSTI 1) (CONSTI 2) label1 label2,
+                    MOV t2 t0]
+
+testTraceSchedule1 = [[LABEL label1,
+                       NOP,
+                       JUMP (CONSTI 1) [label2]],
+                       [LABEL label2,
+                        JUMP (CONSTI 1) [label2]]]

@@ -34,6 +34,7 @@ typeSize t =
    TInt -> intSize
    TChar -> charSize
    TBool -> boolSize
+   TStr -> addrSize
    TArray _ -> addrSize
    TPair _ _ -> addrSize
    _ -> undefined

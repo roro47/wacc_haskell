@@ -177,23 +177,25 @@ analyzeFuncAppF (Ann (FuncApp _ symbol exprs) (pos, _)) = do
         do
           exprs' <- mapM analyzeExprF exprs
           checkParamLen symbol pos (length paramTs) (length exprs')
-          funcT' <- foldM evalT funcT exprs'
+          (funcT', ps) <- foldM evalT (funcT, []) exprs'
           guard (isTFunc funcT')
-          let { TFunc _ _ returnT = funcT' }
-          return $ Ann (FuncApp None symbol exprs') (pos, returnT)
+          let { TFunc _ _ returnT = funcT';
+                funcT'' = TFunc [] ps returnT }
+          return $ Ann (FuncApp funcT'' symbol exprs') (pos, returnT)
       otherwise -> throwError $ "Symbol " ++ show symbol ++ " at " ++ show pos ++
                               " is not a function symbol"
 
   where errT = "For call of " ++ functionType symbol ++ ", type is not matched."
-        evalT :: Type -> ExprF () -> Analyzer Type
-        evalT (TFunc [] (paramT:paramTs) returnT) expr
-          = do { match errT expr [paramT]; return $ TFunc [] paramTs returnT }
+        evalT :: (Type, [Type]) -> ExprF () -> Analyzer (Type, [Type])
+        evalT (TFunc [] (paramT:paramTs) returnT, ps') expr@(Ann _ (_, t))
+          = do { match errT expr [paramT];
+                 return $ (TFunc [] paramTs returnT, ps' ++ [t]) }
 
-        evalT (TFunc allowedT (paramT:paramTs) returnT) expr@(Ann _ (_, t))
+        evalT ((TFunc allowedT (paramT:paramTs) returnT), ps') expr@(Ann _ (_, t))
           = match errT expr allowedT >>= \_ ->
             decideT t paramT >>= \passT ->
-            return $ TFunc [] (map (\t -> if t == T then passT else t) paramTs) 
-                               (replace passT returnT)
+            return $ (TFunc [] (map (\t -> if t == T then passT else t) paramTs) 
+                               (replace passT returnT), ps' ++ [t])
 
         checkParamLen :: IdentF () -> SourcePos -> Int -> Int -> Analyzer ()
         checkParamLen symbol pos paramLen exprLen
@@ -209,7 +211,8 @@ analyzeFuncAppF (Ann (FuncApp _ symbol exprs) (pos, _)) = do
         decide _ = None
         
         replace :: Type -> Type -> Type
-        replace passT (TPair t1 t2) = TPair (replace passT t1) (replace passT t2)
+        replace passT (TPair t1 t2) =
+          TPair (replace passT t1) (replace passT t2)
         replace passT (TArray t) = TArray (replace passT t)
         replace passT t@(TFunc _ _ _) = t -- not decided behaviour
         replace passT T = passT
