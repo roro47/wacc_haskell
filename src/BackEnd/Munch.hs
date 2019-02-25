@@ -71,8 +71,8 @@ munchExp (CALL (NAME "#skip") _) = return ([], dummy)
 
 munchExp (CALL (NAME "#println") es) = do
   ls <- mapM (liftM fst.munchExp) es
-  let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "#p_print_ln"),
-                  src = [], dst = [], jump = ["#p_print_ln"]}
+  let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "p_print_ln"),
+                  src = [], dst = [], jump = ["p_print_ln"]}
   return ((concat ls)++[ln], dummy)
 
 munchExp (CALL (NAME "#p_putchar") [e]) = do
@@ -101,7 +101,7 @@ munchExp (CALL (NAME "exit") [e]) = do
 munchExp (CALL (NAME n) [e])
   | "#p_" `isPrefixOf` n = do
     (i, t) <- munchExp e
-    return  (i++ [(move_to_r t 0), (ljump_to_label n)], dummy)
+    return  (i++ [(move_to_r t 0), (ljump_to_label (drop 1 n))], dummy)
 
 munchExp (CALL (NAME n) e)
   | "#fst" `isPrefixOf` n = accessPair True fst e
@@ -112,8 +112,7 @@ munchExp (CALL (NAME n) e)
       fst = (ls !! 1)
       snd = (ls !! 2)
 
-{- r0 / r1 : result in r0
-  need to check if r0 is divided by zero-}
+{- r0 / r1 : result in r0 -}
 munchExp (BINEXP DIV e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2 --divisor
@@ -126,8 +125,7 @@ munchExp (BINEXP DIV e1 e2) = do
                       src = [0, 1], dst = [0]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, divInstr], 0)
 
-{- r0 % r1 : result in r1
-  need to check if r0 is divided by zero-}
+{- r0 % r1 : result in r1 -}
 munchExp (BINEXP MOD e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2  --divisor
@@ -205,6 +203,7 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
 
+-- our stack implementation is different ???
 -- UNCOMMENT AFTER SP handled
 -- munchExp (BINEXP MINUS (TEMP 13) (CONSTI i)) = do
 --   return ([IOPER {assem = CBS_ (SUB NoSuffix AL) (SP) (SP) (IMM i), src = [13], dst = [13],

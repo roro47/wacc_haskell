@@ -62,7 +62,7 @@ translateFile file = do
 
 translate :: ProgramF () -> State TranslateState Stm
 translate program = do
-  program' <- translateProgramF program 
+  program' <- translateProgramF program
   stm' <- unNx program'
   return $ cleanStm stm'
 
@@ -189,7 +189,7 @@ getVarEntry symbol = do
   (VarEntry (Access frame access) t) <- find' (levels state)
   case access of
     Frame.InReg temp -> return $ TEMP temp
-    Frame.InFrame offset -> do 
+    Frame.InFrame offset -> do
       let { prevLevels = takeWhile notFound (levels state);
             offset' = foldl f offset prevLevels }
       return $ MEM (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset'))
@@ -199,7 +199,7 @@ getVarEntry symbol = do
           case find (\l -> not $ notFound l) levels of
             Just level -> return $ (varTable level) ! symbol
             otherwise -> fail "not found expected var entry"
-            
+
         notFound level =
           case HashMap.lookup symbol (varTable level) of
             Just (VarEntry _ _) -> False
@@ -238,10 +238,7 @@ translateStatF (Ann (Declare t id expr) _) = do
         mem' = MEM $ TEMP Frame.sp } -- access through sp
   addVarEntry symbol t access
   exp' <- unEx exp
-  case t of
-    TChar -> return $ Nx (SEQ adjustSP (MOV (CALL (NAME "#oneByte") [mem]) exp'))
-    TBool -> return $ Nx (SEQ adjustSP (MOV (CALL (NAME "#oneByte") [mem]) exp'))
-    otherwise -> return $ Nx (SEQ adjustSP (MOV mem exp'))
+  return $ Nx (SEQ adjustSP (MOV mem exp'))
   where adjustSP =
           MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI $ Frame.typeSize t))
 
