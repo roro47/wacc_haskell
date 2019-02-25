@@ -16,6 +16,7 @@ import FrontEnd.SemanticAnalyzer
 --TODO : difference between b and bl ??
 -- REGISTER SAVE??
 -- STRING ASSIGNMENT?
+-- how to know if something is to store on the stack? -- after ir is fixed, add sp cases of minus
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
   = lookup bop [(IR.PLUS, ARM.ADD), (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
@@ -41,6 +42,12 @@ munchExp (CALL (NAME "#arrayelem") [(CONSTI size), ident, pos]) = do
       topos = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP it) (RTEMP it) op,
                        src = [it, pt], dst = [it], jump = []}
   return (ii ++ pi ++ [m0, m1, bl, skiplen, topos], it)
+
+munchExp (CALL (NAME "#neg") [(CONSTI i)]) = do
+  t <- newTemp
+  let ldr = IMOV { assem = S_ (LDR W AL) (RTEMP t) (NUM (-i)),
+                   src = [], dst = [t]}
+  return ([ldr], t)
 
 munchExp (CALL (NAME "#neg") [e]) = do
   (i, t) <- munchExp e
@@ -198,6 +205,15 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
 
+-- UNCOMMENT AFTER SP handled
+-- munchExp (BINEXP MINUS (TEMP 13) (CONSTI i)) = do
+--   return ([IOPER {assem = CBS_ (SUB NoSuffix AL) (SP) (SP) (IMM i), src = [13], dst = [13],
+--                  jump = []}], 13)
+--
+-- munchExp (BINEXP PLUS (TEMP 13) (CONSTI i)) = do
+--   return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (SP) (SP) (IMM i), src = [13], dst = [13],
+--                  jump = []}], 13)
+
 -- Now cannot match irpre
 munchExp (BINEXP MINUS e1 e2) = do
   (i1, t1) <- munchExp e1
@@ -272,15 +288,15 @@ condExp (BINEXP bop e1 e2) = do
 
 condExp (CONSTI int) = do
   t <- newTemp
-  return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int) , dst = [t], src = []}], t)
+  return $ \c -> ([IMOV {assem = S_ (LDR W c) (RTEMP t) (NUM int) , dst = [t], src = []}], t)
 
 condExp (CONSTC chr) = do
   t <- newTemp
-  return $ \c -> ([IMOV {assem = S_ (LDR B_ c) (RTEMP t) (CHR_ chr), dst = [t], src = []}], t)
+  return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (CHR chr), dst = [t], src = []}], t)
 
 condExp (NAME l) = do
   t <- newTemp
-  return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
+  return $ \c -> ([IMOV {assem = S_ (LDR W c) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
 
 condExp (MEM (CONSTI i)) = do
   newt <- newTemp
@@ -410,9 +426,14 @@ suffixStm (IR.MOV (MEM me) e) = do -- STR
     return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.STR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
 
 condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
+
 condStm ir@(IR.MOV e (MEM me)) = do
   ret <- suffixStm ir
   return (\c -> ret c W)
+
+condStm ir@(IR.MOV (MEM me) (CONSTC chr)) = do  -- remove this case if align
+  ret <- suffixStm ir
+  return (\c -> ret c B_)
 
 condStm ir@(IR.MOV (MEM me) e) = do
   ret <- suffixStm ir
