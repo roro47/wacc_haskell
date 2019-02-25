@@ -388,8 +388,11 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "fst" -> translatePairAccess (inputTs !! 0) exps' "fst"
     "snd" -> translatePairAccess (inputTs !! 1) exps' "snd"
     "!" -> callp "#!" exps'
-    "#pos" -> return $ Ex $ head exps'
-    "#neg" -> callp "#neg" exps'
+    "#pos" -> return $ Ex (head exps')
+    "#neg" -> do
+      case head exps' of
+        CONSTI n -> return $ Ex (CONSTI $ -n)
+        otherwise -> callp "#neg" exps'
     "len" -> callp "#len" exps'
     "ord" -> callp "#retVal" exps'
     "chr" -> callp "#retVal" exps'

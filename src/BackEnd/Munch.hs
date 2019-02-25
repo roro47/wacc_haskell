@@ -81,11 +81,24 @@ munchExp (CALL (NAME "#p_putchar") [e]) = do
       putchar = ljump_to_label "putchar"
   return (i ++ [mv, putchar], dummy)
 
-munchExp (CALL (NAME "exit") [e]) = do
-  (i, t) <- munchExp e
-  let mv = move_to_r t 0
-      exit = ljump_to_label "exit"
-  return (i ++ [mv, exit], dummy)
+  munchExp (CALL (NAME "exit") [e]) = do
+  let exit = ljump_to_label "exit"
+  case e of
+    CONSTI n ->
+      return ([ IMOV { assem = MC_ (ARM.MOV AL) R0 (IMM n),
+                      src = [],
+                      dst = [0] },
+                exit ], dummy)
+    TEMP t -> 
+      return ([ IMOV { assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t)),
+                       src = [t],
+                       dst = [0] },
+                exit ], dummy)
+    otherwise -> do
+      (i, t) <- munchExp e
+      let mv = move_to_r t 0
+      return (i ++ [mv, exit], dummy)
+
 
 munchExp (CALL (NAME n) [e])
   | "#p_" `isPrefixOf` n = do
@@ -341,6 +354,14 @@ munchStm (EXP e) = do
 
 munchStm (LABEL label) = return [ILABEL {assem = LAB label, lab = label}]
 
+-- moving stack pointer don't need to check overflow
+munchStm (IR.MOV (TEMP 13) (BINEXP bop (TEMP 13) (CONSTI offset))) = do
+  let op = if bop == MINUS then SUB else ADD
+  return [IOPER { assem = CBS_ (op NoSuffix AL) SP SP (IMM offset),
+                  src = [Frame.sp],
+                  dst = [Frame.sp],
+                  jump = [] } ]
+
 munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
    ret <- suffixStm (IR.MOV e (MEM me))
    return $ ret AL SB
@@ -404,8 +425,23 @@ condStm (IR.MOV e1 e2) = do  --In which sequence ?
   return (\c -> i1 ++ i2 ++ [move_to_r t2 t1])
 
 condStm (JUMP e ls) = do
-  (i, t) <- munchExp e
-  return (\c -> [IOPER {assem = BRANCH_ (ARM.B c) (R_ (RTEMP t)), dst = [], src = [], jump = []}])
+  case e of
+    (CONSTI 1) ->
+      return (\c -> [IOPER { assem = BRANCH_ (ARM.B AL) (L_ (head ls)),
+                            dst = [],
+                            src = [],
+                            jump = [head ls] }])
+    (CONSTI 0) -> return (\c -> [])
+    otherwise -> do
+      (i, t) <- munchExp e
+      return (\c -> [IOPER { assem = MC_ (CMP c) (RTEMP t) (IMM 1),
+                             dst = [],
+                             src = [],
+                             jump = [] },
+                     IOPER { assem = BRANCH_ (ARM.B c) (L_ (head ls)),
+                             dst = [],
+                             src = [],
+                             jump = [] }])
 
 condStm (NOP) = return $ \c -> []
 
