@@ -204,6 +204,16 @@ munchExp (BINEXP MINUS e1 e2) = do
                     src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return (i1++i2++[subs, br], t1)
 
+  -- Now cannot match irpre
+munchExp (BINEXP PLUS e1 e2) = do
+  (i1, t1) <- munchExp e1
+  (i2, t2) <- munchExp e2
+  let subs = IOPER {assem = CBS_ (ADD S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
+                    src = [t1, t2], dst = [t1], jump = []}
+      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return (i1++i2++[subs, br], t1)
+
 munchExp x = do
   c <- condExp x
   return $ c AL
@@ -297,6 +307,7 @@ munchMem :: Exp -> State TranslateState ([ASSEM.Instr], [Int], SLOP2)
 munchMem (TEMP t) = return ([], [t], Imm (RTEMP t) 0)
 munchMem (BINEXP PLUS (TEMP t) (CONSTI int)) = return ([], [t], Imm (RTEMP t) int)
 munchMem (BINEXP PLUS (CONSTI int) (TEMP t)) = return ([], [t], Imm (RTEMP t) int)
+munchMem (BINEXP MINUS (TEMP t) (CONSTI int)) = return ([], [t], Imm (RTEMP t) (-int))
 munchMem (CONSTI int) = return ([], [], NUM int)
 
 --- ALL OTHER CASES ---
@@ -508,7 +519,8 @@ munch file = do
                                 C.controlLabelAlloc = Translate.controlLabelAlloc s};
       stms = evalState (transform stm) canonState
       ms = evalState (munchmany stms) s
-      out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
+      substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
+      out = filter (\x -> not $ containsDummy x) substitute
   mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
   putStrLn ""
   return ()
@@ -521,7 +533,8 @@ munchmany (x:xs) = do
 
 optimsedMunch stm = do
   m <- munchStm stm
-  let out = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
+  let substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
+      out = filter (\x -> not $ containsDummy x) substitute
   return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
 
 call = CALL (CONSTI 1) [(CONSTI 7)]

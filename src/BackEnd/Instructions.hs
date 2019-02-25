@@ -113,7 +113,7 @@ instance Show Instr where
   show (C2_ c r1 r2 r3 r4) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3) ++ ", " ++ (show r4)
   show (S_ s r1 op) = (show_ s) ++ (show r1) ++ ", " ++ (show op)
   show (C3_ c r1 r2 r3) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
-  show (LAB str) = (str ++ ":\n")
+  show (LAB str) = (str ++ ":")
   show (M msg int str) = msg ++ ":\n   .word " ++ (show int) ++ "\n   .ascii " ++ show str ++ "\n"
 
 output_show :: Instr -> String
@@ -146,6 +146,29 @@ normReg 15 PC (RTEMP 15) = PC
 normReg from to (RTEMP x)
   | x == from = to
 normReg _ _ x = x
+
+dummyInstr :: Instr -> Bool
+dummyInstr (CBS_ c r1 r2 op) = (dummyReg r1) || (dummyReg r2) || (dummyOp op)
+dummyInstr (MC_ s r op) = (dummyReg r) || (dummyOp op)
+dummyInstr (STACK_ s rs) = foldl1 (||) (map (dummyReg) rs)
+dummyInstr (C2_ c r1 r2 r3 r4) = (dummyReg r1) || (dummyReg r2) || (dummyReg r3) || (dummyReg r4)
+dummyInstr (S_ s r slop) = (dummyReg r) || (dummySLOp slop)
+dummyInstr (C3_ c r1 r2 r3) = (dummyReg r1) || (dummyReg r2) || (dummyReg r3)
+dummyInstr x = False
+
+dummyOp :: OP -> Bool
+dummyOp (R r) = dummyReg r
+dummyOp (LSL_ r int') = dummyReg r
+dummyOp x = False
+
+dummySLOp :: SLOP2 -> Bool
+dummySLOp (PRE r i) = dummyReg r
+dummySLOp (Imm r i) = dummyReg r
+dummySLOp x = False
+
+dummyReg :: REG -> Bool
+dummyReg (RTEMP (-1)) = True
+dummyReg _ = False
 
 {- Sample instruction representations -}
 sample1 = CBS_ (ADD NoSuffix AL) R1 R2 (IMM 3)
