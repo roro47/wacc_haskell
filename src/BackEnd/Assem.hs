@@ -29,3 +29,8 @@ normInstr func (IMOV assem dst src) = IMOV (func assem) dst src
 normAssem ::[(Int, Arm.REG)] -> [Instr] -> [Instr]
 normAssem ((i, r):ls) instrs = normAssem ls (map (normInstr $ Arm.normInstr i r) instrs)
 normAssem [] instrs = instrs
+
+containsDummy :: Instr -> Bool
+containsDummy (IOPER assem _ _ _) = Arm.dummyInstr assem
+containsDummy (ILABEL assem _) = Arm.dummyInstr assem
+containsDummy (IMOV assem _ _) = Arm.dummyInstr assem
