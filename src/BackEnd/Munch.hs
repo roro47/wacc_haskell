@@ -1,17 +1,20 @@
 module BackEnd.Munch where
+
+import Data.Maybe
+import Data.List
+import Control.Monad.State.Lazy
+import qualified Data.Set as Set
+  
+import FrontEnd.Parser
+import FrontEnd.SemanticAnalyzer
 import BackEnd.Instructions as ARM
 import BackEnd.IR as IR
 import BackEnd.Assem as ASSEM
 import BackEnd.Temp hiding (newTemp, newDataLabel)
-import Data.Maybe
-import Control.Monad.State.Lazy
 import BackEnd.Translate as Translate
 import BackEnd.Frame as Frame 
-import Data.List
 import BackEnd.Builtin
-import FrontEnd.Parser
 import BackEnd.Canon as C hiding (newTemp)
-import FrontEnd.SemanticAnalyzer
 --how to know scope ?? when frame is changed ???
 --TODO : difference between b and bl ??
 -- REGISTER SAVE??
@@ -339,6 +342,18 @@ opVal _ = -1
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 
+munchStm (IR.PUSH (TEMP t)) = do
+  return [IOPER { assem = STACK_ (ARM.PUSH AL) [RTEMP t],
+                  src = [t],
+                  dst = [],
+                  jump = [] }]
+
+munchStm (IR.POP (TEMP t)) = do
+  return [IOPER { assem = STACK_ (ARM.POP AL) [RTEMP t],
+                  src = [],
+                  dst = [t],
+                  jump = [] } ]
+
 munchStm (EXP e) = do
   (i, t) <- munchExp e
   return i
@@ -521,17 +536,26 @@ munch file = do
   ast' <- analyzeAST ast
   let
       (stm, s) = runState (Translate.translate ast') Translate.newTranslateState
-      dataFrags = map munchDataFrag (Translate.dataFrags s)
-      canonState = CanonState { C.tempAlloc = Translate.tempAlloc s,
-                                C.controlLabelAlloc = Translate.controlLabelAlloc s};
+      (procFrags, s') = runState (genProcFrags (Set.toList $ builtInSet s)) s
+      dataFrags = map munchDataFrag (Translate.dataFrags s')
+      canonState = CanonState { C.tempAlloc = Translate.tempAlloc s',
+                                C.controlLabelAlloc = Translate.controlLabelAlloc s'};
       stms = evalState (transform stm) canonState
-      ms = evalState (munchmany stms) s
+      ms = evalState (munchmany stms) s'
       substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
       out = filter (\x -> not $ containsDummy x) substitute
-      totalOut = map show (concat dataFrags) ++ (map show out)  
+      totalOut = intercalate ["\n"] (map (map show) procFrags) ++ ["\n"] ++
+                 concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
+                 (map show out)  
   mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) totalOut
   putStrLn ""
   return ()
+  where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
+        genProcFrags ids = do
+          let gens = map (\n -> genBuiltIns !! n) ids
+          pfrags <- foldM (\acc f -> f >>= \pfrag -> return $ acc ++ [pfrag]) [] gens
+          return pfrags
+          
 
 munchmany [] = return []
 munchmany (x:xs) = do
@@ -554,3 +578,181 @@ irPre = IR.MOV (BINEXP MINUS (TEMP 2) (CONSTI 1)) (MEM (TEMP 2))
 --load/store 1 byte sample
 load1b = (IR.MOV (TEMP 2) (CALL (NAME "#oneByte") [MEM (CONSTI 1)]))
 store1b = (IR.MOV (CALL (NAME "#oneByte") [MEM (CONSTI 1)]) (TEMP 2))
+
+
+type GenBuiltIn = State TranslateState [ASSEM.Instr]
+
+genBuiltIns = [p_print_ln,
+               p_print_int,
+               p_print_bool,
+               p_print_string,
+               p_print_reference,
+               p_check_null_pointer,
+               p_throw_runtime_error,
+               p_read_int,
+               p_read_char,
+               p_free_pair,
+               p_check_array_bounds,
+               p_throw_overflow_error]
+
+
+p_print_ln :: GenBuiltIn
+p_print_ln = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg "\0")
+  return $[add_label "p_print_ln",
+           pushlr,
+           ld_msg_toR0 msg,
+           r0_add4,
+           ljump_to_label "puts",
+           r0_clear,
+           ljump_to_label "fflush",
+           poppc]
+
+p_print_int :: GenBuiltIn
+{-In ref compiler this temp is R1 -}
+p_print_int = do
+ msg <- newDataLabel
+ temp <- newTemp
+ addFragment (Frame.STRING msg "%d\0")
+ return $[add_label "p_print_int",
+          pushlr,
+          move_to_r 0 temp,
+          IMOV { assem = S_ (LDR W AL) (RTEMP temp) (MSG msg), src = [], dst = [temp]}]
+          ++ end
+
+p_print_bool :: GenBuiltIn
+p_print_bool = do
+  truemsg <- newDataLabel
+  falsemsg <- newDataLabel
+  addFragment (Frame.STRING truemsg "true\0")
+  addFragment (Frame.STRING falsemsg "false\0")
+  return $[add_label "p_print_bool",
+          pushlr,
+          cmp_r0,
+          ld_cond_msg_toR0 truemsg ARM.NE,
+          ld_cond_msg_toR0 falsemsg ARM.EQ]
+          ++ end
+
+
+p_print_string :: GenBuiltIn
+p_print_string = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg "%.*s\0")
+  return $[add_label "p_print_string",
+          pushlr,
+          IMOV {assem = S_ (LDR W AL) R1 (Imm R0 0), src = [0], dst = [1]},
+          IOPER { assem = CBS_ (ADD NoSuffix AL) R2 R0 (IMM 4), src = [0], dst = [2], jump = []},
+          ld_msg_toR0 msg] ++ end
+
+p_print_reference :: GenBuiltIn
+p_print_reference = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg "%p\0")
+  return $[add_label "p_print_reference",
+          pushlr,
+          move_to_r 0 1,
+          ld_msg_toR0 msg] ++ end
+
+p_check_null_pointer :: GenBuiltIn
+p_check_null_pointer = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg "NullReferenceError: dereference a null reference\n\0")
+  let s = "p_throw_runtime_error"
+  return $[add_label "p_check_null_pointer",
+          pushlr,
+          cmp_r0,
+          ld_cond_msg_toR0 msg ARM.EQ,
+          ljump_cond s ARM.EQ,
+          poppc]
+
+p_throw_runtime_error :: GenBuiltIn
+p_throw_runtime_error = do
+  let s = "p_print_string"
+  return [add_label "p_throw_runtime_error",
+          jump_to_label s,
+          IMOV {assem = MC_ (ARM.MOV AL) R0 (IMM (-1)), src = [], dst = [0]},
+          jump_to_label "exit"]
+
+p_read_int :: GenBuiltIn
+p_read_int = do
+  r <- p_read "%d\0"
+  return $ (add_label "p_read_int"): r
+
+p_read_char :: GenBuiltIn
+p_read_char = do
+  r <- p_read " %c\0"
+  return $ (add_label "p_read_char"): r
+
+p_read :: String -> GenBuiltIn
+p_read str =  do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg str)
+  return [pushlr,
+          move_to_r 0 1,
+          ld_msg_toR0 msg,
+          r0_add4,
+          ljump_to_label "scanf",
+          poppc]
+
+p_free_pair :: GenBuiltIn
+p_free_pair = do
+  msg <- newDataLabel
+  let str = "NullReferenceError: dereference a null reference\n\0"
+      runTimeError = "p_throw_runtime_error"
+  addFragment (Frame.STRING msg str)
+  return [add_label "p_free_pair",
+          pushlr,
+          cmp_r0,
+          ld_cond_msg_toR0 msg ARM.EQ,
+          ljump_cond runTimeError ARM.EQ,
+          IOPER { assem = STACK_ (ARM.PUSH AL) [R0], src = [0], dst = [Frame.fp], jump = []},
+          IMOV {assem = S_ (LDR W AL) R0 (Imm R0 0), src = [0], dst = [0]},
+          ljump_to_label "free",
+          IMOV {assem = S_ (LDR W AL) R0 (Imm (RTEMP Frame.fp) 0), src = [Frame.fp], dst = [0]},
+          IMOV {assem = S_ (LDR W AL) R0 (Imm R0 4), src = [0], dst = [0]},
+          ljump_to_label "free",
+          IOPER { assem = STACK_ (ARM.POP AL) [R0], src = [Frame.fp], dst = [Frame.fp, 0], jump = []},
+          ljump_to_label "free",
+          poppc]
+
+{-How to handle array access in translate && munch? -}
+p_check_array_bounds :: GenBuiltIn
+p_check_array_bounds = do
+  msgneg <- newDataLabel
+  msgover <- newDataLabel
+  t <- newTemp -- r1
+  addFragment (Frame.STRING msgneg "ArrayIndexOutOfBoundsError: negative index\n\0")
+  addFragment (Frame.STRING msgover "ArrayIndexOutOfBoundsError: index too large\n\0")
+  return [add_label "p_check_array_bounds",
+          pushlr,
+          cmp_r0,
+          ld_cond_msg_toR0 msgneg ARM.LT,
+          ljump_cond "p_throw_runtime_error" ARM.LT,
+          IMOV {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0), src = [t], dst = [0]},
+          cmp_r0,
+          ld_cond_msg_toR0 msgover ARM.CS,
+          ljump_cond "p_throw_runtime_error" ARM.CS,
+          poppc]
+
+{- where to call ? -}
+p_throw_overflow_error :: GenBuiltIn
+p_throw_overflow_error = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg $ "OverflowError: the result is too small/large"
+                                   ++ " to store in a 4-byte signed-integer.\n")
+  return [add_label "p_throw_overflow_error",
+          ld_msg_toR0 msg, ljump_to_label "BL p_throw_runtime_error"]
+
+{- where to call ? -}
+p_check_divide_by_zero :: GenBuiltIn
+p_check_divide_by_zero = do
+  msg <- newDataLabel
+  addFragment (Frame.STRING msg "DivideByZeroError: divide or modulo by zero\n\0")
+  return [add_label "p_check_divide_by_zero",
+          pushlr,
+          IOPER {assem = MC_ (CMP AL) R1 (IMM 0), src = [1], dst = [], jump = []},
+          ld_cond_msg_toR0 msg ARM.EQ,
+          ljump_cond "p_throw_runtime_error" ARM.EQ,
+          poppc]
+

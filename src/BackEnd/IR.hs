@@ -21,6 +21,8 @@ data Stm = MOV Exp Exp -- move values to address or register
          | CJUMP ROp Exp Exp Temp.Label Temp.Label
          | SEQ Stm Stm -- sequence of statement
          | LABEL Temp.Label -- target of jump
+         | PUSH Exp
+         | POP Exp
          | NOP
           deriving (Eq)
 cleanStmExp (BINEXP bop e1 e2) =

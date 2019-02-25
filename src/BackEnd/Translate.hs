@@ -4,13 +4,15 @@ import Prelude hiding (LT, EQ, GT, seq)
 import Data.List hiding (insert)
 import Control.Monad.State.Lazy
 import Data.HashMap as HashMap hiding (map)
+import Data.Set as Set hiding (map, foldl)
 import FrontEnd.AST
 import FrontEnd.Parser
 import FrontEnd.SemanticAnalyzer
 import qualified BackEnd.Frame as Frame
-import qualified BackEnd.Temp as Temp
-import BackEnd.IR
-
+import qualified BackEnd.Temp as Temp 
+import BackEnd.Assem as Assem
+import BackEnd.IR as IR
+import BackEnd.Builtin
 -- where to put array index bound??
 
 data Access = Access Frame.Frame Frame.Access deriving (Eq, Show)
@@ -23,15 +25,16 @@ data Level = Level { levelFrame :: Frame.Frame,
                      varTable :: (HashMap.Map String EnvEntry),
                      funTable :: (HashMap.Map String EnvEntry) } deriving (Eq, Show)
 
-data TranslateState = TranslateState { levels :: [Level],
-                                       dataFrags :: [Frame.Fragment],
-                                       procFrags :: [Frame.Fragment],
-                                       tempAlloc :: Temp.TempAllocator,
-                                       controlLabelAlloc :: Temp.LabelAllocator,
-                                       dataLabelAlloc :: Temp.LabelAllocator,
-                                       frameLabelAlloc :: Temp.LabelAllocator}
-                      deriving (Eq, Show)
-
+data TranslateState =
+  TranslateState { levels :: [Level],
+                   dataFrags :: [Frame.Fragment],
+                   procFrags :: [Frame.Fragment],
+                   tempAlloc :: Temp.TempAllocator,
+                   controlLabelAlloc :: Temp.LabelAllocator,
+                   dataLabelAlloc :: Temp.LabelAllocator,
+                   frameLabelAlloc :: Temp.LabelAllocator,
+                   builtInSet :: Set.Set Int }
+                deriving (Eq, Show)
 
 data IExp = Ex Exp
           | Nx Stm
@@ -44,13 +47,15 @@ instance Show IExp where
   show (Cx f) = "Cx " ++ show (f "_" "_")
 
 newTranslateState :: TranslateState
-newTranslateState = TranslateState { levels = [],
-                                     dataFrags = [],
-                                     procFrags = [],
-                                     tempAlloc = Temp.newTempAllocator,
-                                     controlLabelAlloc = Temp.newLabelAllocator,
-                                     dataLabelAlloc = Temp.newLabelAllocator,
-                                     frameLabelAlloc = Temp.newLabelAllocator}
+newTranslateState =
+  TranslateState { levels = [],
+                   dataFrags = [],
+                   procFrags = [],
+                   tempAlloc = Temp.newTempAllocator,
+                   controlLabelAlloc = Temp.newLabelAllocator,
+                   dataLabelAlloc = Temp.newLabelAllocator,
+                   frameLabelAlloc = Temp.newLabelAllocator,
+                   builtInSet = Set.empty }
 
 
 translateFile :: String -> IO Stm
@@ -62,9 +67,8 @@ translateFile file = do
 
 translate :: ProgramF () -> State TranslateState Stm
 translate program = do
-  program' <- translateProgramF program 
-  stm' <- unNx program'
-  return $ cleanStm stm'
+  stm <- translateProgramF program
+  return $ cleanStm stm
 
 
 seq :: [Stm] -> Stm
@@ -124,6 +128,10 @@ popLevel = do
                     return ()
     otherwise -> fail "verify level fails"
 
+addBuiltIn :: Int -> State TranslateState ()
+addBuiltIn id = do
+  state <- get
+  put $ state { builtInSet = Set.insert id (builtInSet state) }
 
 
 allocLocal :: String -> Type -> Bool -> State TranslateState Access
@@ -148,7 +156,7 @@ addVarEntry symbol t access = do
   case result of
     (level:rest) -> do
       let { varEntry = VarEntry access t;
-            level' = level { varTable = insert symbol varEntry (varTable level)}}
+            level' = level { varTable = HashMap.insert symbol varEntry (varTable level)}}
       put $ state { levels = (level':rest) }
       return ()
     otherwise -> fail "verify level fails"
@@ -161,7 +169,7 @@ addFunEntry symbol t = do
   case result of
     (level:rest) -> do
       let { funEntry = FunEntry (levelFrame level) symbol t;
-            level' = level { funTable = insert symbol funEntry (funTable level)}}
+            level' = level { funTable = HashMap.insert symbol funEntry (funTable level)}}
       put $ state { levels = (level':rest) }
       return ()
     otherwise -> fail "verify level fails"
@@ -207,13 +215,20 @@ getVarEntry symbol = do
         f :: Int -> Level -> Int
         f offset level = offset + Frame.frameSize (levelFrame level)
 
-translateProgramF :: ProgramF () -> State TranslateState IExp
+translateProgramF :: ProgramF () -> State TranslateState Stm
 translateProgramF (Ann (Program fs stms) _) = do
   level <- newLevel
   pushLevel level
   stm <- translateStatListF stms
+  stm' <- unNx stm
+  state <- get
+  let offset = Frame.frameSize (levelFrame (head (levels state)))
+      adjustSP =
+        if offset == 0 then NOP
+        else MOV (TEMP Frame.sp) (BINEXP PLUS (TEMP Frame.sp) (CONSTI offset))
   popLevel
-  return stm
+  return $ SEQ (SEQ (IR.PUSH (TEMP Frame.lr)) stm')
+               (SEQ adjustSP (IR.POP (TEMP Frame.pc)))
 
 {-
 translateFuncF :: FuncF () -> State TranslateState IExp
@@ -272,8 +287,12 @@ translateStatF (Ann (If expr stms1 stms2) _) = do
   stm2 <- unNx stms2'
   label1 <- newControlLabel
   label2 <- newControlLabel
+  label3 <- newControlLabel
   return $ Nx (seq [c label1 label2,
-                    SEQ (LABEL label1) stm1, SEQ (LABEL label2) stm2])
+                    LABEL label1, stm1,
+                    JUMP (CONSTI 1) [label3],
+                    LABEL label2, stm2,
+                    LABEL label3])
 
 translateStatF (Ann (While expr stms) _) = do
   exp <- translateExprF expr
@@ -417,22 +436,35 @@ translateFree TStr exprs = callp "#p_free_array" exprs
 
 
 translateRead :: Type -> [Exp] -> State TranslateState IExp
-translateRead TInt exps = callp "#p_read_int" exps
-translateRead TChar exps = callp "#p_read_char" exps
+translateRead TInt exps = do
+  addBuiltIn id_p_read_int
+  callp "#p_read_int" exps
+translateRead TChar exps = do
+  addBuiltIn id_p_read_char
+  callp "#p_read_char" exps
 
 translatePrint :: Type -> [Exp] -> State TranslateState IExp
 translatePrint TChar exps = callp "#p_putchar" exps
-translatePrint TInt exps = callp "#p_print_int" exps
-translatePrint TBool exps = callp "#p_print_bool" exps
-translatePrint TStr exps = callp "#p_print_string" exps
+translatePrint TInt exps = do
+  addBuiltIn id_p_print_int
+  callp "#p_print_int" exps
+translatePrint TBool exps = do
+  addBuiltIn id_p_print_bool
+  callp "#p_print_bool" exps
+translatePrint TStr exps = do
+  addBuiltIn id_p_print_string
+  callp "#p_print_string" exps
 translatePrint (TArray TChar) exps = callp "#p_print_string" exps
-translatePrint t exps = callp "#p_print_reference" exps
+translatePrint t exps = do
+  addBuiltIn id_p_print_reference
+  callp "#p_print_reference" exps
 -- Array & Pair
 
 translatePrintln :: Type -> [Exp] -> State TranslateState IExp
 translatePrintln t exps = do
   print <- translatePrint t exps
   unexPrint <- unEx print
+  addBuiltIn id_p_print_ln
   return $ Ex $ CALL (NAME "#p_print_ln") [unexPrint]
 
 {-
@@ -706,3 +738,17 @@ escape _ = True
 --      runTimeError = JUMP (NAME "p_throw_runtime_error:\n\0") ["p_throw_runtime_error:\n\0"]
 --      statment =  in
 --        addFragment (Frame.PROC statement frame)
+id_p_print_ln = 0
+id_p_print_int = 1
+id_p_print_bool = 2
+id_p_print_string = 3
+id_p_print_reference = 4
+id_p_check_null_pointer = 5
+id_p_throw_runtime_error = 6
+id_p_read_int = 7
+id_p_read_char = 8
+id_p_free_pair = 9
+id_p_check_array_bounds = 10
+id_p_throw_overflow_error = 11
+
+

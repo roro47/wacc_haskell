@@ -26,6 +26,18 @@ testCanonFile file = do
   return stms
 
 
+testBasicBlocksFile :: String -> IO [[Stm]]
+testBasicBlocksFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+        canonState = CanonState { tempAlloc = Translate.tempAlloc s,
+                                  controlLabelAlloc = Translate.controlLabelAlloc s};
+        stms = evalState (transform' stm) canonState }
+  return stms
+
+
+
 newCanonState :: CanonState
 newCanonState = CanonState { tempAlloc = Temp.newTempAllocator,
                              controlLabelAlloc = Temp.newLabelAllocator }
@@ -63,6 +75,12 @@ transform stm = do
   blocks <- basicBlocks stms
   return $ traceSchedule $ fst blocks 
 
+transform' :: Stm -> State CanonState [[Stm]]
+transform' stm = do
+  stms <- linearize stm
+  (stms', _) <- basicBlocks stms
+  return stms'
+  
 newTemp :: State CanonState Temp.Temp
 newTemp = do
   state <- get
@@ -86,10 +104,11 @@ linearize stm = do
          linear (SEQ a b) list = linear a (linear b list)
          linear s list = s:list
 
+-- todo : need to take care of epilogue for done
 basicBlocks :: [Stm] -> State CanonState ([[Stm]], Temp.Label)
 basicBlocks [] = do
   label <- newControlLabel
-  return $ ([[LABEL label]], label)
+  return $ ([[LABEL "done"]], "done")
 basicBlocks (l@(LABEL label):rest) = do
   let { (block, rest') = break (\e -> isEND e) rest }
   if rest' == [] || isLABEL (head rest')
