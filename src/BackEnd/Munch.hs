@@ -16,6 +16,7 @@ import FrontEnd.SemanticAnalyzer
 --TODO : difference between b and bl ??
 -- REGISTER SAVE??
 -- STRING ASSIGNMENT?
+-- how to know if something is to store on the stack?
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
   = lookup bop [(IR.PLUS, ARM.ADD), (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
@@ -41,6 +42,12 @@ munchExp (CALL (NAME "#arrayelem") [(CONSTI size), ident, pos]) = do
       topos = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP it) (RTEMP it) op,
                        src = [it, pt], dst = [it], jump = []}
   return (ii ++ pi ++ [m0, m1, bl, skiplen, topos], it)
+
+munchExp (CALL (NAME "#neg") [(CONSTI i)]) = do
+  t <- newTemp
+  let ldr = IMOV { assem = S_ (LDR W AL) (RTEMP t) (NUM (-i)),
+                   src = [], dst = [t]}
+  return ([ldr], t)
 
 munchExp (CALL (NAME "#neg") [e]) = do
   (i, t) <- munchExp e
@@ -73,6 +80,12 @@ munchExp (CALL (NAME "#p_putchar") [e]) = do
   let mv = move_to_r t 0
       putchar = ljump_to_label "putchar"
   return (i ++ [mv, putchar], dummy)
+
+munchExp (CALL (NAME "exit") [e]) = do
+  (i, t) <- munchExp e
+  let mv = move_to_r t 0
+      exit = ljump_to_label "exit"
+  return (i ++ [mv, exit], dummy)
 
 munchExp (CALL (NAME n) [e])
   | "#p_" `isPrefixOf` n = do
@@ -250,7 +263,7 @@ condExp (BINEXP bop e1 e2) = do
 
 condExp (CONSTI int) = do
   t <- newTemp
-  return $ \c -> ([IMOV {assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int) , dst = [t], src = []}], t)
+  return $ \c -> ([IMOV {assem = S_ (LDR W c) (RTEMP t) (NUM int) , dst = [t], src = []}], t)
 
 condExp (CONSTC chr) = do
   t <- newTemp
@@ -258,7 +271,7 @@ condExp (CONSTC chr) = do
 
 condExp (NAME l) = do
   t <- newTemp
-  return $ \c -> ([IMOV {assem = S_ (ARM.LDR W c) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
+  return $ \c -> ([IMOV {assem = S_ (LDR W c) (RTEMP t) (MSG l) , dst = [t], src = []}], t)
 
 condExp (MEM (CONSTI i)) = do
   newt <- newTemp
