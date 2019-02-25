@@ -214,7 +214,7 @@ translateProgramF (Ann (Program fs stms) _) = do
   stm <- translateStatListF stms
   popLevel
   return stm
-  
+
 {-
 translateFuncF :: FuncF () -> State TranslateState IExp
 translateFuncF (Ann (Func t id params) _) = do
@@ -443,6 +443,8 @@ translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 -- ASSUME 2 parameters
 translateNewPair (TPair t1 t2) exps
   = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
+
+translateNewPair _ _ = undefined
 
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
 translatePairAccess (TPair t1 t2) exps str
