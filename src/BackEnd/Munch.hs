@@ -81,7 +81,7 @@ munchExp (CALL (NAME "#p_putchar") [e]) = do
       putchar = ljump_to_label "putchar"
   return (i ++ [mv, putchar], dummy)
 
-  munchExp (CALL (NAME "exit") [e]) = do
+munchExp (CALL (NAME "exit") [e]) = do
   let exit = ljump_to_label "exit"
   case e of
     CONSTI n ->
@@ -89,7 +89,7 @@ munchExp (CALL (NAME "#p_putchar") [e]) = do
                       src = [],
                       dst = [0] },
                 exit ], dummy)
-    TEMP t -> 
+    TEMP t ->
       return ([ IMOV { assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t)),
                        src = [t],
                        dst = [0] },
