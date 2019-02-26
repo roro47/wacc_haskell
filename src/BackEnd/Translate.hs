@@ -355,10 +355,7 @@ translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
 translateExprF (Ann (IdentExpr id) (_, t)) = do
   let { Ann (Ident symbol) _ = id }
   exp <- getVarEntry symbol
-  case t of
-    TChar -> return $ Ex (CALL (NAME "#oneByte") [exp])
-    TBool -> return $ Ex (CALL (NAME "#oneByte") [exp])
-    otherwise -> return $ Ex exp
+  return $ Ex exp
 
 translateExprF (Ann (FuncExpr f) _) = translateFuncAppF f
 translateExprF (Ann Null _) = return $ Ex $ MEM (CONSTI 0)

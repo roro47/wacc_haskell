@@ -1,7 +1,7 @@
 module BackEnd.Canon where
 
 import Prelude hiding (EQ)
-import Control.Monad.State.Lazy
+import Control.Monad.State
 import Data.HashMap as HashMap hiding (map, filter)
 import FrontEnd.Parser
 import FrontEnd.SemanticAnalyzer
@@ -36,6 +36,16 @@ testBasicBlocksFile file = do
         stms = evalState (transform' stm) canonState }
   return stms
 
+
+testLinearizeFile :: String -> IO [Stm]
+testLinearizeFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+        canonState = CanonState { tempAlloc = Translate.tempAlloc s,
+                                  controlLabelAlloc = Translate.controlLabelAlloc s};
+        stms = evalState (linearize stm) canonState }
+  return stms
 
 
 newCanonState :: CanonState
@@ -176,26 +186,26 @@ isESEQ _ = False
 reorder :: [Exp] -> State CanonState (Stm, [Exp])
 reorder (exp@(CALL _ _):rest) = do
   temp <- newTemp
-  reorder ((ESEQ (MOV (TEMP temp) exp) (TEMP temp)):rest)
+  reorder $! ((ESEQ (MOV (TEMP temp) exp) (TEMP temp)):rest)
 reorder (exp:rest) = do
-  (stm', exps') <- doExp exp
-  (stm2', exps2') <- reorder rest
+  (stm', exps') <- doExp $! exp
+  (stm2', exps2') <- reorder $! rest
   if commute exps' stm2'
   then return (SEQ stm' stm2', (exps':exps2'))
   else newTemp >>= \temp ->
-       return (cleanStm $ SEQ stm' (SEQ (MOV (TEMP temp) exps') stm2'),
+       return (SEQ stm' (SEQ (MOV (TEMP temp) exps') stm2'),
                (TEMP temp):exps2')
 reorder [] = return (NOP, [])
 
 reorderStm :: [Exp] -> ([Exp] -> Stm) -> State CanonState Stm
 reorderStm exps build = do
-  (stm, exps') <- reorder exps
-  return $ cleanStm $ SEQ stm (build exps')
+  (stm, exps') <- reorder $! exps
+  return $ SEQ stm (build $! exps')
 
 reorderExp :: [Exp] -> ([Exp] -> Exp) -> State CanonState (Stm, Exp)
 reorderExp exps build = do
-  (stm', exps') <- reorder exps
-  return (cleanStm $ stm', build exps')
+  (stm', exps') <- reorder $! exps
+  return (stm', build $! exps')
 
 doStm :: Stm -> State CanonState Stm
 doStm (MOV (TEMP t) b)
@@ -215,34 +225,29 @@ doStm (CJUMP rop e1 e2 label1 label2)
 doStm (SEQ stm1 stm2) = do
   stm1' <- doStm stm1
   stm2' <- doStm stm2
-  return $ cleanStm $ SEQ stm1' stm2'
+  return $ SEQ stm1' stm2'
 
-doStm stm = return $ cleanStm $ stm
+doStm stm = return stm
 
+isOneLayer :: Exp -> Bool
 isOneLayer (CONSTI _) = True
 isOneLayer (CONSTC _) = True
 isOneLayer (TEMP _) = True
 isOneLayer (MEM _) = True
 isOneLayer (NAME _) = True
-isOneLayter _ = False
+isOneLayer e = False
 
 
 doExp :: Exp -> State CanonState (Stm, Exp)
 doExp exp@(MEM e@(BINEXP bop e1 e2)) = do
---  if isOneLayer e1 && isOneLayer e2
- return (NOP, exp)
---  else reorderExp [e] (\(e:_) -> MEM e)
+  if isOneLayer e1 && isOneLayer e2
+  then return (NOP, exp)
+  else reorderExp [e] (\(e:_) -> MEM e)
 
 doExp exp@(BINEXP bop e1 e2) = do
   if isOneLayer e1 && isOneLayer e2
   then return (NOP, exp)
   else reorderExp [e1, e2] (\(e1:e2:_) -> BINEXP bop e1 e2) 
- where isOneLayer (CONSTI _) = True
-       isOneLayer (CONSTC _) = True
-       isOneLayer (TEMP _) = True
-       isOneLayer (MEM _) = True
-       isOneLayer (NAME _) = True
-       isOneLayter _ = False
 
 doExp (MEM e)
   = reorderExp [e] (\(e:_) -> MEM e)
@@ -253,7 +258,7 @@ doExp (CALL e es)
 doExp (ESEQ stm e) = do
   stm' <- doStm stm
   (stm'', e') <- doExp e
-  return (cleanStm $ SEQ stm' stm'', e')
+  return (SEQ stm' stm'', e')
 
 doExp e = reorderExp [] (\_ -> e)
 
