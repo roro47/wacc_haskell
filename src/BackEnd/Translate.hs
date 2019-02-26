@@ -128,6 +128,12 @@ popLevel = do
                     return ()
     otherwise -> fail "verify level fails"
 
+getCurrFrame :: State TranslateState Frame.Frame
+getCurrFrame = do
+  state <- get
+  (level:rest) <- verifyLevels $ levels state
+  return $ levelFrame level
+
 addBuiltIn :: Int -> State TranslateState ()
 addBuiltIn id = do
   state <- get
@@ -195,12 +201,15 @@ getVarEntry :: String -> State TranslateState Exp
 getVarEntry symbol = do
   state <- get
   (VarEntry (Access frame access) t) <- find' (levels state)
+  let frametotal = Frame.frameSize (levelFrame (head (levels state)))
   case access of
     Frame.InReg temp -> return $ TEMP temp
     Frame.InFrame offset -> do
       let { prevLevels = takeWhile notFound (levels state);
             offset' = foldl f offset prevLevels }
-      return $ MEM (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset'))
+      --return $ (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset'))  -- remove mem
+      -- -- not correct
+      return $ CALL (NAME "#memaccess") [(CONSTI $  (frametotal+offset'))]
 
   where find' :: [Level] -> State TranslateState EnvEntry
         find' levels =
@@ -215,29 +224,54 @@ getVarEntry symbol = do
         f :: Int -> Level -> Int
         f offset level = offset + Frame.frameSize (levelFrame level)
 
+-- adjust stack pointer on return of a function
+-- removing all the local variables on the stack
+adjustSP :: State TranslateState Stm
+adjustSP = do
+  state <- get
+  let offset = Frame.frameSize (levelFrame (head (levels state)))
+  if offset == 0
+  then return NOP
+  else return $ MOV (TEMP Frame.sp) (BINEXP PLUS (TEMP Frame.sp) (CONSTI offset))
+
+stripParam :: ParamF () -> (Type, String)
+stripParam (Ann (Param t (Ann (Ident s) _)) _) = (t,s)
+  
+translateFuncF :: FuncF () -> State TranslateState ()
+translateFuncF (Ann (Func t id ps stm) _) = do
+  let params = reverse $ map stripParam ps
+  level <- newLevel
+  pushLevel level
+  foldM addParam 0 params
+  stm' <- translateStatListF stm >>= \s -> unNx s
+  adjustSP' <- adjustSP
+  let stm'' = SEQ (IR.PUSH (TEMP Frame.lr)) (SEQ stm' (SEQ adjustSP' (POP (TEMP Frame.pc))))
+  popLevel
+  frame <- getCurrFrame
+  addFragment (Frame.PROC (SEQ (LABEL ("f_" ++ symbol)) stm'') frame)
+  addFunEntry symbol t
+  where Ann (Ident symbol) _ = id
+        
+        addParam :: Int -> (Type, String) -> State TranslateState Int
+        addParam offset (t, s) = do
+          frame <- getCurrFrame
+          addVarEntry s t (Access frame (Frame.InFrame offset))
+          return (offset + Frame.typeSize t)
+
 translateProgramF :: ProgramF () -> State TranslateState Stm
 translateProgramF (Ann (Program fs stms) _) = do
   level <- newLevel
   pushLevel level
+  mapM translateFuncF fs
   stm <- translateStatListF stms
   stm' <- unNx stm
   state <- get
-  let offset = Frame.frameSize (levelFrame (head (levels state)))
-      adjustSP =
-        if offset == 0 then NOP
-        else MOV (TEMP Frame.sp) (BINEXP PLUS (TEMP Frame.sp) (CONSTI offset))
+  adjustSP' <- adjustSP
   popLevel
-  return $ SEQ (SEQ (IR.PUSH (TEMP Frame.lr)) stm')
-               (SEQ adjustSP (SEQ (MOV (TEMP 0) (MEM(CONSTI 0))) (IR.POP (TEMP Frame.pc))))
+  return $ SEQ (LABEL "main") (SEQ (SEQ (IR.PUSH (TEMP Frame.lr)) stm')
+               (SEQ adjustSP' (SEQ (MOV (TEMP 0) (CONSTI 0)) (IR.POP (TEMP Frame.pc)))))
 
-{-
-translateFuncF :: FuncF () -> State TranslateState IExp
-translateFuncF (Ann (Func t id params) _) = do
-  pushLevel
-  let { params' = map stripParam params }
 
-  where stripParam (Ann (Param t (Ann (Ident s) _)) _) = (t, s)
--}
 translateStatListF :: StatListF () -> State TranslateState IExp
 translateStatListF (Ann (StatList stms) _) = do
   stms' <- mapM translateStatF stms
@@ -250,10 +284,10 @@ translateStatF (Ann (Declare t id expr) _) = do
   access <- allocLocal symbol t True
   exp <- translateExprF expr
   let { mem = accessToMem access; -- if access through fp
-        mem' = MEM $ TEMP Frame.sp } -- access through sp
+        mem' = MEM $ TEMP Frame.sp } -- access through sp --use this one!
   addVarEntry symbol t access
   exp' <- unEx exp
-  return $ Nx (SEQ adjustSP (MOV mem exp'))
+  return $ Nx (SEQ adjustSP (MOV mem' exp'))
   where adjustSP =
           MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI $ Frame.typeSize t))
 
@@ -332,7 +366,7 @@ translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
   i <- getVarEntry id
   e <- mapM translateExprF exps
   e' <- mapM unEx e
-  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):i:e'))
+  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):(MEM i):e'))
 
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
@@ -354,11 +388,11 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
 translateExprF (Ann (IdentExpr id) (_, t)) = do
   let { Ann (Ident symbol) _ = id }
-  exp <- getVarEntry symbol
+  exp <- getVarEntry symbol  -- add memory access
   case t of
     TChar -> return $ Ex (CALL (NAME "#oneByte") [exp])
     TBool -> return $ Ex (CALL (NAME "#oneByte") [exp])
-    otherwise -> return $ Ex exp
+    otherwise -> return $ Ex (CALL (NAME "#fourByte") [exp])
 
 translateExprF (Ann (FuncExpr f) _) = translateFuncAppF f
 translateExprF (Ann Null _) = return $ Ex $ MEM (CONSTI 0)
@@ -369,7 +403,31 @@ translateFuncAppF f@(Ann (FuncApp t id exprs) _) = do
   let { Ann (Ident symbol) _ = id }
   if elem symbol (map fst builtInFunc)
   then translateBuiltInFuncAppF f
-  else undefined
+  else do
+    exps <- mapM translateExprF exprs
+    exps' <- mapM unEx exps
+    return $ Ex (CALL (NAME symbol) exps')
+
+-- all parameters of user defined function is pushed on stack
+{-
+translateUserFuncAppF :: FuncAppF () -> State TranslateState IExp
+translateUserFuncAppF f@(Ann (FuncApp funcT id exprs) _) = do
+  exps <- mapM translateExprF exprs
+  exps' <- mapM unEx exps >>= \es -> return $ reverse exps'
+  let pushParams = seq $ map pushParam (zip paramTs exps')
+      adjustSP' = MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI totalParamSize))
+  return SEQ pushParams (SEQ (CALL symbol exps') adjustSP')
+
+
+  where Ann (Ident symbol) _ = id
+        TFunc _ ps returnT = funcT
+        paramTs = map fst $ map stripParam ps -- parameter types
+        pushParam prevPush (t, exp) =
+          SEQ (MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI (typeSize t))))
+              (MOV (MEM (TEMP Frame.sp) exp))
+        totalParamSize = sum $ map typeSize paramTs
+         
+ -}       
 
 translateBuiltInFuncAppF :: FuncAppF () -> State TranslateState IExp
 translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do

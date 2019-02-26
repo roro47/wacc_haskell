@@ -32,6 +32,11 @@ justret e = do
 munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
 munchExp (CALL (NAME "#retVal") [e]) = justret e
 
+munchExp (CALL (NAME "#memaccess") [CONSTI i]) = do
+  t <- newTemp
+  return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP t) SP (IMM i),
+                 src = [13], dst = [t], jump = []}], t)
+
 munchExp (CALL (NAME "#arrayelem") [(CONSTI size), ident, pos]) = do
   (ii, it) <- munchExp ident
   (pi, pt) <- munchExp pos
@@ -146,6 +151,12 @@ munchExp (CALL (NAME "#oneByte") [exp]) = do
   (i, t) <- munchExp exp
   newt <- newTemp
   return (i ++ [IMOV {assem = S_ (ARM.LDR SB AL) (RTEMP newt) (Imm (RTEMP t) 0)
+                      , dst = [t], src = [newt]}], newt)
+
+munchExp (CALL (NAME "#fourByte") [exp]) = do
+  (i, t) <- munchExp exp
+  newt <- newTemp
+  return (i ++ [IMOV {assem = S_ (ARM.LDR W AL) (RTEMP newt) (Imm (RTEMP t) 0)
                       , dst = [t], src = [newt]}], newt)
 
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
@@ -379,17 +390,20 @@ munchMem e = do
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
+optimise (IOPER { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} :
+          IMOV { assem = S_ op (RTEMP t3) (Imm (RTEMP t4) i')}:remain)
+  | t4 == t1 = (IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}):(optimise remain)
 -- PRE-INDEX --
 optimise ((IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :
           (IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
   | (stackEqualCond c sl) && t11 == t12 && t22 == t11
         = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
                 : optimise remain
-optimise ((IMOV {assem = MC_ (ARM.MOV _) a (R b)}):remain)
-  | a == b = remain
+optimise ((IMOV { assem = MC_ (ARM.MOV _) a (R b)}):remain)
+  | a == b = optimise remain
 -- optimise lables but it is dangerous ..
-optimise ((IOPER {assem = (BRANCH_ (B AL) (L_ a))}) : (ILABEL {assem = (LAB b)}) : remain)
-  | a == b = remain
+optimise ((IOPER { assem = (BRANCH_ (B AL) (L_ a))}) : (ILABEL {assem = (LAB b)}) : remain)
+  | a == b = optimise remain
 optimise (x:xs) = x : (optimise xs)
 optimise [] = []
 
@@ -467,7 +481,7 @@ suffixStm (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
   if null l then
-    return (\c -> ( \suff -> i ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) op, src = ts, dst = [t]}]))
+    return (\c -> ( \suff -> i ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) op, src = [t], dst = ts}]))
   else
     let s = head ts in
     return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
@@ -611,28 +625,33 @@ munch file = do
   putStrLn ""
   ast <- parseFile file
   ast' <- analyzeAST ast
-  let
-      (stm, s) = runState (Translate.translate ast') Translate.newTranslateState
-      (procFrags, s') = runState (genProcFrags (Set.toList $ builtInSet s)) s
-      dataFrags = map munchDataFrag (Translate.dataFrags s')
+  let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState
+      (builtInFrags, s') = runState (genProcFrags (Set.toList $ builtInSet s)) s -- generate builtIn
+      userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
+      dataFrags = map munchDataFrag ( Translate.dataFrags s' )
       canonState = CanonState { C.tempAlloc = Translate.tempAlloc s',
-                                C.controlLabelAlloc = Translate.controlLabelAlloc s'};
-      stms = evalState (transform stm) canonState
-      ms = evalState (munchmany stms) s'
-      substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] ms)
+                                C.controlLabelAlloc = Translate.controlLabelAlloc s'}
+      (stm', s'') = runState (transform stm) canonState
+      transState = s' { Translate.tempAlloc = C.tempAlloc s'',
+                        Translate.controlLabelAlloc = C.controlLabelAlloc s'' }
+      (userFrags', s''') = runState (munchmany userFrags) transState -- munch functions
+      arms = evalState (munchmany stm') s'''
+      substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] arms)
       out = filter (\x -> not $ containsDummy x) substitute
-      totalOut = intercalate ["\n"] (map (map show) procFrags) ++ ["\n"] ++
+      substitute' = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] userFrags')
+      out' = filter (\x -> not $ containsDummy x) substitute'
+      totalOut = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
-                 (map show out)
+                 (map show (out' ++ out))
   mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) totalOut
   putStrLn ""
   return ()
+                      
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
           let gens = map (\n -> genBuiltIns !! n) ids
           pfrags <- foldM (\acc f -> f >>= \pfrag -> return $ acc ++ [pfrag]) [] gens
           return pfrags
-
 
 munchmany [] = return []
 munchmany (x:xs) = do
@@ -832,3 +851,4 @@ p_check_divide_by_zero = do
           ld_cond_msg_toR0 msg ARM.EQ,
           ljump_cond "p_throw_runtime_error" ARM.EQ,
           poppc]
+

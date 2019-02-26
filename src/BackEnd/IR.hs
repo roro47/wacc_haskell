@@ -74,10 +74,10 @@ instance Treeable Stm where
   toTree NOP = Node "NOP" []
 
 instance Show Exp where
-  show e = drawVerticalTreeWith 1 $ toTree e
+  show e = drawTree $ toTree e
 
 instance Show Stm where
-  show stm = drawVerticalTreeWith 1 $ toTree stm
+  show stm = drawTree $ toTree stm
 
 
 --         IR    ARM type
