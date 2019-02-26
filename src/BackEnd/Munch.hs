@@ -153,6 +153,12 @@ munchExp (CALL (NAME "#oneByte") [exp]) = do
   return (i ++ [IMOV {assem = S_ (ARM.LDR SB AL) (RTEMP newt) (Imm (RTEMP t) 0)
                       , dst = [t], src = [newt]}], newt)
 
+munchExp (CALL (NAME "#fourByte") [exp]) = do
+  (i, t) <- munchExp exp
+  newt <- newTemp
+  return (i ++ [IMOV {assem = S_ (ARM.LDR W AL) (RTEMP newt) (Imm (RTEMP t) 0)
+                      , dst = [t], src = [newt]}], newt)
+
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
   cinstr <- munchStm cjump
