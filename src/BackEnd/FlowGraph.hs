@@ -11,6 +11,7 @@ data FlowGraph =
               use :: HashMap.Map Int [Temp.Temp],
               nodes :: [Int],
               assems :: HashMap.Map Int Assem.Instr }
+  deriving (Show)
 
 
 newFlowGraph :: FlowGraph
@@ -20,3 +21,6 @@ newFlowGraph = FlowGraph { control = AdjGraph.empty,
                            nodes = [],
                            assems = HashMap.empty }
                              
+data JUMP = JustJump [String]
+          | JumpFall [String]
+          deriving (Show)

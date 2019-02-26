@@ -452,12 +452,8 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "free" -> do { e <- translateFree (head inputTs) exps';
                    e' <- unEx e;
                    return $ Nx (EXP e') }
-    "print" -> do { e <- translatePrint (head inputTs) exps';
-                    e' <- unEx e;
-                    return $ Nx (EXP e') }
-    "println" -> do { e <- translatePrintln (head inputTs) exps';
-                      e' <- unEx e;
-                      return $ Nx (EXP e') }
+    "print" -> translatePrint (head inputTs) exps'
+    "println" -> translatePrintln (head inputTs) exps'
     "newpair" -> translateNewPair (TPair (inputTs !! 0) (inputTs !! 1)) exps'
     "fst" -> translatePairAccess ret exps' "fst"
     "snd" -> translatePairAccess ret exps' "snd"
@@ -516,9 +512,9 @@ translatePrint t exps = do
 translatePrintln :: Type -> [Exp] -> State TranslateState IExp
 translatePrintln t exps = do
   print <- translatePrint t exps
-  unexPrint <- unEx print
+  print' <- unEx print
   addBuiltIn id_p_print_ln
-  return $ Ex $ CALL (NAME "#p_print_ln") [unexPrint]
+  return $ Nx (SEQ (EXP print') (EXP (CALL (NAME "p_print_ln") [])))
 
 {-
  BL MALLOC required here:
