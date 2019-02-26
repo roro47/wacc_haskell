@@ -9,7 +9,7 @@ import FrontEnd.AST
 import FrontEnd.Parser
 import FrontEnd.SemanticAnalyzer
 import qualified BackEnd.Frame as Frame
-import qualified BackEnd.Temp as Temp 
+import qualified BackEnd.Temp as Temp
 import BackEnd.Assem as Assem
 import BackEnd.IR as IR
 import BackEnd.Builtin
@@ -228,7 +228,7 @@ translateProgramF (Ann (Program fs stms) _) = do
         else MOV (TEMP Frame.sp) (BINEXP PLUS (TEMP Frame.sp) (CONSTI offset))
   popLevel
   return $ SEQ (SEQ (IR.PUSH (TEMP Frame.lr)) stm')
-               (SEQ adjustSP (IR.POP (TEMP Frame.pc)))
+               (SEQ adjustSP (SEQ (MOV (TEMP 0) (CONSTI 0)) (IR.POP (TEMP Frame.pc))))
 
 {-
 translateFuncF :: FuncF () -> State TranslateState IExp
@@ -751,5 +751,3 @@ id_p_read_char = 8
 id_p_free_pair = 9
 id_p_check_array_bounds = 10
 id_p_throw_overflow_error = 11
-
-

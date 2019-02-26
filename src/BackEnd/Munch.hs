@@ -4,7 +4,7 @@ import Data.Maybe
 import Data.List
 import Control.Monad.State.Lazy
 import qualified Data.Set as Set
-  
+
 import FrontEnd.Parser
 import FrontEnd.SemanticAnalyzer
 import BackEnd.Instructions as ARM
@@ -12,7 +12,7 @@ import BackEnd.IR as IR
 import BackEnd.Assem as ASSEM
 import BackEnd.Temp hiding (newTemp, newDataLabel)
 import BackEnd.Translate as Translate
-import BackEnd.Frame as Frame 
+import BackEnd.Frame as Frame
 import BackEnd.Builtin
 import BackEnd.Canon as C hiding (newTemp)
 --how to know scope ?? when frame is changed ???
@@ -126,7 +126,7 @@ munchExp (BINEXP DIV e1 e2) = do
                     src = [0, 1], dst = []}
       divInstr = IMOV {assem = BRANCH_ (BL AL) (L_ divLabel),
                       src = [0, 1], dst = [0]} in
-      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, divInstr], 0)
+      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, check, divInstr], 0)
 
 {- r0 % r1 : result in r1 -}
 munchExp (BINEXP MOD e1 e2) = do
@@ -139,7 +139,7 @@ munchExp (BINEXP MOD e1 e2) = do
                     src = [0, 1], dst = []}
       modInstr = IMOV {assem = BRANCH_ (BL AL) (L_ modLabel),
                   src = [0, 1], dst = [1]} in
-      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, modInstr], 1)
+      return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, check ,modInstr], 1)
 
 --load a byte from sp
 munchExp (CALL (NAME "#oneByte") [exp]) = do
@@ -247,6 +247,25 @@ condExp (BINEXP bop (BINEXP MUL (CONSTI int) e1) e2)
   | canlsl bop int
       = lslOP e1 e2 bop int
 
+condExp (BINEXP bop e1@(CONSTI int1) e2@(CONSTI int2))
+  | bop /= PLUS && bop /= MINUS = do
+    (i1, t1) <- munchExp e1
+    let {cbs = bopToCBS bop}
+    case cbs of
+      Nothing -> fail ""
+      otherwise -> return $ \c -> (i1 ++ [IOPER {assem = CBS_ ((fromJust cbs) NoSuffix c)
+                                  (RTEMP t1) (RTEMP t1) (IMM int2),
+                                  dst = [t1], src = [t1], jump = []}], t1)
+  | otherwise = do
+    (i1, t1) <- munchExp e1
+    (i2, t2) <- munchExp e2
+    let subs = IOPER {assem = CBS_ ((if bop == PLUS then ADD else SUB) S AL)
+                      (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),src = [t1, t2],
+                       dst = [t1], jump = []}
+        br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                      src = [], dst = [], jump = ["p_throw_overflow_error"]}
+    return $ \c -> (i1++i2++[subs, br], t1)
+
 condExp (BINEXP bop (CONSTI int) e) = condExp (BINEXP bop e (CONSTI int))
 
 condExp (BINEXP bop e (CONSTI int)) = do
@@ -345,6 +364,11 @@ optimise ((IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :
   | (stackEqualCond c sl) && t11 == t12 && t22 == t11
         = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
                 : optimise remain
+optimise ((IMOV {assem = MC_ (ARM.MOV _) a (R b)}):remain)
+  | a == b = remain
+-- optimise lables but it is dangerous ..
+optimise ((IOPER {assem = (BRANCH_ (B AL) (L_ a))}) : (ILABEL {assem = (LAB b)}) : remain)
+  | a == b = remain
 optimise (x:xs) = x : (optimise xs)
 optimise [] = []
 
@@ -455,6 +479,14 @@ condStm (IR.MOV e1 e2) = do  --In which sequence ?
   (i2, t2) <- munchExp e2
   return (\c -> i1 ++ i2 ++ [move_to_r t2 t1])
 
+condStm (IR.PUSH e) = do
+  (i, t) <- munchExp e
+  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [t], src = []}]) --sp here or not ??
+
+condStm (IR.POP e) = do
+  (i, t) <- munchExp e
+  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.POP c) [RTEMP t], dst = [t], src = []}])
+
 condStm (JUMP e ls) = do
   case e of
     (CONSTI 1) ->
@@ -475,6 +507,8 @@ condStm (JUMP e ls) = do
                              jump = [] }])
 
 condStm (NOP) = return $ \c -> []
+
+condStm t = fail $ show t
 
 munchBuiltInFuncFrag :: Fragment -> State TranslateState [ASSEM.Instr]
 munchBuiltInFuncFrag (PROC stm frame) = do
@@ -564,7 +598,7 @@ munch file = do
       out = filter (\x -> not $ containsDummy x) substitute
       totalOut = intercalate ["\n"] (map (map show) procFrags) ++ ["\n"] ++
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
-                 (map show out)  
+                 (map show out)
   mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) totalOut
   putStrLn ""
   return ()
@@ -573,7 +607,7 @@ munch file = do
           let gens = map (\n -> genBuiltIns !! n) ids
           pfrags <- foldM (\acc f -> f >>= \pfrag -> return $ acc ++ [pfrag]) [] gens
           return pfrags
-          
+
 
 munchmany [] = return []
 munchmany (x:xs) = do
@@ -773,4 +807,3 @@ p_check_divide_by_zero = do
           ld_cond_msg_toR0 msg ARM.EQ,
           ljump_cond "p_throw_runtime_error" ARM.EQ,
           poppc]
-
