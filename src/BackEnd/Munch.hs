@@ -32,11 +32,6 @@ justret e = do
 munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
 munchExp (CALL (NAME "#retVal") [e]) = justret e
 
-munchExp (CALL (NAME "#memaccess") [CONSTI i]) = do
-  t <- newTemp
-  return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP t) SP (IMM i),
-                 src = [13], dst = [t], jump = []}], t)
-
 munchExp (CALL (NAME "#arrayelem") [(CONSTI size), ident, pos]) = do
   (ii, it) <- munchExp ident
   (pi, pt) <- munchExp pos
@@ -151,12 +146,6 @@ munchExp (CALL (NAME "#oneByte") [exp]) = do
   (i, t) <- munchExp exp
   newt <- newTemp
   return (i ++ [IMOV {assem = S_ (ARM.LDR SB AL) (RTEMP newt) (Imm (RTEMP t) 0)
-                      , dst = [t], src = [newt]}], newt)
-
-munchExp (CALL (NAME "#fourByte") [exp]) = do
-  (i, t) <- munchExp exp
-  newt <- newTemp
-  return (i ++ [IMOV {assem = S_ (ARM.LDR W AL) (RTEMP newt) (Imm (RTEMP t) 0)
                       , dst = [t], src = [newt]}], newt)
 
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
@@ -390,20 +379,17 @@ munchMem e = do
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
-optimise (IOPER { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} :
-          IMOV { assem = S_ op (RTEMP t3) (Imm (RTEMP t4) i')}:remain)
-  | t4 == t1 = (IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}):(optimise remain)
 -- PRE-INDEX --
 optimise ((IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :
           (IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
   | (stackEqualCond c sl) && t11 == t12 && t22 == t11
         = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
                 : optimise remain
-optimise ((IMOV { assem = MC_ (ARM.MOV _) a (R b)}):remain)
-  | a == b = optimise remain
+optimise ((IMOV {assem = MC_ (ARM.MOV _) a (R b)}):remain)
+  | a == b = remain
 -- optimise lables but it is dangerous ..
-optimise ((IOPER { assem = (BRANCH_ (B AL) (L_ a))}) : (ILABEL {assem = (LAB b)}) : remain)
-  | a == b = optimise remain
+optimise ((IOPER {assem = (BRANCH_ (B AL) (L_ a))}) : (ILABEL {assem = (LAB b)}) : remain)
+  | a == b = remain
 optimise (x:xs) = x : (optimise xs)
 optimise [] = []
 
@@ -481,7 +467,7 @@ suffixStm (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
   if null l then
-    return (\c -> ( \suff -> i ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) op, src = [t], dst = ts}]))
+    return (\c -> ( \suff -> i ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) op, src = ts, dst = [t]}]))
   else
     let s = head ts in
     return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
