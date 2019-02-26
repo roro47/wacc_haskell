@@ -195,12 +195,15 @@ getVarEntry :: String -> State TranslateState Exp
 getVarEntry symbol = do
   state <- get
   (VarEntry (Access frame access) t) <- find' (levels state)
+  let frametotal = Frame.frameSize (levelFrame (head (levels state)))
   case access of
     Frame.InReg temp -> return $ TEMP temp
     Frame.InFrame offset -> do
       let { prevLevels = takeWhile notFound (levels state);
             offset' = foldl f offset prevLevels }
-      return $ MEM (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset'))
+      --return $ (BINEXP PLUS (TEMP Frame.fp) (CONSTI offset'))  -- remove mem
+      -- -- not correct
+      return $ CALL (NAME "#memaccess") [(CONSTI $  (frametotal+offset'))]
 
   where find' :: [Level] -> State TranslateState EnvEntry
         find' levels =
@@ -228,7 +231,7 @@ translateProgramF (Ann (Program fs stms) _) = do
         else MOV (TEMP Frame.sp) (BINEXP PLUS (TEMP Frame.sp) (CONSTI offset))
   popLevel
   return $ SEQ (SEQ (IR.PUSH (TEMP Frame.lr)) stm')
-               (SEQ adjustSP (SEQ (MOV (TEMP 0) (CONSTI 0)) (IR.POP (TEMP Frame.pc))))
+               (SEQ adjustSP (SEQ (MOV (TEMP 0) (MEM(CONSTI 0))) (IR.POP (TEMP Frame.pc))))
 
 {-
 translateFuncF :: FuncF () -> State TranslateState IExp
@@ -250,10 +253,10 @@ translateStatF (Ann (Declare t id expr) _) = do
   access <- allocLocal symbol t True
   exp <- translateExprF expr
   let { mem = accessToMem access; -- if access through fp
-        mem' = MEM $ TEMP Frame.sp } -- access through sp
+        mem' = MEM $ TEMP Frame.sp } -- access through sp --use this one!
   addVarEntry symbol t access
   exp' <- unEx exp
-  return $ Nx (SEQ adjustSP (MOV mem exp'))
+  return $ Nx (SEQ adjustSP (MOV mem' exp'))
   where adjustSP =
           MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI $ Frame.typeSize t))
 
@@ -332,7 +335,7 @@ translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
   i <- getVarEntry id
   e <- mapM translateExprF exps
   e' <- mapM unEx e
-  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):i:e'))
+  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):(MEM i):e'))
 
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
@@ -354,7 +357,8 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
 translateExprF (Ann (IdentExpr id) (_, t)) = do
   let { Ann (Ident symbol) _ = id }
-  exp <- getVarEntry symbol
+  exp <- getVarEntry symbol  -- add memory access
+  let var = MEM exp
   case t of
     TChar -> return $ Ex (CALL (NAME "#oneByte") [exp])
     TBool -> return $ Ex (CALL (NAME "#oneByte") [exp])
