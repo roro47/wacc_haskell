@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c12ec5fb725021d16e775b5381c4d803c678f8acfc1e6cf16b4b4780553e0429
+-- hash: ce79958c110657d2b23dbf111e7585afc4b12121ec1fdd98e0549fea257030fa
 
 name:           wacc32
 version:        0.1.0.0
@@ -38,7 +38,6 @@ library
       BackEnd.Liveness
       BackEnd.MakeGraph
       BackEnd.Munch
-      BackEnd.State
       BackEnd.Temp
       BackEnd.Translate
       FrontEnd.AST
