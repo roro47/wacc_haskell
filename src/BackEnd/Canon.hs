@@ -204,10 +204,13 @@ reorderStm exps build = do
 
 reorderExp :: [Exp] -> ([Exp] -> Exp) -> State CanonState (Stm, Exp)
 reorderExp exps build = do
-  (stm', exps') <- reorder $! exps
+  (stm', exps') <- reorder exps
   return (stm', build $! exps')
 
 doStm :: Stm -> State CanonState Stm
+doStm (MOV (TEMP t) (CALL e es))
+  = reorderStm (e:es) (\(e:es) -> MOV (TEMP t) (CALL e es))
+  
 doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)
 
@@ -215,6 +218,18 @@ doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b) = do
   if isOneLayer e1 && isOneLayer e2 && isOneLayer b
   then return stm
   else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
+
+doStm (MOV (MEM e) b)
+  = reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
+
+doStm (MOV (ESEQ s e) b)
+  = doStm (SEQ s (MOV e b))
+
+doStm (PUSH e)
+  = reorderStm [e] (\(e:_) -> PUSH e)
+
+doStm (POP e)
+  = reorderStm [e] (\(e:_) -> POP e)
 
 doStm (JUMP e labels)
   = reorderStm [e] (\(e:_) -> JUMP e labels)
@@ -226,6 +241,12 @@ doStm (SEQ stm1 stm2) = do
   stm1' <- doStm stm1
   stm2' <- doStm stm2
   return $ SEQ stm1' stm2'
+
+doStm (EXP (CALL e es))
+  = reorderStm (e:es) (\(e:es) -> EXP (CALL e es))
+
+doStm (EXP e)
+  = reorderStm [e] (\(e:_) -> EXP e)
 
 doStm stm = return stm
 
@@ -290,7 +311,9 @@ testLinear3 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t2 (CONSTI 1)) t2))
 testLinear4 = SEQ (MOV t0 t1) (MOV t0 (BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)))
 testLinear5 = SEQ (MOV t0 t1) (MOV t0 testESEQ4)
 testLinear6 = SEQ (MOV t0 t1) (MOV t0 testESEQ5)
-
+testLinear7 = MOV t0 (CALL (NAME "function") [])
+testLinear8 = MOV t1 (CALL (NAME "function") [CONSTI 1, CONSTI 45])
+testLinear9 = MOV t0 (CALL (NAME "function") [MEM (TEMP 13)])
 
 testBasicBlocks1 = []
 testBasicBlocks2 = [LABEL label1,
