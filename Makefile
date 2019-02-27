@@ -1,8 +1,6 @@
 main:
 	ghc --version
-	stack build --only-dependencies
 	stack build --system-ghc
-	ghc-pkg check
 
 all: main
 
