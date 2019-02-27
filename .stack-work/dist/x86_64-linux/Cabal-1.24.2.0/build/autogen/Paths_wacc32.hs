@@ -29,12 +29,12 @@ version :: Version
 version = Version [0,1,0,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
-bindir     = "/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/bin"
-libdir     = "/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"
-dynlibdir  = "/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2"
-datadir    = "/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/share/x86_64-linux-ghc-8.0.2/wacc32-0.1.0.0"
-libexecdir = "/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/libexec"
-sysconfdir = "/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/etc"
+bindir     = "/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/bin"
+libdir     = "/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"
+dynlibdir  = "/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2"
+datadir    = "/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/share/x86_64-linux-ghc-8.0.2/wacc32-0.1.0.0"
+libexecdir = "/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/libexec"
+sysconfdir = "/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/etc"
 
 getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: IO FilePath
 getBinDir = catchIO (getEnv "wacc32_bindir") (\_ -> return bindir)

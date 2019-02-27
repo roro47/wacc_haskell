@@ -38,7 +38,6 @@ library
       BackEnd.Liveness
       BackEnd.MakeGraph
       BackEnd.Munch
-      BackEnd.State
       BackEnd.Temp
       BackEnd.Translate
       BackEnd.RegAlloc

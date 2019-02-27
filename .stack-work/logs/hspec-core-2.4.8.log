@@ -25,5 +25,5 @@ Preprocessing library hspec-core-2.4.8...
 [22 of 23] Compiling Test.Hspec.Core.Runner.Eval ( src/Test/Hspec/Core/Runner/Eval.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Test/Hspec/Core/Runner/Eval.o )
 [23 of 23] Compiling Test.Hspec.Core.Runner ( src/Test/Hspec/Core/Runner.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Test/Hspec/Core/Runner.o )
 Installing library in
-/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/hspec-core-2.4.8-AVusFidNcWO1vgXgCJc6Az
+/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/hspec-core-2.4.8-AVusFidNcWO1vgXgCJc6Az
 Registering hspec-core-2.4.8...
