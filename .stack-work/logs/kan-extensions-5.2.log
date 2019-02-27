@@ -15,5 +15,5 @@ Preprocessing library kan-extensions-5.2...
 [12 of 13] Compiling Control.Comonad.Density ( src/Control/Comonad/Density.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Control/Comonad/Density.o )
 [13 of 13] Compiling Control.Monad.Co ( src/Control/Monad/Co.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Control/Monad/Co.o )
 Installing library in
-/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/kan-extensions-5.2-FGkvhKmYmw81QHxsIpKhmh
+/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/kan-extensions-5.2-FGkvhKmYmw81QHxsIpKhmh
 Registering kan-extensions-5.2...

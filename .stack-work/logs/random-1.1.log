@@ -7,5 +7,5 @@ System/Random.hs:43:1: warning: [-Wtabs]
     Tab character found here, and in 74 further locations.
     Please use spaces instead.
 Installing library in
-/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/random-1.1-9tceXaeYIMZ4JrKq20Egog
+/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/random-1.1-9tceXaeYIMZ4JrKq20Egog
 Registering random-1.1...

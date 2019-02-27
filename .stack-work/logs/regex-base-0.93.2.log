@@ -10,5 +10,5 @@ Text/Regex/Base.hs:55:13: warning: [-Wdeprecations]
     Deprecated: "See GHC ticket #2496"
 [4 of 4] Compiling Text.Regex.Base.Impl ( Text/Regex/Base/Impl.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Text/Regex/Base/Impl.o )
 Installing library in
-/home/parallels/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/regex-base-0.93.2-FAqPXYX9UsJ5xC9mG2bESX
+/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/regex-base-0.93.2-FAqPXYX9UsJ5xC9mG2bESX
 Registering regex-base-0.93.2...
