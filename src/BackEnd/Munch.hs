@@ -46,28 +46,26 @@ munchExp (CALL (NAME "malloc") [CONSTI i]) = do
 
 munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
   (ii, it) <- munchExp ident
-  result <- singleIndex size ident pos
+  result <- singleIndex size it pos
   return (ii ++ result, it)
     where
-      singleIndex :: Int -> Exp -> [Exp] -> State TranslateState [ASSEM.Instr]
-      singleIndex _ _ [] = return []
-      singleindex size ident (p:ps) = do
-        (ii, it) <- munchExp ident
+      singleIndex :: Int -> Temp -> [Exp] -> State TranslateState [ASSEM.Instr]
+      singleindex size t (p:ps) = do
         (pi, pt) <- munchExp p
         let op = if size == 1 then (R (RTEMP pt)) else (LSL_ (RTEMP pt) 2)
-            ldr = IMOV { assem = S_ (LDR W AL) (RTEMP it) (Imm (RTEMP it) 0),
-                        src = [it], dst = [it]}
+            ldr = IMOV { assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
+                        src = [t], dst = [t]}
             m0 = move_to_r pt 0
-            m1 = move_to_r it 1
+            m1 = move_to_r t 1
             bl = IOPER {assem = BRANCH_ (BL AL) (L_ "p_check_array_bounds"),
                         src = [0, 1], dst = [], jump = ["p_check_array_bounds"]}
-            skiplen = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP it) (RTEMP it) (IMM 4),
-                             src = [it], dst = [it], jump = []}
-            topos = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP it) (RTEMP it) op,
-                             src = [it, pt], dst = [it], jump = []}
-        rest <- singleIndex size ident ps
+            skiplen = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP t) (RTEMP t) (IMM 4),
+                             src = [t], dst = [t], jump = []}
+            topos = IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP t) (RTEMP t) op,
+                             src = [t, pt], dst = [t], jump = []}
+        rest <- singleIndex size t ps
         return (pi ++ [ldr, m0, m1, bl, skiplen, topos] ++ rest)
-      -- singleIndex _ _ _ = return []
+      singleIndex _ _ [] = return []
 
 
 
@@ -504,10 +502,11 @@ suffixStm (IR.MOV e (MEM me)) = do -- LDR
   (l, ts, op) <- munchMem me
   if null l then
     return (\c -> ( \suff -> i ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) op,
-                                          src = [t], dst = ts}]))
+                                          src = [t], dst = ts, jump = []}]))
   else
     let s = head ts in
-    return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
+    return (\c -> (\suff -> i ++ l ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0),
+                                       src = [s], dst = [t], jump = []}]))
 
 condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
 
@@ -534,11 +533,13 @@ condStm (IR.MOV e1 e2) = do  --In which sequence ?
 
 condStm (IR.PUSH e) = do
   (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [t], src = []}]) --sp here or not ??
+  return (\c -> i ++ [IOPER {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [sp],
+                             src = [t], jump = []}]) --sp here or not ??
 
 condStm (IR.POP e) = do
   (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV {assem = STACK_ (ARM.POP c) [RTEMP t], dst = [t], src = []}])
+  return (\c -> i ++ [IOPER {assem = STACK_ (ARM.POP c) [RTEMP t], dst = [t, sp],
+                             src = [sp], jump = []}])
 
 condStm (JUMP e ls) = do
   case e of
@@ -557,7 +558,7 @@ condStm (JUMP e ls) = do
                      IOPER { assem = BRANCH_ (ARM.B c) (L_ (head ls)),
                              dst = [],
                              src = [],
-                             jump = [] }])
+                             jump = [head ls] }])
 
 condStm (NOP) = return $ \c -> []
 
@@ -579,15 +580,20 @@ createPair s1 s2 exps = do
   (i2, t2) <- munchExp (exps !! 1)
   tadddr <- newTemp -- pair addr
   let
-      ld8 = IMOV { assem = (S_ (LDR W AL) R0 (NUM 8)), src = [], dst = [0]}
-      ld4 = IMOV { assem = (S_ (LDR W AL) R0 (NUM 4)), src = [], dst = [0]}
+      ld8 = IOPER { assem = (S_ (LDR W AL) R0 (NUM 8)), src = [], dst = [0], jump = []}
+      ld4 = IOPER { assem = (S_ (LDR W AL) R0 (NUM 4)), src = [], dst = [0], jump = []}
       malloc = IOPER { assem = BRANCH_ (BL AL) (L_ "malloc"), src = [0], dst = [0], jump = ["malloc"]}
       strPairAddr = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP tadddr) (R R0), src = [0], dst = [tadddr]}
-      savefst = IMOV { assem = (S_ (STR W {- suffix1 -} AL) (RTEMP t1) (Imm R0 0)), src = [t1, 0], dst = []}
-      savesnd = IMOV { assem = (S_ (STR W {- suffix2 -} AL) (RTEMP t2) (Imm R0 0)), src = [t2, 0], dst = []}
-      strfstaddr = IMOV { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 0)), src = [tadddr, 0], dst = []}
-      strsndaddr = IMOV { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 4)), src = [tadddr, 0], dst = []}
-      strpaironstack= IMOV { assem = (S_ (STR W AL) (RTEMP tadddr) (Imm (RTEMP 13) 0)), src = [t1, 13], dst = [0]}
+      savefst = IOPER { assem = (S_ (STR W {- suffix1 -} AL) (RTEMP t1) (Imm R0 0)),
+                        src = [t1, 0], dst = [], jump = []}
+      savesnd = IOPER { assem = (S_ (STR W {- suffix2 -} AL) (RTEMP t2) (Imm R0 0)),
+                        src = [t2, 0], dst = [], jump = []}
+      strfstaddr = IOPER { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 0)),
+                           src = [tadddr, 0], dst = [], jump = []}
+      strsndaddr = IOPER { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 4)),
+                           src = [tadddr, 0], dst = [], jump = []}
+      strpaironstack= IOPER { assem = (S_ (STR W AL) (RTEMP tadddr) (Imm (RTEMP 13) 0)),
+                              src = [tadddr, 13], dst = [], jump = []}
   return ([ld8, malloc, strPairAddr] ++ i1 ++ [ld4, malloc, savefst, strfstaddr]
            ++ i2 ++ [ld4, malloc, savesnd, strsndaddr, strpaironstack], dummy)
 
@@ -598,7 +604,8 @@ accessPair isfst typestr [e] = do
       getpaddr = move_to_r t 0
       check = IOPER { assem = BRANCH_ (BL AL) (L_ "p_check_null_pointer")
                       , src = [0], dst = [], jump = ["p_check_null_pointer"]}
-      s1 = IMOV {assem = (S_ (LDR {-(if one then SB else W)-} W AL) (RTEMP t) (Imm (RTEMP t) offset)), src = [t], dst = [t]}
+      s1 = IOPER {assem = (S_ (LDR {-(if one then SB else W)-} W AL) (RTEMP t)
+                           (Imm (RTEMP t) offset)), src = [t], dst = [t], jump = []}
   return (i ++ [getpaddr, check, s1], t)  -- cannot handle sb/w here as only return reg
 
 
@@ -614,16 +621,6 @@ same a = fromJust $ lookup a (zip condIR condARM)
 
 deSeq :: Stm -> (Stm, Stm)
 deSeq (SEQ s1 s2) = (s1, s2)
-
-showStm stm = do
-  putStrLn ""
-  munch <- evalState (optimsedMunch stm) Translate.newTranslateState
-  putStrLn ""
-  return $ ()
-
-showExp exp = do
-  munch <- evalState (munchExp exp) Translate.newTranslateState
-  return (munch)
 
 munch file = do
   putStrLn ""
@@ -662,18 +659,6 @@ munchmany (x:xs) = do
   m <- munchStm x
   ms <- munchmany xs
   return $ (m++ms)
-
-optimsedMunch stm = do
-  m <- munchStm stm
-  let substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] m)
-      out = filter (\x -> not $ containsDummy x) substitute
-  return $ mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) (map show out)
-
-call = CALL (CONSTI 1) [(CONSTI 7)]
--- pre-Index sample --
-assemPre = (IOPER { assem = (CBS_ (ARM.ADD NoSuffix ARM.EQ) (RTEMP 1) (RTEMP 1) (IMM 2)), src = [1], dst = [1], jump = []}) :
-           (IMOV { assem = (S_ (ARM.LDR W ARM.EQ) (RTEMP 2) (Imm (RTEMP 1) 0)), src = [2], dst = [1]}) : []
-irPre = IR.MOV (BINEXP MINUS (TEMP 2) (CONSTI 1)) (MEM (TEMP 2))
 
 type GenBuiltIn = State TranslateState [ASSEM.Instr]
 
@@ -714,7 +699,8 @@ p_print_int = do
  return $[add_label "p_print_int",
           pushlr,
           move_to_r 0 temp,
-          IMOV { assem = S_ (LDR W AL) (RTEMP temp) (MSG msg), src = [], dst = [temp]}]
+          IOPER { assem = S_ (LDR W AL) (RTEMP temp) (MSG msg), src = [],
+                  dst = [temp], jump = []}]
           ++ end
 
 p_print_bool :: GenBuiltIn
@@ -737,8 +723,10 @@ p_print_string = do
   addFragment (Frame.STRING msg "%.*s\0")
   return $[add_label "p_print_string",
           pushlr,
-          IMOV {assem = S_ (LDR W AL) R1 (Imm R0 0), src = [0], dst = [1]},
-          IOPER { assem = CBS_ (ADD NoSuffix AL) R2 R0 (IMM 4), src = [0], dst = [2], jump = []},
+          IOPER {assem = S_ (LDR W AL) R1 (Imm R0 0), src = [0], dst = [1],
+                 jump = []},
+          IOPER { assem = CBS_ (ADD NoSuffix AL) R2 R0 (IMM 4), src = [0],
+                  dst = [2], jump = []},
           ld_msg_toR0 msg] ++ end
 
 p_print_reference :: GenBuiltIn
@@ -802,13 +790,13 @@ p_free_pair = do
           cmp_r0,
           ld_cond_msg_toR0 msg ARM.EQ,
           ljump_cond runTimeError ARM.EQ,
-          IOPER { assem = STACK_ (ARM.PUSH AL) [R0], src = [0], dst = [Frame.fp], jump = []},
-          IMOV {assem = S_ (LDR W AL) R0 (Imm R0 0), src = [0], dst = [0]},
+          IOPER { assem = STACK_ (ARM.PUSH AL) [R0], src = [0], dst = [13], jump = []},
+          IOPER {assem = S_ (LDR W AL) R0 (Imm R0 0), src = [0], dst = [0], jump = []},
           ljump_to_label "free",
-          IMOV {assem = S_ (LDR W AL) R0 (Imm (RTEMP Frame.fp) 0), src = [Frame.fp], dst = [0]},
-          IMOV {assem = S_ (LDR W AL) R0 (Imm R0 4), src = [0], dst = [0]},
+          IOPER {assem = S_ (LDR W AL) R0 (Imm (RTEMP 13) 0), src = [13], dst = [0], jump = []},
+          IOPER {assem = S_ (LDR W AL) R0 (Imm R0 4), src = [0], dst = [0], jump = []},
           ljump_to_label "free",
-          IOPER { assem = STACK_ (ARM.POP AL) [R0], src = [Frame.fp], dst = [Frame.fp, 0], jump = []},
+          IOPER { assem = STACK_ (ARM.POP AL) [R0], src = [13], dst = [13, 0], jump = []},
           ljump_to_label "free",
           poppc]
 
@@ -825,7 +813,8 @@ p_check_array_bounds = do
           cmp_r0,
           ld_cond_msg_toR0 msgneg ARM.LT,
           ljump_cond "p_throw_runtime_error" ARM.LT,
-          IMOV {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0), src = [t], dst = [0]},
+          IOPER {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0), src = [t],
+                 dst = [t], jump = []},
           cmp_r0,
           ld_cond_msg_toR0 msgover ARM.CS,
           ljump_cond "p_throw_runtime_error" ARM.CS,
