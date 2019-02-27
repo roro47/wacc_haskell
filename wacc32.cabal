@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 18bfafd6a13919f1a949bab3af37b94cebf29f9365201f6ab4870ffea2ef7ce5
+-- hash: c12ec5fb725021d16e775b5381c4d803c678f8acfc1e6cf16b4b4780553e0429
 
 name:           wacc32
 version:        0.1.0.0
@@ -27,6 +27,21 @@ source-repository head
 
 library
   exposed-modules:
+      BackEnd.Assem
+      BackEnd.Builtin
+      BackEnd.Canon
+      BackEnd.FlowGraph
+      BackEnd.Frame
+      BackEnd.Graph
+      BackEnd.Instructions
+      BackEnd.IR
+      BackEnd.Liveness
+      BackEnd.MakeGraph
+      BackEnd.Munch
+      BackEnd.State
+      BackEnd.Temp
+      BackEnd.Translate
+      BackEnd.RegAlloc
       FrontEnd.AST
       FrontEnd.Lexer
       FrontEnd.Parser
@@ -38,17 +53,22 @@ library
   build-depends:
       HUnit
     , MissingH
+    , algebraic-graphs
     , base >=4.7 && <5
     , call-stack
+    , containers
+    , generic-deriving
     , hashable
     , hashmap
     , hslogger
     , hspec
     , mtl
     , parsec
+    , pretty-tree
     , regex-base
     , regex-compat
     , regex-posix
+    , lens
   default-language: Haskell2010
 
 executable compile
@@ -61,14 +81,18 @@ executable compile
   build-depends:
       HUnit
     , MissingH
+    , algebraic-graphs
     , base >=4.7 && <5
     , call-stack
+    , containers
+    , generic-deriving
     , hashable
     , hashmap
     , hslogger
     , hspec
     , mtl
     , parsec
+    , pretty-tree
     , regex-base
     , regex-compat
     , regex-posix
@@ -93,15 +117,19 @@ test-suite wacc32-test
   build-depends:
       HUnit
     , MissingH
+    , algebraic-graphs
     , base >=4.7 && <5
     , call-stack
+    , containers
     , directory
+    , generic-deriving
     , hashable
     , hashmap
     , hslogger
     , hspec
     , mtl
     , parsec
+    , pretty-tree
     , regex-base
     , regex-compat
     , regex-posix

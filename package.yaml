@@ -33,6 +33,11 @@ dependencies:
 - regex-posix
 - mtl
 - hspec
+- generic-deriving
+- algebraic-graphs
+- containers
+- pretty-tree
+- lens
 
 library:
   source-dirs: src
@@ -50,6 +55,11 @@ executables:
     - parsec
     - hashmap
     - MissingH
+    - generic-deriving
+    - algebraic-graphs
+    - containers
+    - pretty-tree
+    - lens
 
 tests:
   wacc32-test:

@@ -161,7 +161,7 @@ analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) = do
   stats' <- analyzeStatListF stats
   popScope
   setContext Main
-  return f
+  return (Ann (Func t symbol ps stats') (pos, none))
   where paramTs = map (\(Ann (Param t _) _) -> t) ps
 
 analyzeStatListF :: StatListF () -> Analyzer (StatListF ())
@@ -169,7 +169,7 @@ analyzeStatListF (Ann (StatList stats) ann) =
   mapM analyzeStatF stats >>= \stats' ->
   return $ Ann (StatList stats') ann
 
-analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
+analyzeFuncAppF (Ann (FuncApp _ symbol exprs) (pos, _)) = do
     maybeT <- lookUpFunction symbol
     case maybeT of
       Nothing -> throwError $ notDeclaredError symbol pos
@@ -177,23 +177,25 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
         do
           exprs' <- mapM analyzeExprF exprs
           checkParamLen symbol pos (length paramTs) (length exprs')
-          funcT' <- foldM evalT funcT exprs'
+          (funcT', ps) <- foldM evalT (funcT, []) exprs'
           guard (isTFunc funcT')
-          let { TFunc _ _ returnT = funcT' }
-          return $ Ann (FuncApp symbol exprs') (pos, returnT)
+          let { TFunc _ _ returnT = funcT';
+                funcT'' = TFunc [] ps returnT }
+          return $ Ann (FuncApp funcT'' symbol exprs') (pos, returnT)
       otherwise -> throwError $ "Symbol " ++ show symbol ++ " at " ++ show pos ++
                               " is not a function symbol"
 
   where errT = "For call of " ++ functionType symbol ++ ", type is not matched."
-        evalT :: Type -> ExprF () -> Analyzer Type
-        evalT (TFunc [] (paramT:paramTs) returnT) expr
-          = do { match errT expr [paramT]; return $ TFunc [] paramTs returnT }
+        evalT :: (Type, [Type]) -> ExprF () -> Analyzer (Type, [Type])
+        evalT (TFunc [] (paramT:paramTs) returnT, ps') expr@(Ann _ (_, t))
+          = do { match errT expr [paramT];
+                 return $ (TFunc [] paramTs returnT, ps' ++ [t]) }
 
-        evalT (TFunc allowedT (paramT:paramTs) returnT) expr@(Ann _ (_, t))
+        evalT ((TFunc allowedT (paramT:paramTs) returnT), ps') expr@(Ann _ (_, t))
           = match errT expr allowedT >>= \_ ->
             decideT t paramT >>= \passT ->
-            return $ TFunc [] (map (\t -> if t == T then passT else t) paramTs) 
-                               (replace passT returnT)
+            return $ (TFunc [] (map (\t -> if t == T then passT else t) paramTs) 
+                               (replace passT returnT), ps' ++ [t])
 
         checkParamLen :: IdentF () -> SourcePos -> Int -> Int -> Analyzer ()
         checkParamLen symbol pos paramLen exprLen
@@ -209,7 +211,8 @@ analyzeFuncAppF (Ann (FuncApp symbol exprs) (pos, _)) = do
         decide _ = None
         
         replace :: Type -> Type -> Type
-        replace passT (TPair t1 t2) = TPair (replace passT t1) (replace passT t2)
+        replace passT (TPair t1 t2) =
+          TPair (replace passT t1) (replace passT t2)
         replace passT (TArray t) = TArray (replace passT t)
         replace passT t@(TFunc _ _ _) = t -- not decided behaviour
         replace passT T = passT
@@ -220,10 +223,12 @@ analyzeStatF (Ann s@(Declare declareT symbol rhs) (pos, none)) =
   lookUpSymbolCurrScope symbol >>= \maybeT ->
     case maybeT of
       Just (_, pos') -> throwError $ declaredError symbol pos pos'
-      otherwise -> do rhs' <- analyzeExprF rhs
-                      match err rhs' [declareT]
-                      addSymbol symbol declareT pos
-                      return $ Ann (Declare declareT symbol rhs') (pos, none)
+      otherwise -> do
+        rhs' <- analyzeExprF rhs
+        let { (Ann e (posRHS, _)) = rhs'; rhs'' = Ann e (posRHS, declareT) }
+        match err rhs' [declareT]
+        addSymbol symbol declareT pos
+        return $ Ann (Declare declareT symbol rhs'') (pos, none)
    where err = "Assign wrong type of value in declaration"
 
 analyzeStatF (Ann (Assign lhs rhs) ann@(pos, none)) = do
@@ -317,6 +322,15 @@ analyzeExprF (Ann (BracketExpr expr) (pos, _)) = do
 analyzeExprF (Ann (FuncExpr f) (pos, _)) = do
   f'@(Ann _ (_, t)) <- analyzeFuncAppF f
   return $ Ann (FuncExpr f') (pos, t)
+
+
+analyzeFile :: String -> IO (ProgramF ())
+analyzeFile file = do
+  program <- readFile file
+  case parse parseProgramF "" program of
+    Left e -> putStrLn "#syntax_error#" >>
+              exitWith (ExitFailure 100)
+    Right r -> analyzeAST r
 
 analyzeAST :: ProgramF () -> IO (ProgramF ())
 analyzeAST ast = do

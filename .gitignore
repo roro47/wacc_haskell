@@ -8,4 +8,5 @@ src/antlr
 *o
 *i
 *.s
-EXEName
+.stack-work
+*.swp

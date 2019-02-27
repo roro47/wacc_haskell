@@ -44,7 +44,7 @@ data Type = TInt
           | None
           | T -- similar to type parameter
 
-data Expr a = IntLiter Integer
+data Expr a = IntLiter Int
             | BoolLiter Bool
             | CharLiter Char
             | StringLiter String
@@ -58,7 +58,11 @@ data Expr a = IntLiter Integer
 
 {- The datatype for all functions, including built-in and user decleared ones.
    The IdentF represents the name of the function and the exprf are the parameters. -}
-data FuncApp a = FuncApp (IdentF a) [ExprF a] deriving (Eq, Show)
+data FuncApp a = FuncApp Type (IdentF a) [ExprF a] deriving (Eq)
+
+instance Show (FuncApp a) where
+  show (FuncApp t i e) = "FuncApp " ++ "<" ++ (show t) ++ ">"
+                         ++ " " ++ (show i) ++ " " ++ (show e)
 
 data Ident a = Ident String deriving (Eq)
 
@@ -155,11 +159,14 @@ instance Show (Type) where
   show TAny = "Any"
   show Void = "Void"
   show (TFunc _ ts t) = "TFunc (" ++ show t ++ ") " ++
-    "(" ++ intersperse ',' (concat $ map show ts) ++ ")"
-  show None = "None"
+    "(" ++ intercalate "," (map show ts) ++ ")"
+  show None = ""
   show T = "T"
-
 
 instance Show (Ident a) where
   show (Ident s) = show s
 
+typeLen :: Type -> Int
+typeLen TChar = 1
+typeLen TBool = 1
+typeLen _ = 4
