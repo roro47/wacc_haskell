@@ -245,16 +245,6 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
 
--- our stack implementation is different ???
--- UNCOMMENT AFTER SP handled
--- munchExp (BINEXP MINUS (TEMP 13) (CONSTI i)) = do
---   return ([IOPER {assem = CBS_ (SUB NoSuffix AL) (SP) (SP) (IMM i), src = [13], dst = [13],
---                  jump = []}], 13)
---
--- munchExp (BINEXP PLUS (TEMP 13) (CONSTI i)) = do
---   return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (SP) (SP) (IMM i), src = [13], dst = [13],
---                  jump = []}], 13)
-
 munchExp x = do
   c <- condExp x
   return $ c AL
@@ -267,6 +257,14 @@ lslOP e1 e2 bop int = do
                   (LSL_ (RTEMP t2) (log2 int)), dst = [t1], src = [t2], jump = []}] , t1)
 
 canlsl bop int = (bop == MINUS || bop == PLUS) && (int == 2 || int == 4 || int == 8)
+
+plusMinus destination source op srcreg srcinstr = do
+  (i1, t1) <- munchExp destination
+  let calc = IOPER {assem = CBS_ (op S AL) (RTEMP t1) (RTEMP t1) source,
+                    src = ([t1] ++ srcreg), dst = [t1], jump = []}
+      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
+                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
+  return $ \c -> (i1++srcinstr++[calc, br], t1)
 
 condExp :: Exp -> State TranslateState (Cond -> ([ASSEM.Instr], Temp))
 -- LSL inside ADD SUB  ** ugly pattern match to avoid run time loop --
@@ -295,15 +293,20 @@ condExp (BINEXP bop e1@(CONSTI int1) e2@(CONSTI int2))
       otherwise -> return $ \c -> (i1 ++ [IOPER {assem = CBS_ ((fromJust cbs) NoSuffix c)
                                   (RTEMP t1) (RTEMP t1) (IMM int2),
                                   dst = [t1], src = [t1], jump = []}], t1)
-  | otherwise = do
-    (i1, t1) <- munchExp e1
-    (i2, t2) <- munchExp e2
-    let subs = IOPER {assem = CBS_ ((if bop == PLUS then ADD else SUB) S AL)
-                      (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),src = [t1, t2],
-                       dst = [t1], jump = []}
-        br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
-                      src = [], dst = [], jump = ["p_throw_overflow_error"]}
-    return $ \c -> (i1++i2++[subs, br], t1)
+
+condExp (BINEXP PLUS e1 (CONSTI i))
+  = plusMinus e1 (IMM i) ADD [] []
+
+condExp (BINEXP PLUS e1 e2) = do
+  (i2, t2) <- munchExp e2
+  plusMinus e1 (R (RTEMP t2)) ADD [t2] i2
+
+condExp (BINEXP MINUS e1 (CONSTI i))
+  = plusMinus e1 (IMM i) SUB [] []
+
+condExp (BINEXP MINUS e1 e2) = do
+  (i2, t2) <- munchExp e2
+  plusMinus e1 (R (RTEMP t2)) SUB [t2] i2
 
 condExp (BINEXP bop (CONSTI int) e) = condExp (BINEXP bop e (CONSTI int))
 
@@ -316,25 +319,6 @@ condExp (BINEXP bop e (CONSTI int)) = do
                                 (RTEMP t1) (RTEMP t1) (IMM int),
                                 dst = [t1], src = [t1], jump = []}], t1)
 
--- Now cannot match irpre
-condExp (BINEXP MINUS e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  let subs = IOPER {assem = CBS_ (SUB S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
-                    src = [t1, t2], dst = [t1], jump = []}
-      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
-                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
-  return $ \c -> (i1++i2++[subs, br], t1)
-
-  -- Now cannot match irpre
-condExp (BINEXP PLUS e1 e2) = do
-  (i1, t1) <- munchExp e1
-  (i2, t2) <- munchExp e2
-  let subs = IOPER {assem = CBS_ (ADD S AL) (RTEMP t1) (RTEMP t1) (R (RTEMP t2)),
-                    src = [t1, t2], dst = [t1], jump = []}
-      br = IOPER {assem = BRANCH_ (BL VS) (L_ "p_throw_overflow_error"),
-                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
-  return $ \c -> (i1++i2++[subs, br], t1)
 
 condExp (BINEXP bop e1 e2) = do
   (i1, t1) <- munchExp e1
@@ -405,12 +389,12 @@ optimise (IMOV { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} :
           IMOV { assem = S_ op (RTEMP t3) (Imm (RTEMP t4) i')}:remain)
   | t4 == t1 = (IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}):(optimise remain)
 
--- PRE-INDEX --
 optimise ((IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :
           (IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
   | (stackEqualCond c sl) && t11 == t12 && t22 == t11
-        = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
+          = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
                 : optimise remain
+-- PRE-INDEX --
 optimise ((IMOV { assem = MC_ (ARM.MOV _) a (R b)}):remain)
   | a == b = optimise remain
 -- optimise lables but it is dangerous ..
@@ -437,13 +421,15 @@ munchStm (EXP call@(CALL _ _)) = do
 
 munchStm (LABEL label) = return [ILABEL {assem = LAB label, lab = label}]
 
--- moving stack pointer don't need to check overflow
-munchStm (IR.MOV (TEMP 13) (BINEXP bop (TEMP 13) (CONSTI offset))) = do
-  let op = if bop == MINUS then SUB else ADD
-  return [IOPER { assem = CBS_ (op NoSuffix AL) SP SP (IMM offset),
-                  src = [Frame.sp],
-                  dst = [Frame.sp],
-                  jump = [] } ]
+-- -- moving stack pointer don't need to check overflow
+munchStm (IR.MOV (TEMP 13) (BINEXP bop (TEMP 13) (CONSTI offset)))
+  | bop == MINUS = return $ ret SUB
+  | bop == PLUS = return $ ret ADD
+    where
+      ret = \op -> [IOPER { assem = CBS_ (op NoSuffix AL) SP SP (IMM offset),
+                    src = [Frame.sp],
+                    dst = [Frame.sp],
+                    jump = [] } ]
 
 munchStm (SEQ s1 s2) = do
   l1 <- munchStm s1
