@@ -18,5 +18,5 @@ Preprocessing library profunctors-5.3...
 [15 of 16] Compiling Data.Profunctor.Ran ( src/Data/Profunctor/Ran.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Profunctor/Ran.o )
 [16 of 16] Compiling Data.Profunctor.Yoneda ( src/Data/Profunctor/Yoneda.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Profunctor/Yoneda.o )
 Installing library in
-/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/profunctors-5.3-7nHxSXdrlWOB364RwGjzTx
+/home/qs4617/homedir/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/profunctors-5.3-7nHxSXdrlWOB364RwGjzTx
 Registering profunctors-5.3...

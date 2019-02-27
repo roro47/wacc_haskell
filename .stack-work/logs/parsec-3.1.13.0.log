@@ -27,5 +27,5 @@ Preprocessing library parsec-3.1.13.0...
 [24 of 25] Compiling Text.Parsec.Perm ( src/Text/Parsec/Perm.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Text/Parsec/Perm.o )
 [25 of 25] Compiling Text.ParserCombinators.Parsec.Perm ( src/Text/ParserCombinators/Parsec/Perm.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Text/ParserCombinators/Parsec/Perm.o )
 Installing library in
-/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/parsec-3.1.13.0-5jBHpMDfG914ocK3TvC2E
+/home/qs4617/homedir/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/parsec-3.1.13.0-5jBHpMDfG914ocK3TvC2E
 Registering parsec-3.1.13.0...
