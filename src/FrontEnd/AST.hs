@@ -58,10 +58,11 @@ data Expr a = IntLiter Int
 
 {- The datatype for all functions, including built-in and user decleared ones.
    The IdentF represents the name of the function and the exprf are the parameters. -}
-data FuncApp a = FuncApp Type (IdentF a) [ExprF a] deriving Eq
+data FuncApp a = FuncApp Type (IdentF a) [ExprF a] deriving (Eq)
 
 instance Show (FuncApp a) where
-  show (FuncApp t i e) = "FuncApp " ++ (show i) ++ " " ++ (show e)
+  show (FuncApp t i e) = "FuncApp " ++ "<" ++ (show t) ++ ">"
+                         ++ " " ++ (show i) ++ " " ++ (show e)
 
 data Ident a = Ident String deriving (Eq)
 
@@ -158,7 +159,7 @@ instance Show (Type) where
   show TAny = "Any"
   show Void = "Void"
   show (TFunc _ ts t) = "TFunc (" ++ show t ++ ") " ++
-    "(" ++ intersperse ',' (concat $ map show ts) ++ ")"
+    "(" ++ intercalate "," (map show ts) ++ ")"
   show None = ""
   show T = "T"
 

@@ -1,6 +1,12 @@
 begin
-  int f() is
-    return 0
-  end
-  int a = call f ()
+  bool printLine(int n) is
+   int i = 0 ;
+    while i < n do
+      print "-" ;
+      i = i + 1
+    done ;
+ 
+   return true
+ end
+ int i = 0
 end

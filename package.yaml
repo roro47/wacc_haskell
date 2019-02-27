@@ -37,6 +37,7 @@ dependencies:
 - algebraic-graphs
 - containers
 - pretty-tree
+- lens
 
 library:
   source-dirs: src
@@ -58,6 +59,7 @@ executables:
     - algebraic-graphs
     - containers
     - pretty-tree
+    - lens
 
 tests:
   wacc32-test:

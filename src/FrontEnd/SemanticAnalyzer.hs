@@ -161,7 +161,7 @@ analyzeFuncF f@(Ann (Func t symbol ps stats) (pos, none)) = do
   stats' <- analyzeStatListF stats
   popScope
   setContext Main
-  return f
+  return (Ann (Func t symbol ps stats') (pos, none))
   where paramTs = map (\(Ann (Param t _) _) -> t) ps
 
 analyzeStatListF :: StatListF () -> Analyzer (StatListF ())
@@ -323,6 +323,14 @@ analyzeExprF (Ann (FuncExpr f) (pos, _)) = do
   f'@(Ann _ (_, t)) <- analyzeFuncAppF f
   return $ Ann (FuncExpr f') (pos, t)
 
+
+analyzeFile :: String -> IO (ProgramF ())
+analyzeFile file = do
+  program <- readFile file
+  case parse parseProgramF "" program of
+    Left e -> putStrLn "#syntax_error#" >>
+              exitWith (ExitFailure 100)
+    Right r -> analyzeAST r
 analyzeAST :: ProgramF () -> IO (ProgramF ())
 analyzeAST ast = do
   case evalStateT (analyzeProgramF ast) (([], HashMap.empty), Main) of

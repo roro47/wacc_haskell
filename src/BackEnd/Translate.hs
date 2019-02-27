@@ -62,8 +62,9 @@ translateFile :: String -> IO Stm
 translateFile file = do
   ast <- parseFile file
   ast' <- analyzeAST ast
-  let { stm = evalState (translate ast') newTranslateState }
-  return stm
+  let { (stm, s) = runState (translate ast') newTranslateState;
+        (Frame.PROC procFrag _) = head (procFrags s) }
+  return (SEQ stm (procFrag))
 
 translate :: ProgramF () -> State TranslateState Stm
 translate program = do
@@ -243,13 +244,13 @@ translateFuncF (Ann (Func t id ps stm) _) = do
   level <- newLevel
   pushLevel level
   foldM addParam 0 params
+  addFunEntry symbol t
   stm' <- translateStatListF stm >>= \s -> unNx s
   adjustSP' <- adjustSP
   let stm'' = SEQ (IR.PUSH (TEMP Frame.lr)) (SEQ stm' (SEQ adjustSP' (POP (TEMP Frame.pc))))
   popLevel
   frame <- getCurrFrame
   addFragment (Frame.PROC (SEQ (LABEL ("f_" ++ symbol)) stm'') frame)
-  addFunEntry symbol t
   where Ann (Ident symbol) _ = id
         
         addParam :: Int -> (Type, String) -> State TranslateState Int
