@@ -409,9 +409,8 @@ optimise ((IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}):
 optimise ((IMOV { assem = MC_ (ARM.MOV _) a (R b)}):remain)
   | a == b = optimise remain
 
--- optimise lables but it is dangerous ..
-optimise ((IOPER { assem = (BRANCH_ (B AL) (L_ a))}) : (ILABEL {assem = (LAB b)}) : remain)
-  | a == b = optimise remain
+optimise ((IOPER { assem = (BRANCH_ (B AL) (L_ a))}) : l@(ILABEL {assem = (LAB b)}) : remain)
+  | a == b = optimise (l:remain)
 optimise (x:xs) = x : (optimise xs)
 optimise [] = []
 
@@ -668,7 +667,8 @@ genBuiltIns = [p_print_ln,
                p_read_char,
                p_free_pair,
                p_check_array_bounds,
-               p_throw_overflow_error]
+               p_throw_overflow_error,
+               p_check_divide_by_zero]
 
 
 p_print_ln :: GenBuiltIn

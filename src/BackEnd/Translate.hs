@@ -135,11 +135,13 @@ getCurrFrame = do
   (level:rest) <- verifyLevels $ levels state
   return $ levelFrame level
 
-addBuiltIn :: Int -> State TranslateState ()
-addBuiltIn id = do
+addBuiltIn :: [Int] -> State TranslateState ()
+addBuiltIn (i:is) = do
   state <- get
-  put $ state { builtInSet = Set.insert id (builtInSet state) }
+  put $ state { builtInSet = Set.insert i (builtInSet state) }
+  addBuiltIn is
 
+addBuiltIn [] = return ()
 
 allocLocal :: String -> Type -> Bool -> State TranslateState Access
 allocLocal symbol t escape = do
@@ -342,9 +344,10 @@ translateStatF (Ann (While expr stms) _) = do
 translateStatF (Ann (Subroutine stms) _) = do
   level <- newLevel
   pushLevel level
-  stms' <- translateStatListF stms
+  Nx stms' <- translateStatListF stms
+  adjustSP' <- adjustSP
   popLevel
-  return $ stms'
+  return $ Nx (SEQ stms' adjustSP')
 
 translateStatF (Ann (FuncStat f) _) = do
   f' <- translateFuncAppF f
@@ -367,6 +370,7 @@ translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
   i <- getVarEntry id
   e <- mapM translateExprF exps
   e' <- mapM unEx e
+  addBuiltIn id_p_check_array_bounds
   return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):(MEM i):e'))
 
 -- need to call system function to allocate memory
@@ -433,11 +437,11 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
   exps' <- mapM unEx exps
   let { Ann (Ident symbol) _ = id }
   case symbol of
-    "*" -> return $ binexp MUL exps'
-    "/" -> return $ binexp DIV exps'
-    "%" -> return $ binexp MOD exps'
-    "+" -> return $ binexp PLUS exps'
-    "-" -> return $ binexp MINUS exps'
+    "*" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp MUL exps'}
+    "/" -> do {addBuiltIn id_p_check_divide_by_zero ;return $ binexp DIV exps'}
+    "%" -> do {addBuiltIn id_p_check_divide_by_zero ;return $ binexp MOD exps'}
+    "+" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp PLUS exps'}
+    "-" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp MINUS exps'}
     "&&" -> return $ binexp AND exps'
     "||" -> return $ binexp OR exps'
     ">" -> return $ condition GT exps'
@@ -533,14 +537,10 @@ translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 translateNewPair (TPair t1 t2) exps
   = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
 
-translateNewPair t _ = undefined
-
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
--- translatePairAccess (TPair t1 t2) exps str
---   = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
--- translatePairAccess t _ _ = fail $ show t
-translatePairAccess t exps str
-  = return $ Ex $ MEM $ CALL (NAME ("#" ++ str ++ " " ++ (show' t) )) exps
+translatePairAccess t exps str = do
+  addBuiltIn id_p_check_null_pointer
+  return $ Ex $ MEM $ CALL (NAME ("#" ++ str ++ " " ++ (show' t) )) exps
 
 -- turn IExp to Exp
 unEx :: IExp -> State TranslateState Exp
@@ -792,15 +792,16 @@ escape _ = True
 --      runTimeError = JUMP (NAME "p_throw_runtime_error:\n\0") ["p_throw_runtime_error:\n\0"]
 --      statment =  in
 --        addFragment (Frame.PROC statement frame)
-id_p_print_ln = 0
-id_p_print_int = 1
-id_p_print_bool = 2
-id_p_print_string = 3
-id_p_print_reference = 4
-id_p_check_null_pointer = 5
-id_p_throw_runtime_error = 6
-id_p_read_int = 7
-id_p_read_char = 8
-id_p_free_pair = 9
-id_p_check_array_bounds = 10
-id_p_throw_overflow_error = 11
+id_p_print_ln = [0] --0
+id_p_print_int = [1] --1
+id_p_print_bool = [2] --2
+id_p_print_string = [3] --3
+id_p_print_reference = [4] --4
+id_p_check_null_pointer = [5] ++ id_p_throw_runtime_error --5
+id_p_throw_runtime_error = [6] ++ id_p_print_string --6
+id_p_read_int = [7] --7
+id_p_read_char = [8] --8
+id_p_free_pair = [9] ++ id_p_throw_runtime_error --9
+id_p_check_array_bounds = [10] ++ id_p_throw_runtime_error --10
+id_p_throw_overflow_error = [11] ++ id_p_throw_runtime_error --11
+id_p_check_divide_by_zero = [12] ++ id_p_throw_runtime_error --12
