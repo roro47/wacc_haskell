@@ -1,12 +1,8 @@
 begin
-  bool printLine(int n) is
-   int i = 0 ;
-    while i < n do
-      print "-" ;
-      i = i + 1
-    done ;
- 
-   return true
- end
- int i = 0
+  bool taketwo(int n, char c) is
+    print n;
+    char usechar = c;
+    return true
+  end
+ bool i = call taketwo(1, 'a')
 end

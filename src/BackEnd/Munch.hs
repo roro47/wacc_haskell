@@ -50,7 +50,8 @@ munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
   return (ii ++ result, it)
     where
       singleIndex :: Int -> Temp -> [Exp] -> State TranslateState [ASSEM.Instr]
-      singleindex size t (p:ps) = do
+      singleIndex _ _ [] = return []
+      singleIndex size t (p:ps) = do
         (pi, pt) <- munchExp p
         let op = if size == 1 then (R (RTEMP pt)) else (LSL_ (RTEMP pt) 2)
             ldr = IMOV { assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
@@ -65,9 +66,6 @@ munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
                              src = [t, pt], dst = [t], jump = []}
         rest <- singleIndex size t ps
         return (pi ++ [ldr, m0, m1, bl, skiplen, topos] ++ rest)
-      singleIndex _ _ [] = return []
-
-
 
 munchExp (CALL (NAME "#neg") [(CONSTI i)]) = do
   t <- newTemp

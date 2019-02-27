@@ -371,8 +371,8 @@ translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
   e <- mapM translateExprF exps
   e' <- mapM unEx e
   addBuiltIn id_p_check_array_bounds
-
-  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI $ typeLen t):(MEM i):e'))
+ -- typeLen
+  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI 4):i:e'))
 
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
