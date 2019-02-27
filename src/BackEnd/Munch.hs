@@ -37,6 +37,14 @@ munchExp (CALL (NAME "#memaccess") [CONSTI i]) = do
   return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP t) SP (IMM i),
                  src = [13], dst = [t], jump = []}], t)
 
+munchExp (CALL (NAME "malloc") [CONSTI i]) = do
+  t <-newTemp
+  let ldr = IMOV { assem = S_ (LDR W AL) (R0) (NUM (i)),
+                  src = [], dst = [0]}
+      move = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP t) (R R0),
+                    src = [t], dst = [0] }
+  return ([ldr, ljump_to_label "malloc", move], dummy)
+
 munchExp (CALL (NAME "#arrayelem") [(CONSTI size), ident, pos]) = do
   (ii, it) <- munchExp ident
   (pi, pt) <- munchExp pos
@@ -77,11 +85,17 @@ munchExp (CALL (NAME "#len") [e]) = do
 
 munchExp (CALL (NAME "#skip") _) = return ([], dummy)
 
-munchExp (CALL (NAME "#println") es) = do
+munchExp (CALL (NAME "#p_print_ln") es) = do
   ls <- mapM (liftM fst.munchExp) es
   let ln = IOPER {assem = BRANCH_ (BL AL) (L_ "p_print_ln"),
                   src = [], dst = [], jump = ["p_print_ln"]}
   return ((concat ls)++[ln], dummy)
+
+munchExp (CALL (NAME "#p_read_int") [MEM e]) = do
+  (i, t) <- munchExp e
+  let mv = move_to_r t 0
+      putchar = ljump_to_label "p_read_int"
+  return (i ++ [mv, putchar], dummy)
 
 munchExp (CALL (NAME "#p_putchar") [e]) = do
   (i, t) <- munchExp e
@@ -146,19 +160,6 @@ munchExp (BINEXP MOD e1 e2) = do
                   src = [0, 1], dst = [1]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, check ,modInstr], 1)
 
---load a byte from sp
-munchExp (CALL (NAME "#oneByte") [exp]) = do
-  (i, t) <- munchExp exp
-  newt <- newTemp
-  return (i ++ [IMOV {assem = S_ (ARM.LDR SB AL) (RTEMP newt) (Imm (RTEMP t) 0)
-                      , dst = [t], src = [newt]}], newt)
-
-munchExp (CALL (NAME "#fourByte") [exp]) = do
-  (i, t) <- munchExp exp
-  newt <- newTemp
-  return (i ++ [IMOV {assem = S_ (ARM.LDR W AL) (RTEMP newt) (Imm (RTEMP t) 0)
-                      , dst = [t], src = [newt]}], newt)
-
 {-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
   cinstr <- munchStm cjump
@@ -201,18 +202,18 @@ munchExp (CALL (NAME f) es) = do
   where pushParam exp =
           [IR.MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4)),
            IR.MOV (MEM (TEMP Frame.sp)) exp]
-        adjustSP = if totalParamSize == 0 then [] else 
+        adjustSP = if totalParamSize == 0 then [] else
           [IOPER { assem = CBS_ (ADD NoSuffix AL) SP SP (IMM totalParamSize),
                   src = [Frame.sp],
                   dst = [Frame.sp],
                   jump = [] }]
-        bToFunc = 
+        bToFunc =
           IOPER { assem = BRANCH_ (B AL) (L_ f),
                   src = [],
                   dst = [],
                   jump = [f] }
         totalParamSize = (length es) * 4
-  
+
 
 munchExp (CALL f es) = do
   (fi, ft) <- munchExp f -- assume result returned in ft
@@ -390,9 +391,14 @@ munchMem e = do
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
-optimise (IOPER { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} :
+optimise (IOPER {assem = CBS_ a@(ADD NoSuffix AL) SP SP (IMM 0)} : remain) = optimise remain
+optimise (IOPER { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} : -- remoge this after unified
           IMOV { assem = S_ op (RTEMP t3) (Imm (RTEMP t4) i')}:remain)
   | t4 == t1 = (IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}):(optimise remain)
+optimise (IMOV { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} :
+          IMOV { assem = S_ op (RTEMP t3) (Imm (RTEMP t4) i')}:remain)
+  | t4 == t1 = (IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}):(optimise remain)
+
 -- PRE-INDEX --
 optimise ((IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :
           (IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
@@ -419,7 +425,6 @@ opVal (ARM.ADD _ _) = 1
 opVal _ = -1
 
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
-
 munchStm (EXP call@(CALL _ _)) = do
   (intrs, reg) <- munchExp call
   return intrs
@@ -433,21 +438,6 @@ munchStm (IR.MOV (TEMP 13) (BINEXP bop (TEMP 13) (CONSTI offset))) = do
                   src = [Frame.sp],
                   dst = [Frame.sp],
                   jump = [] } ]
-
-munchStm (IR.MOV (TEMP 11) (BINEXP bop (TEMP 11) (CONSTI offset))) = do
-  let op = if bop == MINUS then SUB else ADD
-  return [IOPER { assem = CBS_ (op NoSuffix AL) SP SP (IMM offset),
-                  src = [Frame.fp],
-                  dst = [Frame.fp],
-                  jump = [] } ]
-
-munchStm (IR.MOV e (CALL (NAME "#oneByte") [MEM me])) = do
-   ret <- suffixStm (IR.MOV e (MEM me))
-   return $ ret AL SB
-
-munchStm (IR.MOV (CALL (NAME "#oneByte") [MEM me]) e) = do
-   ret <- suffixStm (IR.MOV (MEM me) e)
-   return $ ret AL B_
 
 munchStm (SEQ s1 s2) = do
   l1 <- munchStm s1
@@ -477,15 +467,6 @@ munchStm x = do
 
 -- ALLOW the suffix + cond of a load / store to change
 suffixStm :: Stm -> State TranslateState (Cond -> SLType -> [ASSEM.Instr])
-suffixStm (IR.MOV e (MEM me)) = do -- LDR
-  (i, t) <- munchExp e
-  (l, ts, op) <- munchMem me
-  if null l then
-    return (\c -> ( \suff -> i ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) op, src = [t], dst = ts}]))
-  else
-    let s = head ts in
-    return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
-
 suffixStm (IR.MOV (MEM me) e) = do -- STR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
@@ -494,6 +475,15 @@ suffixStm (IR.MOV (MEM me) e) = do -- STR
   else
     let s = head ts in
     return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.STR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
+
+suffixStm (IR.MOV e (MEM me)) = do -- LDR
+  (i, t) <- munchExp e
+  (l, ts, op) <- munchMem me
+  if null l then
+    return (\c -> ( \suff -> i ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) op, src = [t], dst = ts}]))
+  else
+    let s = head ts in
+    return (\c -> (\suff -> i ++ l ++ [IMOV { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0), src = [s], dst = [t]}]))
 
 condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
 
@@ -558,45 +548,35 @@ munchDataFrag :: Fragment -> [ASSEM.Instr]
 munchDataFrag (STRING label str)
   = [ILABEL {assem = (M label (length str) str), lab = label}]
 
-oneByte :: String -> Bool
-oneByte "TBool" = True
-oneByte "TChar" = True
-oneByte _ = False
-
 createPair :: String -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
 -- pre : exps contains only two param
 createPair s1 s2 exps = do
   (i1, t1) <- munchExp (exps !! 0)
   (i2, t2) <- munchExp (exps !! 1)
   tadddr <- newTemp -- pair addr
-  let suffix1 = if (oneByte s1) then B_ else W
-      suffix2 = if (oneByte s2) then B_ else W
+  let
       ld8 = IMOV { assem = (S_ (LDR W AL) R0 (NUM 8)), src = [], dst = [0]}
       ld4 = IMOV { assem = (S_ (LDR W AL) R0 (NUM 4)), src = [], dst = [0]}
       malloc = IOPER { assem = BRANCH_ (BL AL) (L_ "malloc"), src = [0], dst = [0], jump = ["malloc"]}
       strPairAddr = IMOV { assem = MC_ (ARM.MOV AL) (RTEMP tadddr) (R R0), src = [0], dst = [tadddr]}
-      savefst = IMOV { assem = (S_ (STR suffix1 AL) (RTEMP t1) (Imm R0 0)), src = [t1, 0], dst = []}
-      savesnd = IMOV { assem = (S_ (STR suffix2 AL) (RTEMP t2) (Imm R0 0)), src = [t2, 0], dst = []}
+      savefst = IMOV { assem = (S_ (STR W {- suffix1 -} AL) (RTEMP t1) (Imm R0 0)), src = [t1, 0], dst = []}
+      savesnd = IMOV { assem = (S_ (STR W {- suffix2 -} AL) (RTEMP t2) (Imm R0 0)), src = [t2, 0], dst = []}
       strfstaddr = IMOV { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 0)), src = [tadddr, 0], dst = []}
       strsndaddr = IMOV { assem = (S_ (STR W AL) R0 (Imm (RTEMP tadddr) 4)), src = [tadddr, 0], dst = []}
       strpaironstack= IMOV { assem = (S_ (STR W AL) (RTEMP tadddr) (Imm (RTEMP 13) 0)), src = [t1, 13], dst = [0]}
   return ([ld8, malloc, strPairAddr] ++ i1 ++ [ld4, malloc, savefst, strfstaddr]
-           ++ i2 ++ [ld4, malloc, savesnd, strpaironstack], Frame.fp)
+           ++ i2 ++ [ld4, malloc, savesnd, strsndaddr, strpaironstack], dummy)
 
 accessPair :: Bool -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
 accessPair isfst typestr [e] = do
   (i, t) <- munchExp e
-  let one = oneByte typestr
-      offset = if isfst then 0 else 4
+  let offset = if isfst then 0 else 4
       getpaddr = move_to_r t 0
       check = IOPER { assem = BRANCH_ (BL AL) (L_ "p_check_null_pointer")
                       , src = [0], dst = [], jump = ["p_check_null_pointer"]}
-      s1 = IMOV {assem = (S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) offset)), src = [t], dst = [t]}
-      s2_suffix = if one then SB else W
-      s2 = IMOV {assem = (S_ (LDR s2_suffix AL) (RTEMP t) (Imm (RTEMP t) 0)), src = [t], dst = [t]}
-      s3_suffix = if one then B_ else W
-      s3 = IMOV {assem = (S_ (STR s3_suffix AL) (RTEMP t) (Imm (RTEMP 13) 0)), src = [t, 13], dst = []}
-  return (i ++ [getpaddr, check, s1, s2, s3], 13)
+      s1 = IMOV {assem = (S_ (LDR {-(if one then SB else W)-} W AL) (RTEMP t) (Imm (RTEMP t) offset)), src = [t], dst = [t]}
+  return (i ++ [getpaddr, check, s1], t)  -- cannot handle sb/w here as only return reg
+
 
 -------------------- Utilities ---------------------
 condIR = [IR.EQ, IR.LT, IR.LE, IR.GT, IR.GE, IR.NE]
@@ -646,7 +626,7 @@ munch file = do
   mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) totalOut
   putStrLn ""
   return ()
-                      
+
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
           let gens = map (\n -> genBuiltIns !! n) ids
@@ -670,11 +650,6 @@ call = CALL (CONSTI 1) [(CONSTI 7)]
 assemPre = (IOPER { assem = (CBS_ (ARM.ADD NoSuffix ARM.EQ) (RTEMP 1) (RTEMP 1) (IMM 2)), src = [1], dst = [1], jump = []}) :
            (IMOV { assem = (S_ (ARM.LDR W ARM.EQ) (RTEMP 2) (Imm (RTEMP 1) 0)), src = [2], dst = [1]}) : []
 irPre = IR.MOV (BINEXP MINUS (TEMP 2) (CONSTI 1)) (MEM (TEMP 2))
-
---load/store 1 byte sample
-load1b = (IR.MOV (TEMP 2) (CALL (NAME "#oneByte") [MEM (CONSTI 1)]))
-store1b = (IR.MOV (CALL (NAME "#oneByte") [MEM (CONSTI 1)]) (TEMP 2))
-
 
 type GenBuiltIn = State TranslateState [ASSEM.Instr]
 
@@ -851,4 +826,3 @@ p_check_divide_by_zero = do
           ld_cond_msg_toR0 msg ARM.EQ,
           ljump_cond "p_throw_runtime_error" ARM.EQ,
           poppc]
-

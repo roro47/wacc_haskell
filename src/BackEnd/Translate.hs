@@ -237,7 +237,7 @@ adjustSP = do
 
 stripParam :: ParamF () -> (Type, String)
 stripParam (Ann (Param t (Ann (Ident s) _)) _) = (t,s)
-  
+
 translateFuncF :: FuncF () -> State TranslateState ()
 translateFuncF (Ann (Func t id ps stm) _) = do
   let params = reverse $ map stripParam ps
@@ -252,7 +252,7 @@ translateFuncF (Ann (Func t id ps stm) _) = do
   frame <- getCurrFrame
   addFragment (Frame.PROC (SEQ (LABEL ("f_" ++ symbol)) stm'') frame)
   where Ann (Ident symbol) _ = id
-        
+
         addParam :: Int -> (Type, String) -> State TranslateState Int
         addParam offset (t, s) = do
           frame <- getCurrFrame
@@ -390,13 +390,10 @@ translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
 translateExprF (Ann (IdentExpr id) (_, t)) = do
   let { Ann (Ident symbol) _ = id }
   exp <- getVarEntry symbol  -- add memory access
-  case t of
-    TChar -> return $ Ex (CALL (NAME "#oneByte") [exp])
-    TBool -> return $ Ex (CALL (NAME "#oneByte") [exp])
-    otherwise -> return $ Ex (CALL (NAME "#fourByte") [exp])
+  return $ Ex $ MEM exp
 
 translateExprF (Ann (FuncExpr f) _) = translateFuncAppF f
-translateExprF (Ann Null _) = return $ Ex $ MEM (CONSTI 0)
+translateExprF (Ann Null _) = return $ Ex $ (CONSTI 0)
 
 
 translateFuncAppF :: FuncAppF () -> State TranslateState IExp
@@ -427,8 +424,8 @@ translateUserFuncAppF f@(Ann (FuncApp funcT id exprs) _) = do
           SEQ (MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI (typeSize t))))
               (MOV (MEM (TEMP Frame.sp) exp))
         totalParamSize = sum $ map typeSize paramTs
-         
- -}       
+
+ -}
 
 translateBuiltInFuncAppF :: FuncAppF () -> State TranslateState IExp
 translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
@@ -518,7 +515,7 @@ translatePrintln t exps = do
   print <- translatePrint t exps
   print' <- unEx print
   addBuiltIn id_p_print_ln
-  return $ Nx (SEQ (EXP print') (EXP (CALL (NAME "p_print_ln") [])))
+  return $ Nx (SEQ (EXP print') (EXP (CALL (NAME "#p_print_ln") [])))
 
 {-
  BL MALLOC required here:
@@ -542,7 +539,7 @@ translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
 --   = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t1) ++ " " ++ (show' t2))) exps
 -- translatePairAccess t _ _ = fail $ show t
 translatePairAccess t exps str
-  = return $ Ex $ CALL (NAME ("#" ++ str ++ " " ++ (show' t) )) exps
+  = return $ Ex $ MEM $ CALL (NAME ("#" ++ str ++ " " ++ (show' t) )) exps
 
 -- turn IExp to Exp
 unEx :: IExp -> State TranslateState Exp
