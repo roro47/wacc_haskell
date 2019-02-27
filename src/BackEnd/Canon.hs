@@ -8,6 +8,7 @@ import FrontEnd.SemanticAnalyzer
 import qualified BackEnd.Translate as Translate
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
+import Data.List hiding(insert)
 
 data CanonState =
   CanonState { tempAlloc :: Temp.TempAllocator,
@@ -83,14 +84,14 @@ transform :: Stm -> State CanonState [Stm]
 transform stm = do
   stms <- linearize stm
   blocks <- basicBlocks stms
-  return $ traceSchedule $ fst blocks 
+  return $ traceSchedule $ fst blocks
 
 transform' :: Stm -> State CanonState [[Stm]]
 transform' stm = do
   stms <- linearize stm
   (stms', _) <- basicBlocks stms
   return stms'
-  
+
 newTemp :: State CanonState Temp.Temp
 newTemp = do
   state <- get
@@ -170,7 +171,7 @@ traceSchedule'' block@((LABEL label):rest) blockTable markTable
             LABEL _ -> []
             JUMP _ labels -> labels
             CJUMP _ _ _ label1 label2 -> [label2, label1]
-    
+
 
 -- test whether two statements commute or not
 commute :: Exp -> Stm -> Bool
@@ -184,6 +185,10 @@ isESEQ (ESEQ _ _) = True
 isESEQ _ = False
 
 reorder :: [Exp] -> State CanonState (Stm, [Exp])
+reorder (exp@(CALL (NAME n) _):rest)
+ | "#" `isPrefixOf` n = do
+   (stm, exps) <- reorder $! rest
+   return (stm, (exp:exps))
 reorder (exp@(CALL _ _):rest) = do
   temp <- newTemp
   reorder $! ((ESEQ (MOV (TEMP temp) exp) (TEMP temp)):rest)
@@ -208,15 +213,16 @@ reorderExp exps build = do
   return (stm', build $! exps')
 
 doStm :: Stm -> State CanonState Stm
+
 doStm (MOV (TEMP t) (CALL (NAME f) es))
   = reorderStm es (\es -> MOV (TEMP t) (CALL (NAME f) es))
   
 doStm (MOV (MEM e) (CALL (NAME f) es))
   = reorderStm (e:es) (\(e:es) -> MOV (MEM e) (CALL (NAME f) es))
- 
+
 doStm (MOV (TEMP t) (CALL e es))
   = reorderStm (e:es) (\(e:es) -> MOV (TEMP t) (CALL e es))
- 
+
 doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)
 
@@ -225,8 +231,10 @@ doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b) = do
   then return stm
   else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
 
-doStm (MOV (MEM e) b)
-  = reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
+doStm stm@(MOV (MEM e) b) = do
+  if isOneLayer e && isOneLayer b
+  then return stm
+  else reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
 
 doStm (MOV (ESEQ s e) b)
   = doStm (SEQ s (MOV e b))
@@ -252,7 +260,7 @@ doStm (EXP (CALL (NAME f) es))
   = reorderStm es (\es -> EXP (CALL (NAME f) es))
 
 doStm (EXP (CALL e es))
-  = reorderStm (e:es) (\(e:es) -> EXP (CALL e es)) 
+  = reorderStm (e:es) (\(e:es) -> EXP (CALL e es))
 doStm (EXP e)
   = reorderStm [e] (\(e:_) -> EXP e)
 
@@ -276,17 +284,17 @@ doExp exp@(MEM e@(BINEXP bop e1 e2)) = do
 doExp exp@(BINEXP bop e1 e2) = do
   if isOneLayer e1 && isOneLayer e2
   then return (NOP, exp)
-  else reorderExp [e1, e2] (\(e1:e2:_) -> BINEXP bop e1 e2) 
+  else reorderExp [e1, e2] (\(e1:e2:_) -> BINEXP bop e1 e2)
 
 doExp (MEM e)
   = reorderExp [e] (\(e:_) -> MEM e)
-  
+
 doExp (CALL (NAME f) es)
   = reorderExp es (\es -> CALL (NAME f) es)
-  
+
 doExp (CALL e es)
   = reorderExp (e:es) (\(e:es) -> CALL e es)
-  
+
 doExp (ESEQ stm e) = do
   stm' <- doStm stm
   (stm'', e') <- doExp e
@@ -317,7 +325,7 @@ testESEQ5 = BINEXP PLUS (MEM (CONSTI 23)) (ESEQ (MOV (TEMP 0) (TEMP 1)) (CONSTI 
 
 
 testLinear1 = SEQ (MOV t0 t1) (MOV t0 t2)
-testLinear2 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t0 t1) (CONSTI 1))) 
+testLinear2 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t0 t1) (CONSTI 1)))
 testLinear3 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t2 (CONSTI 1)) t2))
 testLinear4 = SEQ (MOV t0 t1) (MOV t0 (BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)))
 testLinear5 = SEQ (MOV t0 t1) (MOV t0 testESEQ4)

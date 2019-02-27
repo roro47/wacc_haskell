@@ -5,7 +5,8 @@ src/antlr
 #ignore Java class files
 *.class
 *~
-*o
-*i
-.stack-work
 *.swp
+*.o
+*.~
+*.swp
+.stack-work
