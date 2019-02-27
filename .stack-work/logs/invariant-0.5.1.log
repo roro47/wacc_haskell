@@ -1,0 +1,21 @@
+Warning: invariant.cabal: Unknown fields: build-tool-depends (line 72)
+Fields allowed in this section:
+type, main-is, test-module, buildable, build-tools, build-depends,
+cpp-options, cc-options, ld-options, pkgconfig-depends, frameworks,
+extra-framework-dirs, c-sources, js-sources, default-language,
+other-languages, default-extensions, other-extensions, extensions,
+extra-libraries, extra-ghci-libraries, extra-lib-dirs, includes,
+install-includes, include-dirs, hs-source-dirs, other-modules,
+ghc-prof-options, ghcjs-prof-options, ghc-shared-options,
+ghcjs-shared-options, ghc-options, ghcjs-options, jhc-options,
+hugs-options, nhc98-options
+Configuring invariant-0.5.1...
+Building invariant-0.5.1...
+Preprocessing library invariant-0.5.1...
+[1 of 4] Compiling Paths_invariant  ( .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/autogen/Paths_invariant.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Paths_invariant.o )
+[2 of 4] Compiling Data.Functor.Invariant ( src/Data/Functor/Invariant.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Functor/Invariant.o )
+[3 of 4] Compiling Data.Functor.Invariant.TH.Internal ( src/Data/Functor/Invariant/TH/Internal.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Functor/Invariant/TH/Internal.o )
+[4 of 4] Compiling Data.Functor.Invariant.TH ( src/Data/Functor/Invariant/TH.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Functor/Invariant/TH.o )
+Installing library in
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/invariant-0.5.1-AepnZOPMGMAHX4v1j3d5qK
+Registering invariant-0.5.1...

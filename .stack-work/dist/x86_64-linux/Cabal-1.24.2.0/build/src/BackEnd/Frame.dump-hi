@@ -1,0 +1,885 @@
+
+==================== FINAL INTERFACE ====================
+2019-02-27 09:56:05.281094486 UTC
+
+interface wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Frame 8002
+  interface hash: c87c61e1c5975ea74918b567a83edbd8
+  ABI hash: 2a16ec41ca683a4c04bc531bc13d071b
+  export-list hash: ff876c8d53ae8d9cc84a5698ff7b815b
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 02b3c746106ad76f793f89ebc1f71840
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  BackEnd.Frame.addrSize
+  BackEnd.Frame.allocLocal
+  BackEnd.Frame.boolSize
+  BackEnd.Frame.charSize
+  BackEnd.Frame.dummy
+  BackEnd.Frame.externalCall
+  BackEnd.Frame.fp
+  BackEnd.Frame.intSize
+  BackEnd.Frame.lr
+  BackEnd.Frame.newFrame
+  BackEnd.Frame.param0
+  BackEnd.Frame.param1
+  BackEnd.Frame.param2
+  BackEnd.Frame.param3
+  BackEnd.Frame.pc
+  BackEnd.Frame.rv
+  BackEnd.Frame.sp
+  BackEnd.Frame.typeSize
+  BackEnd.Frame.Access{BackEnd.Frame.InFrame BackEnd.Frame.InReg}
+  BackEnd.Frame.Fragment{BackEnd.Frame.PROC BackEnd.Frame.STRING}
+  BackEnd.Frame.Frame{BackEnd.Frame.Frame frameName frameSize}
+module dependencies: BackEnd.IR BackEnd.Temp FrontEnd.AST
+                     FrontEnd.Lexer
+package dependencies: array-0.5.1.1@array-0.5.1.1 base-4.9.1.0*
+                      binary-0.8.3.0@binary-0.8.3.0
+                      boxes-0.1.5@boxes-0.1.5-6DdHE3jJ0TwE6WTwMdCW4f
+                      bytestring-0.10.8.1@bytestring-0.10.8.1
+                      containers-0.5.7.1@containers-0.5.7.1
+                      deepseq-1.4.2.0@deepseq-1.4.2.0 ghc-prim-0.5.0.0
+                      integer-gmp-1.0.0.1 mtl-2.2.2@mtl-2.2.2-IUStvhCM9Fb6Pb0KlPCV7h
+                      parsec-3.1.13.0@parsec-3.1.13.0-5jBHpMDfG914ocK3TvC2E
+                      pretty-tree-0.1.0.0@pretty-tree-0.1.0.0-5ldf01HzJj05FtOtje7CSt
+                      split-0.2.3.3@split-0.2.3.3-KPq5EVv6rbi8XHTA0KJd3E
+                      text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ
+                      transformers-0.5.2.0@transformers-0.5.2.0
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+         binary-0.8.3.0@binary-0.8.3.0:Data.Binary.Generic
+         bytestring-0.10.8.1@bytestring-0.10.8.1:Data.ByteString.Builder
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Show
+         transformers-0.5.2.0@transformers-0.5.2.0:Control.Monad.Trans.Error
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Complex base-4.9.1.0:Data.Either
+                         base-4.9.1.0:Data.Functor.Const base-4.9.1.0:Data.Functor.Identity
+                         base-4.9.1.0:Data.List.NonEmpty base-4.9.1.0:Data.Monoid
+                         base-4.9.1.0:Data.Semigroup base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:Data.Version base-4.9.1.0:Data.Void
+                         base-4.9.1.0:GHC.Exts base-4.9.1.0:GHC.Generics
+                         base-4.9.1.0:GHC.IO.Exception base-4.9.1.0:GHC.TypeLits
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntMap.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntSet.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Map.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Sequence
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Set.Base
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+import  -/  base-4.9.1.0:GHC.Base c4231c43c07e46080a26bf94094c7aa1
+import  -/  base-4.9.1.0:GHC.Err 3bba35a16538d33d424682ce66876cdd
+import  -/  base-4.9.1.0:GHC.Num 00bfaa7b2f9d6084913c0697a8a49ec8
+import  -/  base-4.9.1.0:GHC.Show a027f5ac24879eaba752f44aa90fe511
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  ghc-prim-0.5.0.0:GHC.Classes 0bdf3d057a415ec1b84a7b1994efbe47
+import  -/  BackEnd.IR 881b5c7113579e9e0196d2b90545a438
+  exports: 6d764dfdda2ad49e5da2751723ca6e76
+  CALL 3ea9e353cc093939205143f9affc94dd
+  Exp 29a6c3cd3ea133857ec2f8677caa5fe0
+  NAME 09e0af564273846ddfc4a8df2204c47b
+  Stm 29a6c3cd3ea133857ec2f8677caa5fe0
+import  -/  BackEnd.Temp 0c22f42d627493b2b3f13cd2a3ac5a46
+  exports: ecf0e74365e1a70f2572e5197e175ea3
+  Label ab7a275275a088fb10914e7eda58ce46
+  Temp 14024289252e98b781eb5778cbac8848
+  TempAllocator bdce2d3fdfa323e7fb6e0441a84ede78
+  newTemp 8b95d76b77154b40029113217d048b32
+import  -/  FrontEnd.AST 13c4a14be76ce51c011789d09991ee7e
+  exports: c71a8578c05d8981bdbdc0f839e79cdc
+  TArray 675264970e89d6be6a7b3e6f609b61a8
+  TBool ebaf87cd8048064e60b38511bca54962
+  TChar ec215f0c3082a946dbbc8dae32db4dc2
+  TInt 217cf96b2dda4e7a20fd48a7acdc5d45
+  TPair f6c60416a1982c621b5593998f9b57e5
+  TStr 1e8a03d0c8a4120669e95455e7ec9733
+  Type 31b3244b67ff67ccd6b5abdfe81be110
+c360135ea7bf783632002c360507c5e6
+  $fEqAccess :: GHC.Classes.Eq BackEnd.Frame.Access
+  DFunId
+  {- HasNoCafRefs, Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Frame.Access
+                  BackEnd.Frame.$fEqAccess_$c==
+                  BackEnd.Frame.$fEqAccess_$c/= -}
+c360135ea7bf783632002c360507c5e6
+  $fEqAccess_$c/= ::
+    BackEnd.Frame.Access -> BackEnd.Frame.Access -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><S,1*U>,
+     Unfolding: (\ (a :: BackEnd.Frame.Access)
+                   (b :: BackEnd.Frame.Access) ->
+                 case a of wild {
+                   BackEnd.Frame.InFrame a1
+                   -> case b of wild1 {
+                        BackEnd.Frame.InFrame b1
+                        -> case a1 of wild2 { GHC.Types.I# x ->
+                           case b1 of wild3 { GHC.Types.I# y ->
+                           case GHC.Prim.tagToEnum#
+                                  @ GHC.Types.Bool
+                                  (GHC.Prim.==# x y) of wild4 {
+                             GHC.Types.False -> GHC.Types.True
+                             GHC.Types.True -> GHC.Types.False } } }
+                        BackEnd.Frame.InReg ipv -> GHC.Types.True }
+                   BackEnd.Frame.InReg a1
+                   -> case b of wild1 {
+                        BackEnd.Frame.InFrame ipv -> GHC.Types.True
+                        BackEnd.Frame.InReg b1
+                        -> case a1 of wild2 { GHC.Types.I# x ->
+                           case b1 of wild3 { GHC.Types.I# y ->
+                           case GHC.Prim.tagToEnum#
+                                  @ GHC.Types.Bool
+                                  (GHC.Prim.==# x y) of wild4 {
+                             GHC.Types.False -> GHC.Types.True
+                             GHC.Types.True -> GHC.Types.False } } } } }) -}
+c360135ea7bf783632002c360507c5e6
+  $fEqAccess_$c== ::
+    BackEnd.Frame.Access -> BackEnd.Frame.Access -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><S,1*U>,
+     Unfolding: (\ (ds :: BackEnd.Frame.Access)
+                   (ds1 :: BackEnd.Frame.Access) ->
+                 case ds of wild {
+                   BackEnd.Frame.InFrame a1
+                   -> case ds1 of wild1 {
+                        BackEnd.Frame.InFrame b1 -> GHC.Classes.eqInt a1 b1
+                        BackEnd.Frame.InReg ipv -> GHC.Types.False }
+                   BackEnd.Frame.InReg a1
+                   -> case ds1 of wild1 {
+                        BackEnd.Frame.InFrame ipv -> GHC.Types.False
+                        BackEnd.Frame.InReg b1 -> GHC.Classes.eqInt a1 b1 } }) -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fEqFragment :: GHC.Classes.Eq BackEnd.Frame.Fragment
+  DFunId
+  {- HasNoCafRefs, Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Frame.Fragment
+                  BackEnd.Frame.$fEqFragment_$c==
+                  BackEnd.Frame.$fEqFragment_$c/= -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fEqFragment_$c/= ::
+    BackEnd.Frame.Fragment -> BackEnd.Frame.Fragment -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><S,1*U>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (a :: BackEnd.Frame.Fragment) (b :: BackEnd.Frame.Fragment) ->
+                 case BackEnd.Frame.$fEqFragment_$c== a b of wild {
+                   GHC.Types.False -> GHC.Types.True
+                   GHC.Types.True -> GHC.Types.False }) -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fEqFragment_$c== ::
+    BackEnd.Frame.Fragment -> BackEnd.Frame.Fragment -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><S,1*U>,
+     Unfolding: (\ (ds :: BackEnd.Frame.Fragment)
+                   (ds1 :: BackEnd.Frame.Fragment) ->
+                 case ds of wild {
+                   BackEnd.Frame.PROC a1 a2
+                   -> case ds1 of wild1 {
+                        BackEnd.Frame.PROC b1 b2
+                        -> case BackEnd.IR.$fEqStm_$c== a1 b1 of wild2 {
+                             GHC.Types.False -> GHC.Types.False
+                             GHC.Types.True -> BackEnd.Frame.$fEqFragment_$c==1 a2 b2 }
+                        BackEnd.Frame.STRING ipv ipv1 -> GHC.Types.False }
+                   BackEnd.Frame.STRING a1 a2
+                   -> case ds1 of wild1 {
+                        BackEnd.Frame.PROC ipv ipv1 -> GHC.Types.False
+                        BackEnd.Frame.STRING b1 b2
+                        -> case GHC.Base.eqString a1 b1 of wild2 {
+                             GHC.Types.False -> GHC.Types.False
+                             GHC.Types.True -> GHC.Base.eqString a2 b2 } } }) -}
+2ef4972266d072b4e7678a4819306338
+  $fEqFragment_$c==1 ::
+    BackEnd.Frame.Frame -> BackEnd.Frame.Frame -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(SL),1*U(1*U,1*U(U))><S(SL),1*U(1*U,1*U(U))>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (2, True, False)
+                (\ (w :: BackEnd.Frame.Frame) (w1 :: BackEnd.Frame.Frame) ->
+                 case w of ww { BackEnd.Frame.Frame ww1 ww2 ->
+                 case w1 of ww3 { BackEnd.Frame.Frame ww4 ww5 ->
+                 BackEnd.Frame.$w$c== ww1 ww2 ww4 ww5 } }) -}
+2ef4972266d072b4e7678a4819306338
+  $fEqFrame :: GHC.Classes.Eq BackEnd.Frame.Frame
+  DFunId
+  {- HasNoCafRefs, Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Frame.Frame
+                  BackEnd.Frame.$fEqFragment_$c==1
+                  BackEnd.Frame.$fEqFrame_$c/= -}
+2ef4972266d072b4e7678a4819306338
+  $fEqFrame_$c/= ::
+    BackEnd.Frame.Frame -> BackEnd.Frame.Frame -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(SL),1*U(1*U,1*U(U))><S(SL),1*U(1*U,1*U(U))>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (2, True, False)
+                (\ (w :: BackEnd.Frame.Frame) (w1 :: BackEnd.Frame.Frame) ->
+                 case w of ww { BackEnd.Frame.Frame ww1 ww2 ->
+                 case w1 of ww3 { BackEnd.Frame.Frame ww4 ww5 ->
+                 BackEnd.Frame.$w$c/= ww1 ww2 ww4 ww5 } }) -}
+c360135ea7bf783632002c360507c5e6
+  $fShowAccess :: GHC.Show.Show BackEnd.Frame.Access
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Frame.Access
+                  BackEnd.Frame.$fShowAccess_$cshowsPrec
+                  BackEnd.Frame.$fShowAccess_$cshow
+                  BackEnd.Frame.$fShowAccess_$cshowList -}
+c360135ea7bf783632002c360507c5e6
+  $fShowAccess1 :: BackEnd.Frame.Access -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (\ (w :: BackEnd.Frame.Access)
+                   (w1 :: GHC.Base.String) ->
+                 BackEnd.Frame.$w$cshowsPrec 0# w w1) -}
+25a5b545e090cd43874ad448f90c5962
+  $fShowAccess2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "InReg "#) -}
+9a63323537cb90d5eba72061bd87b700
+  $fShowAccess3 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "InFrame "#) -}
+c360135ea7bf783632002c360507c5e6
+  $fShowAccess_$cshow :: BackEnd.Frame.Access -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (x :: BackEnd.Frame.Access) ->
+                 BackEnd.Frame.$fShowAccess_$cshowsPrec
+                   GHC.Show.shows22
+                   x
+                   (GHC.Types.[] @ GHC.Types.Char)) -}
+c360135ea7bf783632002c360507c5e6
+  $fShowAccess_$cshowList :: [BackEnd.Frame.Access] -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (GHC.Show.showList__
+                   @ BackEnd.Frame.Access
+                   BackEnd.Frame.$fShowAccess1) -}
+c360135ea7bf783632002c360507c5e6
+  $fShowAccess_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Frame.Access -> GHC.Show.ShowS
+  {- Arity: 3, Strictness: <S(S),1*U(U)><S,1*U><L,U>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ (w :: GHC.Types.Int)
+                   (w1 :: BackEnd.Frame.Access)
+                   (w2 :: GHC.Base.String) ->
+                 case w of ww { GHC.Types.I# ww1 ->
+                 BackEnd.Frame.$w$cshowsPrec ww1 w1 w2 }) -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fShowFragment :: GHC.Show.Show BackEnd.Frame.Fragment
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Frame.Fragment
+                  BackEnd.Frame.$fShowFragment_$cshowsPrec
+                  BackEnd.Frame.$fShowFragment_$cshow
+                  BackEnd.Frame.$fShowFragment_$cshowList -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fShowFragment1 :: BackEnd.Frame.Fragment -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (\ (w :: BackEnd.Frame.Fragment)
+                   (w1 :: GHC.Base.String) ->
+                 BackEnd.Frame.$w$cshowsPrec1 0# w w1) -}
+3234d1cc6581f4bd7c1d274038b0e8dc
+  $fShowFragment2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "STRING "#) -}
+a53f85e1e6bbe880f76d791be36df1af
+  $fShowFragment3 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "}"#) -}
+6ddaf7c4ec6e1bfbbd98fe64eb4d45fc
+  $fShowFragment4 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "frameSize = "#) -}
+e327e2870f987b638a42517cf44aba04
+  $fShowFragment5 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# ", "#) -}
+6d3415db5ee3ac9bff2f406665dfaa7c
+  $fShowFragment6 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "frameName = "#) -}
+26ca85c0943f14f14b7416935b8e2ae5
+  $fShowFragment7 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "Frame {"#) -}
+57b7a9816b0fb4c73b60baf11e2e9987
+  $fShowFragment8 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "PROC "#) -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fShowFragment_$cshow :: BackEnd.Frame.Fragment -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (x :: BackEnd.Frame.Fragment) ->
+                 BackEnd.Frame.$fShowFragment_$cshowsPrec
+                   GHC.Show.shows22
+                   x
+                   (GHC.Types.[] @ GHC.Types.Char)) -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fShowFragment_$cshowList ::
+    [BackEnd.Frame.Fragment] -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (GHC.Show.showList__
+                   @ BackEnd.Frame.Fragment
+                   BackEnd.Frame.$fShowFragment1) -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $fShowFragment_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Frame.Fragment -> GHC.Show.ShowS
+  {- Arity: 3, Strictness: <S(S),1*U(U)><S,1*U><L,U>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ (w :: GHC.Types.Int)
+                   (w1 :: BackEnd.Frame.Fragment)
+                   (w2 :: GHC.Base.String) ->
+                 case w of ww { GHC.Types.I# ww1 ->
+                 BackEnd.Frame.$w$cshowsPrec1 ww1 w1 w2 }) -}
+2ef4972266d072b4e7678a4819306338
+  $fShowFrame :: GHC.Show.Show BackEnd.Frame.Frame
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Frame.Frame
+                  BackEnd.Frame.$fShowFrame_$cshowsPrec
+                  BackEnd.Frame.$fShowFrame_$cshow
+                  BackEnd.Frame.$fShowFrame_$cshowList -}
+2ef4972266d072b4e7678a4819306338
+  $fShowFrame1 :: BackEnd.Frame.Frame -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (\ (w :: BackEnd.Frame.Frame) (w1 :: GHC.Base.String) ->
+                 case w of ww { BackEnd.Frame.Frame ww1 ww2 ->
+                 BackEnd.Frame.$w$cshowsPrec2 0# ww1 ww2 w1 }) -}
+2ef4972266d072b4e7678a4819306338
+  $fShowFrame_$cshow :: BackEnd.Frame.Frame -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U(1*U,1*U(U))>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (x :: BackEnd.Frame.Frame) ->
+                 BackEnd.Frame.$fShowFrame_$cshowsPrec
+                   GHC.Show.shows22
+                   x
+                   (GHC.Types.[] @ GHC.Types.Char)) -}
+2ef4972266d072b4e7678a4819306338
+  $fShowFrame_$cshowList :: [BackEnd.Frame.Frame] -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (GHC.Show.showList__
+                   @ BackEnd.Frame.Frame
+                   BackEnd.Frame.$fShowFrame1) -}
+2ef4972266d072b4e7678a4819306338
+  $fShowFrame_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Frame.Frame -> GHC.Show.ShowS
+  {- Arity: 3, Strictness: <S(S),1*U(U)><S,1*U(1*U,1*U(U))><L,U>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ (w :: GHC.Types.Int)
+                   (w1 :: BackEnd.Frame.Frame)
+                   (w2 :: GHC.Base.String) ->
+                 case w of ww { GHC.Types.I# ww1 ->
+                 case w1 of ww2 { BackEnd.Frame.Frame ww3 ww4 ->
+                 BackEnd.Frame.$w$cshowsPrec2 ww1 ww3 ww4 w2 } }) -}
+e2b9fc304a601a5dd96d4a0ec167eaf2
+  $tc'Frame :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   14161209216419001392##
+                   6859689684199449734##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tc'Frame1) -}
+84b5555dcbbbcd5c4cc3d9a7317bb047
+  $tc'Frame1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'Frame"#) -}
+60f51c189fcc2f1c3624ae1de021900a
+  $tc'InFrame :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   13373973176351882102##
+                   602934909107823855##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tc'InFrame1) -}
+4c2f43af997ef62b82071133e507c108
+  $tc'InFrame1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'InFrame"#) -}
+2139624c220c13f883e6c6d1f52f08b1
+  $tc'InReg :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   7779891560519731766##
+                   11721270120651131593##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tc'InReg1) -}
+a97987d04ad1c932beb13658e5a67261
+  $tc'InReg1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'InReg"#) -}
+c8dbbe16c0c5778bd4d6e39c7511fc72
+  $tc'PROC :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   7288998302402966299##
+                   2930085466643245042##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tc'PROC1) -}
+98bcbe6ede6c36eeb43c18be0effe1fd
+  $tc'PROC1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'PROC"#) -}
+a7c9d7cdcc6bb0360d1e250351c66d7d
+  $tc'STRING :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   12977973261801023787##
+                   16796071628267239360##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tc'STRING1) -}
+f1777bce6d1dba850f945e2750421a0d
+  $tc'STRING1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'STRING"#) -}
+47009ccc1502d0d1ee1e573ec4340d5e
+  $tcAccess :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   7277455362453209839##
+                   6731821477635036243##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tcAccess1) -}
+aa012d843fb8997eccb6b0f752d0b7ab
+  $tcAccess1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Access"#) -}
+b12f766c25424aa9dee9ccc2f33616c3
+  $tcFragment :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   5929906748925694915##
+                   2915958196042488712##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tcFragment1) -}
+6a529fcd609571d910a2479b3a87904c
+  $tcFragment1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Fragment"#) -}
+fbe8b47b06b255b47fe403b51645ff69
+  $tcFrame :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   12793735854984754087##
+                   3198972912777517014##
+                   BackEnd.Frame.$trModule
+                   BackEnd.Frame.$tcFrame1) -}
+46b554d87236efcadc1dfae92d6f4b6f
+  $tcFrame1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Frame"#) -}
+66f837aaa9c27450449da2dc20157bfd
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   BackEnd.Frame.$trModule2
+                   BackEnd.Frame.$trModule1) -}
+0f4b985dd99384324c2172e18dc76d32
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "BackEnd.Frame"#) -}
+bc44300ae8867494ecd64659d3d98acc
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   "wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"#) -}
+8c353fdade9be6f298dcee2e33076762
+  $w$c/= ::
+    GHC.Base.String
+    -> GHC.Types.Int
+    -> GHC.Base.String
+    -> GHC.Types.Int
+    -> GHC.Types.Bool
+  {- Arity: 4, HasNoCafRefs,
+     Strictness: <S,1*U><L,1*U(U)><S,1*U><L,1*U(U)>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Base.String)
+                   (ww1 :: GHC.Types.Int)
+                   (ww2 :: GHC.Base.String)
+                   (ww3 :: GHC.Types.Int) ->
+                 case GHC.Base.eqString ww ww2 of wild {
+                   GHC.Types.False -> GHC.Types.True
+                   GHC.Types.True
+                   -> case ww1 of wild1 { GHC.Types.I# x ->
+                      case ww3 of wild2 { GHC.Types.I# y ->
+                      case GHC.Prim.tagToEnum#
+                             @ GHC.Types.Bool
+                             (GHC.Prim.==# x y) of wild3 {
+                        GHC.Types.False -> GHC.Types.True
+                        GHC.Types.True -> GHC.Types.False } } } }) -}
+d402c5bb22785d76a7560e12792bfeb3
+  $w$c== ::
+    GHC.Base.String
+    -> GHC.Types.Int
+    -> GHC.Base.String
+    -> GHC.Types.Int
+    -> GHC.Types.Bool
+  {- Arity: 4, HasNoCafRefs,
+     Strictness: <S,1*U><L,1*U(U)><S,1*U><L,1*U(U)>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Base.String)
+                   (ww1 :: GHC.Types.Int)
+                   (ww2 :: GHC.Base.String)
+                   (ww3 :: GHC.Types.Int) ->
+                 case GHC.Base.eqString ww ww2 of wild {
+                   GHC.Types.False -> GHC.Types.False
+                   GHC.Types.True -> GHC.Classes.eqInt ww1 ww3 }) -}
+c360135ea7bf783632002c360507c5e6
+  $w$cshowsPrec ::
+    GHC.Prim.Int#
+    -> BackEnd.Frame.Access -> GHC.Base.String -> GHC.Base.String
+  {- Arity: 3, Strictness: <S,U><S,1*U><L,U>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (w :: BackEnd.Frame.Access)
+                   (w1 :: GHC.Base.String) ->
+                 case w of wild {
+                   BackEnd.Frame.InFrame b1
+                   -> case GHC.Prim.tagToEnum#
+                             @ GHC.Types.Bool
+                             (GHC.Prim.>=# ww 11#) of wild1 {
+                        GHC.Types.False
+                        -> GHC.Base.++
+                             @ GHC.Types.Char
+                             BackEnd.Frame.$fShowAccess3
+                             (case b1 of ww2 { GHC.Types.I# ww3 ->
+                              case GHC.Show.$wshowSignedInt 11# ww3 w1 of ww4 { (#,#) ww5 ww6 ->
+                              GHC.Types.: @ GHC.Types.Char ww5 ww6 } })
+                        GHC.Types.True
+                        -> GHC.Types.:
+                             @ GHC.Types.Char
+                             GHC.Show.shows7
+                             (GHC.Base.++
+                                @ GHC.Types.Char
+                                BackEnd.Frame.$fShowAccess3
+                                (case b1 of ww2 { GHC.Types.I# ww3 ->
+                                 case GHC.Show.$wshowSignedInt
+                                        11#
+                                        ww3
+                                        (GHC.Types.:
+                                           @ GHC.Types.Char
+                                           GHC.Show.shows4
+                                           w1) of ww4 { (#,#) ww5 ww6 ->
+                                 GHC.Types.: @ GHC.Types.Char ww5 ww6 } })) }
+                   BackEnd.Frame.InReg b1
+                   -> case GHC.Prim.tagToEnum#
+                             @ GHC.Types.Bool
+                             (GHC.Prim.>=# ww 11#) of wild1 {
+                        GHC.Types.False
+                        -> GHC.Base.++
+                             @ GHC.Types.Char
+                             BackEnd.Frame.$fShowAccess2
+                             (case b1 of ww2 { GHC.Types.I# ww3 ->
+                              case GHC.Show.$wshowSignedInt 11# ww3 w1 of ww4 { (#,#) ww5 ww6 ->
+                              GHC.Types.: @ GHC.Types.Char ww5 ww6 } })
+                        GHC.Types.True
+                        -> GHC.Types.:
+                             @ GHC.Types.Char
+                             GHC.Show.shows7
+                             (GHC.Base.++
+                                @ GHC.Types.Char
+                                BackEnd.Frame.$fShowAccess2
+                                (case b1 of ww2 { GHC.Types.I# ww3 ->
+                                 case GHC.Show.$wshowSignedInt
+                                        11#
+                                        ww3
+                                        (GHC.Types.:
+                                           @ GHC.Types.Char
+                                           GHC.Show.shows4
+                                           w1) of ww4 { (#,#) ww5 ww6 ->
+                                 GHC.Types.: @ GHC.Types.Char ww5 ww6 } })) } }) -}
+178f360a73d54bda48fbe76e6c7fbb4f
+  $w$cshowsPrec1 ::
+    GHC.Prim.Int#
+    -> BackEnd.Frame.Fragment -> GHC.Base.String -> GHC.Base.String
+  {- Arity: 3, Strictness: <S,U><S,1*U><L,U>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (w :: BackEnd.Frame.Fragment)
+                   (w1 :: GHC.Base.String) ->
+                 case w of wild {
+                   BackEnd.Frame.PROC b1 b2
+                   -> let {
+                        p :: GHC.Show.ShowS {- Arity: 1, Strictness: <L,U> -}
+                        = \ (x :: GHC.Base.String)[OneShot] ->
+                          GHC.Base.++
+                            @ GHC.Types.Char
+                            BackEnd.Frame.$fShowFragment8
+                            (BackEnd.IR.$w$cshowsPrec3
+                               b1
+                               (GHC.Types.:
+                                  @ GHC.Types.Char
+                                  GHC.Show.showSpace1
+                                  (case b2 of ww1 { BackEnd.Frame.Frame ww2 ww3 ->
+                                   BackEnd.Frame.$w$cshowsPrec2 11# ww2 ww3 x })))
+                      } in
+                      case GHC.Prim.tagToEnum#
+                             @ GHC.Types.Bool
+                             (GHC.Prim.>=# ww 11#) of wild1 {
+                        GHC.Types.False -> p w1
+                        GHC.Types.True
+                        -> GHC.Types.:
+                             @ GHC.Types.Char
+                             GHC.Show.shows7
+                             (p (GHC.Types.: @ GHC.Types.Char GHC.Show.shows4 w1)) }
+                   BackEnd.Frame.STRING b1 b2
+                   -> let {
+                        p :: GHC.Show.ShowS {- Arity: 1, Strictness: <L,U> -}
+                        = \ (x :: GHC.Base.String)[OneShot] ->
+                          GHC.Base.++
+                            @ GHC.Types.Char
+                            BackEnd.Frame.$fShowFragment2
+                            (GHC.Types.:
+                               @ GHC.Types.Char
+                               GHC.Show.shows6
+                               (GHC.Show.showLitString
+                                  b1
+                                  (GHC.Types.:
+                                     @ GHC.Types.Char
+                                     GHC.Show.shows6
+                                     (GHC.Types.:
+                                        @ GHC.Types.Char
+                                        GHC.Show.showSpace1
+                                        (GHC.Types.:
+                                           @ GHC.Types.Char
+                                           GHC.Show.shows6
+                                           (GHC.Show.showLitString
+                                              b2
+                                              (GHC.Types.: @ GHC.Types.Char GHC.Show.shows6 x)))))))
+                      } in
+                      case GHC.Prim.tagToEnum#
+                             @ GHC.Types.Bool
+                             (GHC.Prim.>=# ww 11#) of wild1 {
+                        GHC.Types.False -> p w1
+                        GHC.Types.True
+                        -> GHC.Types.:
+                             @ GHC.Types.Char
+                             GHC.Show.shows7
+                             (p (GHC.Types.: @ GHC.Types.Char GHC.Show.shows4 w1)) } }) -}
+9a6c64b9570bcda9f44c2f67df6c9768
+  $w$cshowsPrec2 ::
+    GHC.Prim.Int#
+    -> GHC.Base.String
+    -> GHC.Types.Int
+    -> GHC.Base.String
+    -> GHC.Base.String
+  {- Arity: 4, Strictness: <S,U><L,1*U><L,1*U(U)><L,U>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (ww1 :: GHC.Base.String)
+                   (ww2 :: GHC.Types.Int)
+                   (w :: GHC.Base.String) ->
+                 let {
+                   p :: GHC.Show.ShowS {- Arity: 1, Strictness: <L,1*U> -}
+                   = \ (x :: GHC.Base.String)[OneShot] ->
+                     GHC.Base.++
+                       @ GHC.Types.Char
+                       BackEnd.Frame.$fShowFragment7
+                       (GHC.Base.++
+                          @ GHC.Types.Char
+                          BackEnd.Frame.$fShowFragment6
+                          (GHC.Types.:
+                             @ GHC.Types.Char
+                             GHC.Show.shows6
+                             (GHC.Show.showLitString
+                                ww1
+                                (GHC.Types.:
+                                   @ GHC.Types.Char
+                                   GHC.Show.shows6
+                                   (GHC.Base.++
+                                      @ GHC.Types.Char
+                                      BackEnd.Frame.$fShowFragment5
+                                      (GHC.Base.++
+                                         @ GHC.Types.Char
+                                         BackEnd.Frame.$fShowFragment4
+                                         (case ww2 of ww3 { GHC.Types.I# ww4 ->
+                                          case GHC.Show.$wshowSignedInt
+                                                 0#
+                                                 ww4
+                                                 (GHC.Base.++
+                                                    @ GHC.Types.Char
+                                                    BackEnd.Frame.$fShowFragment3
+                                                    x) of ww5 { (#,#) ww6 ww7 ->
+                                          GHC.Types.: @ GHC.Types.Char ww6 ww7 } })))))))
+                 } in
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.>=# ww 11#) of wild {
+                   GHC.Types.False -> p w
+                   GHC.Types.True
+                   -> GHC.Types.:
+                        @ GHC.Types.Char
+                        GHC.Show.shows7
+                        (p (GHC.Types.: @ GHC.Types.Char GHC.Show.shows4 w)) }) -}
+81ced71cbefd110ef15a9e17ad5a96a1
+  $wallocLocal ::
+    BackEnd.Frame.Frame
+    -> FrontEnd.AST.Type
+    -> GHC.Types.Bool
+    -> BackEnd.Temp.TempAllocator
+    -> (# BackEnd.Frame.Frame, BackEnd.Frame.Access,
+          BackEnd.Temp.TempAllocator #)
+  {- Arity: 4, Strictness: <L,U(U,U(U))><L,1*U><S,1*U><L,U(U(U))>,
+     Inline: [0],
+     Unfolding: (\ (w :: BackEnd.Frame.Frame)
+                   (w1 :: FrontEnd.AST.Type)
+                   (w2 :: GHC.Types.Bool)
+                   (w3 :: BackEnd.Temp.TempAllocator) ->
+                 case w2 of wild {
+                   GHC.Types.False
+                   -> let {
+                        ds :: (BackEnd.Temp.TempAllocator, BackEnd.Temp.Temp)
+                        = case w3 of wild1 { BackEnd.Temp.TempAllocator i ->
+                          (BackEnd.Temp.TempAllocator
+                             (case i of wild2 { GHC.Types.I# x ->
+                              GHC.Types.I# (GHC.Prim.+# x 1#) }),
+                           i) }
+                      } in
+                      (# w,
+                         BackEnd.Frame.InReg
+                           (case ds of wild1 { (,) tempAlloc' temp -> temp }),
+                         case ds of wild1 { (,) tempAlloc' temp -> tempAlloc' } #)
+                   GHC.Types.True
+                   -> let {
+                        offset :: GHC.Types.Int
+                        = case w of wild1 { BackEnd.Frame.Frame ds ds1 ->
+                          case ds1 of wild2 { GHC.Types.I# x ->
+                          case w1 of wild3 {
+                            DEFAULT -> BackEnd.Frame.allocLocal1
+                            FrontEnd.AST.TInt -> GHC.Types.I# (GHC.Prim.+# x 4#)
+                            FrontEnd.AST.TBool -> GHC.Types.I# (GHC.Prim.+# x 4#)
+                            FrontEnd.AST.TChar -> GHC.Types.I# (GHC.Prim.+# x 4#)
+                            FrontEnd.AST.TStr -> GHC.Types.I# (GHC.Prim.+# x 4#)
+                            FrontEnd.AST.TArray ds2 -> GHC.Types.I# (GHC.Prim.+# x 4#)
+                            FrontEnd.AST.TPair ds2 ds3 -> GHC.Types.I# (GHC.Prim.+# x 4#) } } }
+                      } in
+                      (# case w of wild1 { BackEnd.Frame.Frame ds ds1 ->
+                         BackEnd.Frame.Frame ds offset },
+                         BackEnd.Frame.InFrame (GHC.Num.$fNumInt_$cnegate offset),
+                         w3 #) }) -}
+c360135ea7bf783632002c360507c5e6
+  data Access = InFrame GHC.Types.Int | InReg BackEnd.Temp.Temp
+178f360a73d54bda48fbe76e6c7fbb4f
+  data Fragment
+    = PROC BackEnd.IR.Stm BackEnd.Frame.Frame
+    | STRING BackEnd.Temp.Label GHC.Base.String
+2ef4972266d072b4e7678a4819306338
+  data Frame
+    = Frame {frameName :: GHC.Base.String, frameSize :: GHC.Types.Int}
+5d8a550a7e1ccc38e2bef79ea365255f
+  addrSize :: GHC.Types.Int
+  {- Strictness: m, Unfolding: (BackEnd.Frame.charSize) -}
+cb37e23ca45e334443bec1ea3c7ea33e
+  allocLocal ::
+    BackEnd.Frame.Frame
+    -> FrontEnd.AST.Type
+    -> GHC.Types.Bool
+    -> BackEnd.Temp.TempAllocator
+    -> (BackEnd.Frame.Frame, BackEnd.Frame.Access,
+        BackEnd.Temp.TempAllocator)
+  {- Arity: 4, Strictness: <L,U(U,U(U))><L,1*U><S,1*U><L,U(U(U))>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (4, True, False)
+                (\ (w :: BackEnd.Frame.Frame)
+                   (w1 :: FrontEnd.AST.Type)
+                   (w2 :: GHC.Types.Bool)
+                   (w3 :: BackEnd.Temp.TempAllocator) ->
+                 case BackEnd.Frame.$wallocLocal
+                        w
+                        w1
+                        w2
+                        w3 of ww { (#,,#) ww1 ww2 ww3 ->
+                 (ww1, ww2, ww3) }) -}
+5cfdc61618251f957468a4f97f1013f7
+  allocLocal1 :: GHC.Types.Int
+  {- Strictness: x -}
+1257c41a052371f1c119d6a1fd66284f
+  boolSize :: GHC.Types.Int
+  {- Strictness: m, Unfolding: (BackEnd.Frame.charSize) -}
+75abc947a683de1c6b340a26463afba6
+  charSize :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 4#) -}
+60f190fa7b95b3b4a6dcf548b389921c
+  dummy :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# -1#) -}
+0718412434e71a2db004fd72ffa91585
+  externalCall ::
+    GHC.Base.String -> [BackEnd.IR.Exp] -> BackEnd.IR.Exp
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,U><L,U>m7,
+     Unfolding: InlineRule (2, True, False)
+                (\ (sysFunc :: GHC.Base.String) (args :: [BackEnd.IR.Exp]) ->
+                 BackEnd.IR.CALL (BackEnd.IR.NAME sysFunc) args) -}
+580da9e0b0080cc1e0c65032dd5bff72
+  fp :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 11#) -}
+57e6fc1f9de8c0927b135d044e497833
+  frameName :: BackEnd.Frame.Frame -> GHC.Base.String
+  RecSel Left BackEnd.Frame.Frame
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(SL),1*U(1*U,A)>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Frame.Frame) ->
+                 case ds of wild { BackEnd.Frame.Frame ds1 ds2 -> ds1 }) -}
+d7217b8b4d7324d73d337d97ca38236b
+  frameSize :: BackEnd.Frame.Frame -> GHC.Types.Int
+  RecSel Left BackEnd.Frame.Frame
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(LS),1*U(A,1*U(U))>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Frame.Frame) ->
+                 case ds of wild { BackEnd.Frame.Frame ds1 ds2 -> ds2 }) -}
+2b7b2a6297fbd835ff05c56dcd060bbc
+  intSize :: GHC.Types.Int
+  {- Strictness: m, Unfolding: (BackEnd.Frame.charSize) -}
+28eccfe9e7eccd80ae5dc2a2cb3a283f
+  lr :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 14#) -}
+d604ad44d8122ec717f29314cb3ef953
+  newFrame :: GHC.Base.String -> BackEnd.Frame.Frame
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ (label :: GHC.Base.String) ->
+                 BackEnd.Frame.Frame label BackEnd.Frame.rv) -}
+a405ad102ee0a7f89197480fefde79e7
+  param0 :: BackEnd.Temp.Temp
+  {- Strictness: m, Unfolding: (BackEnd.Frame.rv) -}
+6e3289acb60ef096760597ad474c2edb
+  param1 :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 1#) -}
+bc9269c9671b82cc09c75822c407487b
+  param2 :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 2#) -}
+4163242eee3189b07137661711ec00e7
+  param3 :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 3#) -}
+4b283bb9ccaeccc5f95d9b0bd3b4141d
+  pc :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 15#) -}
+e58867315ab8d44130e0fd01a25ead82
+  rv :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 0#) -}
+606994e88545fb7a8d39f0c48e74df00
+  sp :: BackEnd.Temp.Temp
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 13#) -}
+99523c9d860be452c82b91263cac7110
+  typeSize :: FrontEnd.AST.Type -> GHC.Types.Int
+  {- Arity: 1, Strictness: <S,1*U>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ (t :: FrontEnd.AST.Type) ->
+                 case t of wild {
+                   DEFAULT -> BackEnd.Frame.allocLocal1
+                   FrontEnd.AST.TInt -> BackEnd.Frame.charSize
+                   FrontEnd.AST.TBool -> BackEnd.Frame.charSize
+                   FrontEnd.AST.TChar -> BackEnd.Frame.charSize
+                   FrontEnd.AST.TStr -> BackEnd.Frame.charSize
+                   FrontEnd.AST.TArray ds -> BackEnd.Frame.charSize
+                   FrontEnd.AST.TPair ds ds1 -> BackEnd.Frame.charSize }) -}
+instance [safe] GHC.Classes.Eq [BackEnd.Frame.Access]
+  = BackEnd.Frame.$fEqAccess
+instance [safe] GHC.Classes.Eq [BackEnd.Frame.Fragment]
+  = BackEnd.Frame.$fEqFragment
+instance [safe] GHC.Classes.Eq [BackEnd.Frame.Frame]
+  = BackEnd.Frame.$fEqFrame
+instance [safe] GHC.Show.Show [BackEnd.Frame.Access]
+  = BackEnd.Frame.$fShowAccess
+instance [safe] GHC.Show.Show [BackEnd.Frame.Fragment]
+  = BackEnd.Frame.$fShowFragment
+instance [safe] GHC.Show.Show [BackEnd.Frame.Frame]
+  = BackEnd.Frame.$fShowFrame
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

@@ -1,0 +1,501 @@
+
+==================== FINAL INTERFACE ====================
+2019-02-27 09:56:02.780632529 UTC
+
+interface wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Temp 8002
+  interface hash: 6a7d3bf887e5e7ab7790b29169a2cc5e
+  ABI hash: 0c22f42d627493b2b3f13cd2a3ac5a46
+  export-list hash: ecf0e74365e1a70f2572e5197e175ea3
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 02b3c746106ad76f793f89ebc1f71840
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  BackEnd.Temp.newControlLabel
+  BackEnd.Temp.newDataLabel
+  BackEnd.Temp.newFrameLabel
+  BackEnd.Temp.newLabelAllocator
+  BackEnd.Temp.newTemp
+  BackEnd.Temp.newTempAllocator
+  BackEnd.Temp.Label
+  BackEnd.Temp.LabelAllocator{BackEnd.Temp.LabelAllocator}
+  BackEnd.Temp.Temp
+  BackEnd.Temp.TempAllocator{BackEnd.Temp.TempAllocator}
+module dependencies:
+package dependencies: base-4.9.1.0* ghc-prim-0.5.0.0
+                      integer-gmp-1.0.0.1
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Either base-4.9.1.0:Data.Functor.Const
+                         base-4.9.1.0:Data.Monoid base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:GHC.Generics base-4.9.1.0:GHC.IO.Exception
+                         base-4.9.1.0:GHC.TypeLits
+import  -/  base-4.9.1.0:GHC.Base c4231c43c07e46080a26bf94094c7aa1
+import  -/  base-4.9.1.0:GHC.Num 00bfaa7b2f9d6084913c0697a8a49ec8
+import  -/  base-4.9.1.0:GHC.Show a027f5ac24879eaba752f44aa90fe511
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  ghc-prim-0.5.0.0:GHC.Classes 0bdf3d057a415ec1b84a7b1994efbe47
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fEqLabelAllocator :: GHC.Classes.Eq BackEnd.Temp.LabelAllocator
+  DFunId
+  {- HasNoCafRefs, Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Temp.LabelAllocator
+                  BackEnd.Temp.$fEqLabelAllocator_$c==
+                  BackEnd.Temp.$fEqLabelAllocator_$c/= -}
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fEqLabelAllocator_$c/= ::
+    BackEnd.Temp.LabelAllocator
+    -> BackEnd.Temp.LabelAllocator -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(S(S)),1*U(1*U(U))><S(S(S)),1*U(1*U(U))>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (a :: BackEnd.Temp.LabelAllocator)
+                   (b :: BackEnd.Temp.LabelAllocator) ->
+                 case a of wild { BackEnd.Temp.LabelAllocator a1 ->
+                 case b of wild1 { BackEnd.Temp.LabelAllocator b1 ->
+                 case a1 of wild2 { GHC.Types.I# x ->
+                 case b1 of wild3 { GHC.Types.I# y ->
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.==# x y) of wild4 {
+                   GHC.Types.False -> GHC.Types.True
+                   GHC.Types.True -> GHC.Types.False } } } } }) -}
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fEqLabelAllocator_$c== ::
+    BackEnd.Temp.LabelAllocator
+    -> BackEnd.Temp.LabelAllocator -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(S(S)),1*U(1*U(U))><S(S(S)),1*U(1*U(U))>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (ds :: BackEnd.Temp.LabelAllocator)
+                   (ds1 :: BackEnd.Temp.LabelAllocator) ->
+                 case ds of wild { BackEnd.Temp.LabelAllocator a1 ->
+                 case ds1 of wild1 { BackEnd.Temp.LabelAllocator b1 ->
+                 GHC.Classes.eqInt a1 b1 } }) -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fEqTempAllocator :: GHC.Classes.Eq BackEnd.Temp.TempAllocator
+  DFunId
+  {- HasNoCafRefs, Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Temp.TempAllocator
+                  BackEnd.Temp.$fEqTempAllocator_$c==
+                  BackEnd.Temp.$fEqTempAllocator_$c/= -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fEqTempAllocator_$c/= ::
+    BackEnd.Temp.TempAllocator
+    -> BackEnd.Temp.TempAllocator -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(S(S)),1*U(1*U(U))><S(S(S)),1*U(1*U(U))>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (a :: BackEnd.Temp.TempAllocator)
+                   (b :: BackEnd.Temp.TempAllocator) ->
+                 case a of wild { BackEnd.Temp.TempAllocator a1 ->
+                 case b of wild1 { BackEnd.Temp.TempAllocator b1 ->
+                 case a1 of wild2 { GHC.Types.I# x ->
+                 case b1 of wild3 { GHC.Types.I# y ->
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.==# x y) of wild4 {
+                   GHC.Types.False -> GHC.Types.True
+                   GHC.Types.True -> GHC.Types.False } } } } }) -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fEqTempAllocator_$c== ::
+    BackEnd.Temp.TempAllocator
+    -> BackEnd.Temp.TempAllocator -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(S(S)),1*U(1*U(U))><S(S(S)),1*U(1*U(U))>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (ds :: BackEnd.Temp.TempAllocator)
+                   (ds1 :: BackEnd.Temp.TempAllocator) ->
+                 case ds of wild { BackEnd.Temp.TempAllocator a1 ->
+                 case ds1 of wild1 { BackEnd.Temp.TempAllocator b1 ->
+                 GHC.Classes.eqInt a1 b1 } }) -}
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fShowLabelAllocator :: GHC.Show.Show BackEnd.Temp.LabelAllocator
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Temp.LabelAllocator
+                  BackEnd.Temp.$fShowLabelAllocator_$cshowsPrec
+                  BackEnd.Temp.$fShowLabelAllocator_$cshow
+                  BackEnd.Temp.$fShowLabelAllocator_$cshowList -}
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fShowLabelAllocator1 ::
+    BackEnd.Temp.LabelAllocator -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (\ (w :: BackEnd.Temp.LabelAllocator)
+                   (w1 :: GHC.Base.String) ->
+                 case w of ww { BackEnd.Temp.LabelAllocator ww1 ->
+                 BackEnd.Temp.$w$cshowsPrec 0# ww1 w1 }) -}
+26fcf5470c39173d13cb86b99d8a937a
+  $fShowLabelAllocator2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "LabelAllocator "#) -}
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fShowLabelAllocator_$cshow ::
+    BackEnd.Temp.LabelAllocator -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U(1*U(U))>, Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Temp.LabelAllocator) ->
+                 case w of ww { BackEnd.Temp.LabelAllocator ww1 ->
+                 BackEnd.Temp.$w$cshow ww1 }) -}
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fShowLabelAllocator_$cshowList ::
+    [BackEnd.Temp.LabelAllocator] -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (GHC.Show.showList__
+                   @ BackEnd.Temp.LabelAllocator
+                   BackEnd.Temp.$fShowLabelAllocator1) -}
+7133bcfcbc18cbbc113f9e0135903ce5
+  $fShowLabelAllocator_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Temp.LabelAllocator -> GHC.Show.ShowS
+  {- Arity: 3, Strictness: <S(S),1*U(U)><S,1*U(1*U(U))><L,U>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ (w :: GHC.Types.Int)
+                   (w1 :: BackEnd.Temp.LabelAllocator)
+                   (w2 :: GHC.Base.String) ->
+                 case w of ww { GHC.Types.I# ww1 ->
+                 case w1 of ww2 { BackEnd.Temp.LabelAllocator ww3 ->
+                 BackEnd.Temp.$w$cshowsPrec ww1 ww3 w2 } }) -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fShowTempAllocator :: GHC.Show.Show BackEnd.Temp.TempAllocator
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Temp.TempAllocator
+                  BackEnd.Temp.$fShowTempAllocator_$cshowsPrec
+                  BackEnd.Temp.$fShowTempAllocator_$cshow
+                  BackEnd.Temp.$fShowTempAllocator_$cshowList -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fShowTempAllocator1 ::
+    BackEnd.Temp.TempAllocator -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (\ (w :: BackEnd.Temp.TempAllocator)
+                   (w1 :: GHC.Base.String) ->
+                 case w of ww { BackEnd.Temp.TempAllocator ww1 ->
+                 BackEnd.Temp.$w$cshowsPrec1 0# ww1 w1 }) -}
+f04a73a86b710e272ab39d0108d30718
+  $fShowTempAllocator2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "TempAllocator "#) -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fShowTempAllocator_$cshow ::
+    BackEnd.Temp.TempAllocator -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U(1*U(U))>, Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Temp.TempAllocator) ->
+                 case w of ww { BackEnd.Temp.TempAllocator ww1 ->
+                 BackEnd.Temp.$w$cshow1 ww1 }) -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fShowTempAllocator_$cshowList ::
+    [BackEnd.Temp.TempAllocator] -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (GHC.Show.showList__
+                   @ BackEnd.Temp.TempAllocator
+                   BackEnd.Temp.$fShowTempAllocator1) -}
+bdce2d3fdfa323e7fb6e0441a84ede78
+  $fShowTempAllocator_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Temp.TempAllocator -> GHC.Show.ShowS
+  {- Arity: 3, Strictness: <S(S),1*U(U)><S,1*U(1*U(U))><L,U>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ (w :: GHC.Types.Int)
+                   (w1 :: BackEnd.Temp.TempAllocator)
+                   (w2 :: GHC.Base.String) ->
+                 case w of ww { GHC.Types.I# ww1 ->
+                 case w1 of ww2 { BackEnd.Temp.TempAllocator ww3 ->
+                 BackEnd.Temp.$w$cshowsPrec1 ww1 ww3 w2 } }) -}
+6c2b78df530073ae7e8643d0848445b6
+  $tc'LabelAllocator :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   15800115360100137040##
+                   1115209896502867172##
+                   BackEnd.Temp.$trModule
+                   BackEnd.Temp.$tc'LabelAllocator1) -}
+ba992155ddeabc2c26ae2dd64cf3389d
+  $tc'LabelAllocator1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'LabelAllocator"#) -}
+247385ac1b44232b057902ee05ffcd09
+  $tc'TempAllocator :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   221762789957840183##
+                   302228056793408333##
+                   BackEnd.Temp.$trModule
+                   BackEnd.Temp.$tc'TempAllocator1) -}
+83fab2a63c60b2cb75dfde4d30d5cf7b
+  $tc'TempAllocator1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'TempAllocator"#) -}
+cc54257a3ed9e1b4b8a798c2b8122d92
+  $tcLabelAllocator :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   6928607809055992752##
+                   11744967707874483853##
+                   BackEnd.Temp.$trModule
+                   BackEnd.Temp.$tcLabelAllocator1) -}
+9745fc39d4af80ca8c3910e973b55824
+  $tcLabelAllocator1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "LabelAllocator"#) -}
+db5c10eab4f537a401a75e745adc68f5
+  $tcTempAllocator :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   17194079194548517125##
+                   8494679245541198966##
+                   BackEnd.Temp.$trModule
+                   BackEnd.Temp.$tcTempAllocator1) -}
+737ee0be8ea63b72440e382643fbd878
+  $tcTempAllocator1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "TempAllocator"#) -}
+12fc0c7261e39d7fb5de0eb8eefff748
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   BackEnd.Temp.$trModule2
+                   BackEnd.Temp.$trModule1) -}
+66dc2f78a015fb3638d19b967d54dc31
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "BackEnd.Temp"#) -}
+5091e0d29809376f7165e1a89472b579
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   "wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"#) -}
+e72a7d8efabc73d1a16bf74fb663e2dd
+  $w$cshow :: GHC.Types.Int -> GHC.Base.String
+  {- Arity: 1, Strictness: <L,1*U(U)>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Types.Int) ->
+                 GHC.Base.++
+                   @ GHC.Types.Char
+                   BackEnd.Temp.$fShowLabelAllocator2
+                   (case ww of ww2 { GHC.Types.I# ww3 ->
+                    case GHC.Show.$wshowSignedInt
+                           11#
+                           ww3
+                           (GHC.Types.[] @ GHC.Types.Char) of ww4 { (#,#) ww5 ww6 ->
+                    GHC.Types.: @ GHC.Types.Char ww5 ww6 } })) -}
+4e6d482229d8597e202822d09a90b03b
+  $w$cshow1 :: GHC.Types.Int -> GHC.Base.String
+  {- Arity: 1, Strictness: <L,1*U(U)>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Types.Int) ->
+                 GHC.Base.++
+                   @ GHC.Types.Char
+                   BackEnd.Temp.$fShowTempAllocator2
+                   (case ww of ww2 { GHC.Types.I# ww3 ->
+                    case GHC.Show.$wshowSignedInt
+                           11#
+                           ww3
+                           (GHC.Types.[] @ GHC.Types.Char) of ww4 { (#,#) ww5 ww6 ->
+                    GHC.Types.: @ GHC.Types.Char ww5 ww6 } })) -}
+8fb87c08c6cb366942131c112c36e917
+  $w$cshowsPrec ::
+    GHC.Prim.Int#
+    -> GHC.Types.Int -> GHC.Base.String -> GHC.Base.String
+  {- Arity: 3, Strictness: <S,U><L,1*U(U)><L,U>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (ww1 :: GHC.Types.Int)
+                   (w :: GHC.Base.String) ->
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.>=# ww 11#) of wild {
+                   GHC.Types.False
+                   -> GHC.Base.++
+                        @ GHC.Types.Char
+                        BackEnd.Temp.$fShowLabelAllocator2
+                        (case ww1 of ww2 { GHC.Types.I# ww3 ->
+                         case GHC.Show.$wshowSignedInt 11# ww3 w of ww4 { (#,#) ww5 ww6 ->
+                         GHC.Types.: @ GHC.Types.Char ww5 ww6 } })
+                   GHC.Types.True
+                   -> GHC.Types.:
+                        @ GHC.Types.Char
+                        GHC.Show.shows7
+                        (GHC.Base.++
+                           @ GHC.Types.Char
+                           BackEnd.Temp.$fShowLabelAllocator2
+                           (case ww1 of ww2 { GHC.Types.I# ww3 ->
+                            case GHC.Show.$wshowSignedInt
+                                   11#
+                                   ww3
+                                   (GHC.Types.:
+                                      @ GHC.Types.Char
+                                      GHC.Show.shows4
+                                      w) of ww4 { (#,#) ww5 ww6 ->
+                            GHC.Types.: @ GHC.Types.Char ww5 ww6 } })) }) -}
+d3470db4ec91f952d5d0a7a1ee75b40f
+  $w$cshowsPrec1 ::
+    GHC.Prim.Int#
+    -> GHC.Types.Int -> GHC.Base.String -> GHC.Base.String
+  {- Arity: 3, Strictness: <S,U><L,1*U(U)><L,U>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (ww1 :: GHC.Types.Int)
+                   (w :: GHC.Base.String) ->
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.>=# ww 11#) of wild {
+                   GHC.Types.False
+                   -> GHC.Base.++
+                        @ GHC.Types.Char
+                        BackEnd.Temp.$fShowTempAllocator2
+                        (case ww1 of ww2 { GHC.Types.I# ww3 ->
+                         case GHC.Show.$wshowSignedInt 11# ww3 w of ww4 { (#,#) ww5 ww6 ->
+                         GHC.Types.: @ GHC.Types.Char ww5 ww6 } })
+                   GHC.Types.True
+                   -> GHC.Types.:
+                        @ GHC.Types.Char
+                        GHC.Show.shows7
+                        (GHC.Base.++
+                           @ GHC.Types.Char
+                           BackEnd.Temp.$fShowTempAllocator2
+                           (case ww1 of ww2 { GHC.Types.I# ww3 ->
+                            case GHC.Show.$wshowSignedInt
+                                   11#
+                                   ww3
+                                   (GHC.Types.:
+                                      @ GHC.Types.Char
+                                      GHC.Show.shows4
+                                      w) of ww4 { (#,#) ww5 ww6 ->
+                            GHC.Types.: @ GHC.Types.Char ww5 ww6 } })) }) -}
+2e5a4a0c8e55ba4408ea423856abfe08
+  $wnewControlLabel ::
+    GHC.Types.Int
+    -> (# BackEnd.Temp.LabelAllocator, BackEnd.Temp.Label #)
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(U)>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Types.Int) ->
+                 (# BackEnd.Temp.LabelAllocator
+                      (case ww of wild { GHC.Types.I# x ->
+                       GHC.Types.I# (GHC.Prim.+# x 1#) }),
+                    GHC.CString.unpackAppendCString#
+                      "label_"#
+                      (case ww of ww2 { GHC.Types.I# ww3 ->
+                       case GHC.Show.$wshowSignedInt
+                              0#
+                              ww3
+                              (GHC.Types.[] @ GHC.Types.Char) of ww4 { (#,#) ww5 ww6 ->
+                       GHC.Types.: @ GHC.Types.Char ww5 ww6 } }) #)) -}
+b3ea0698fbbe2072fc4d7070b8010e5d
+  $wnewDataLabel ::
+    GHC.Types.Int
+    -> (# BackEnd.Temp.LabelAllocator, BackEnd.Temp.Label #)
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(U)>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Types.Int) ->
+                 (# BackEnd.Temp.LabelAllocator
+                      (case ww of wild { GHC.Types.I# x ->
+                       GHC.Types.I# (GHC.Prim.+# x 1#) }),
+                    GHC.CString.unpackAppendCString#
+                      "msg_"#
+                      (case ww of ww2 { GHC.Types.I# ww3 ->
+                       case GHC.Show.$wshowSignedInt
+                              0#
+                              ww3
+                              (GHC.Types.[] @ GHC.Types.Char) of ww4 { (#,#) ww5 ww6 ->
+                       GHC.Types.: @ GHC.Types.Char ww5 ww6 } }) #)) -}
+c121849e09ba6e85b4934e0a7098e62e
+  $wnewFrameLabel ::
+    GHC.Types.Int
+    -> (# BackEnd.Temp.LabelAllocator, BackEnd.Temp.Label #)
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(U)>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Types.Int) ->
+                 (# BackEnd.Temp.LabelAllocator
+                      (case ww of wild { GHC.Types.I# x ->
+                       GHC.Types.I# (GHC.Prim.+# x 1#) }),
+                    GHC.CString.unpackAppendCString#
+                      "frame_"#
+                      (case ww of ww2 { GHC.Types.I# ww3 ->
+                       case GHC.Show.$wshowSignedInt
+                              0#
+                              ww3
+                              (GHC.Types.[] @ GHC.Types.Char) of ww4 { (#,#) ww5 ww6 ->
+                       GHC.Types.: @ GHC.Types.Char ww5 ww6 } }) #)) -}
+ab7a275275a088fb10914e7eda58ce46
+  type Label = GHC.Base.String
+7133bcfcbc18cbbc113f9e0135903ce5
+  data LabelAllocator = LabelAllocator GHC.Types.Int
+14024289252e98b781eb5778cbac8848
+  type Temp = GHC.Types.Int
+bdce2d3fdfa323e7fb6e0441a84ede78
+  data TempAllocator = TempAllocator GHC.Types.Int
+e0f1c493c743ab50763f5aab8b4da255
+  newControlLabel ::
+    BackEnd.Temp.LabelAllocator
+    -> (BackEnd.Temp.LabelAllocator, BackEnd.Temp.Label)
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U(U(U))>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Temp.LabelAllocator) ->
+                 case w of ww { BackEnd.Temp.LabelAllocator ww1 ->
+                 case BackEnd.Temp.$wnewControlLabel ww1 of ww2 { (#,#) ww3 ww4 ->
+                 (ww3, ww4) } }) -}
+d6246df241a890c138eef69b9eb119d6
+  newDataLabel ::
+    BackEnd.Temp.LabelAllocator
+    -> (BackEnd.Temp.LabelAllocator, BackEnd.Temp.Label)
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U(U(U))>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Temp.LabelAllocator) ->
+                 case w of ww { BackEnd.Temp.LabelAllocator ww1 ->
+                 case BackEnd.Temp.$wnewDataLabel ww1 of ww2 { (#,#) ww3 ww4 ->
+                 (ww3, ww4) } }) -}
+7941faa0a81ce9aa4bdc8f83e659c136
+  newFrameLabel ::
+    BackEnd.Temp.LabelAllocator
+    -> (BackEnd.Temp.LabelAllocator, BackEnd.Temp.Label)
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U(U(U))>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Temp.LabelAllocator) ->
+                 case w of ww { BackEnd.Temp.LabelAllocator ww1 ->
+                 case BackEnd.Temp.$wnewFrameLabel ww1 of ww2 { (#,#) ww3 ww4 ->
+                 (ww3, ww4) } }) -}
+e9ec3bab80f5b18e9df1fbb1e736e3e7
+  newLabelAllocator :: BackEnd.Temp.LabelAllocator
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (BackEnd.Temp.LabelAllocator
+                   BackEnd.Temp.newLabelAllocator1) -}
+efef02e87caa217818b67f8cf8fdd057
+  newLabelAllocator1 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 0#) -}
+8b95d76b77154b40029113217d048b32
+  newTemp ::
+    BackEnd.Temp.TempAllocator
+    -> (BackEnd.Temp.TempAllocator, BackEnd.Temp.Temp)
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U(U(U))>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Temp.TempAllocator) ->
+                 case ds of wild { BackEnd.Temp.TempAllocator i ->
+                 (BackEnd.Temp.TempAllocator
+                    (case i of wild1 { GHC.Types.I# x ->
+                     GHC.Types.I# (GHC.Prim.+# x 1#) }),
+                  i) }) -}
+1656e7b6841ac685e639c91435f4d93d
+  newTempAllocator :: BackEnd.Temp.TempAllocator
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (BackEnd.Temp.TempAllocator
+                   BackEnd.Temp.newTempAllocator1) -}
+79e7e403adc2350e0d1e811c2d2b8402
+  newTempAllocator1 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 16#) -}
+instance [safe] GHC.Classes.Eq [BackEnd.Temp.LabelAllocator]
+  = BackEnd.Temp.$fEqLabelAllocator
+instance [safe] GHC.Classes.Eq [BackEnd.Temp.TempAllocator]
+  = BackEnd.Temp.$fEqTempAllocator
+instance [safe] GHC.Show.Show [BackEnd.Temp.LabelAllocator]
+  = BackEnd.Temp.$fShowLabelAllocator
+instance [safe] GHC.Show.Show [BackEnd.Temp.TempAllocator]
+  = BackEnd.Temp.$fShowTempAllocator
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

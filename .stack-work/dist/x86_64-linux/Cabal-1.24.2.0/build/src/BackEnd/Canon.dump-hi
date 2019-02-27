@@ -1,0 +1,1900 @@
+
+==================== FINAL INTERFACE ====================
+2019-02-27 09:56:07.762684968 UTC
+
+interface wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Canon 8002
+  interface hash: 7b17a04244e9f82e0b69c7506b3e0ace
+  ABI hash: 503efaee7e90294fb8de0b26955df2ec
+  export-list hash: d57d47cd826eaad486c36c64207b85ec
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 02b3c746106ad76f793f89ebc1f71840
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  BackEnd.Canon.bLabel
+  BackEnd.Canon.basicBlocks
+  BackEnd.Canon.commute
+  BackEnd.Canon.doExp
+  BackEnd.Canon.doStm
+  BackEnd.Canon.e1
+  BackEnd.Canon.isESEQ
+  BackEnd.Canon.isOneLayer
+  BackEnd.Canon.label1
+  BackEnd.Canon.label2
+  BackEnd.Canon.label3
+  BackEnd.Canon.linearize
+  BackEnd.Canon.newCanonState
+  BackEnd.Canon.newControlLabel
+  BackEnd.Canon.newTemp
+  BackEnd.Canon.reorder
+  BackEnd.Canon.reorderExp
+  BackEnd.Canon.reorderStm
+  BackEnd.Canon.s1
+  BackEnd.Canon.s2
+  BackEnd.Canon.t0
+  BackEnd.Canon.t1
+  BackEnd.Canon.t2
+  BackEnd.Canon.testBasicBlocks
+  BackEnd.Canon.testBasicBlocks1
+  BackEnd.Canon.testBasicBlocks2
+  BackEnd.Canon.testBasicBlocks3
+  BackEnd.Canon.testBasicBlocks4
+  BackEnd.Canon.testBasicBlocksFile
+  BackEnd.Canon.testCanon
+  BackEnd.Canon.testCanonFile
+  BackEnd.Canon.testDoExp
+  BackEnd.Canon.testDoStm
+  BackEnd.Canon.testESEQ1
+  BackEnd.Canon.testESEQ2
+  BackEnd.Canon.testESEQ3
+  BackEnd.Canon.testESEQ4
+  BackEnd.Canon.testESEQ5
+  BackEnd.Canon.testLinear1
+  BackEnd.Canon.testLinear2
+  BackEnd.Canon.testLinear3
+  BackEnd.Canon.testLinear4
+  BackEnd.Canon.testLinear5
+  BackEnd.Canon.testLinear6
+  BackEnd.Canon.testLinear7
+  BackEnd.Canon.testLinear8
+  BackEnd.Canon.testLinear9
+  BackEnd.Canon.testLinearize
+  BackEnd.Canon.testLinearizeFile
+  BackEnd.Canon.testTraceSchedule1
+  BackEnd.Canon.traceSchedule
+  BackEnd.Canon.traceSchedule'
+  BackEnd.Canon.traceSchedule''
+  BackEnd.Canon.transform
+  BackEnd.Canon.transform'
+  BackEnd.Canon.CanonState{BackEnd.Canon.CanonState controlLabelAlloc tempAlloc}
+module dependencies: BackEnd.Assem BackEnd.Builtin BackEnd.Frame
+                     BackEnd.IR BackEnd.Instructions BackEnd.Temp BackEnd.Translate
+                     FrontEnd.AST FrontEnd.Lexer FrontEnd.Parser
+                     FrontEnd.SemanticAnalyzer
+package dependencies: MissingH-1.4.0.1@MissingH-1.4.0.1-XvvfeDrBQU2lhIiDW7bjd
+                      array-0.5.1.1@array-0.5.1.1 base-4.9.1.0*
+                      binary-0.8.3.0@binary-0.8.3.0
+                      boxes-0.1.5@boxes-0.1.5-6DdHE3jJ0TwE6WTwMdCW4f
+                      bytestring-0.10.8.1@bytestring-0.10.8.1
+                      containers-0.5.7.1@containers-0.5.7.1
+                      deepseq-1.4.2.0@deepseq-1.4.2.0
+                      generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn
+                      ghc-prim-0.5.0.0
+                      hashable-1.2.7.0@hashable-1.2.7.0-3Ov9NDiX2mfFTkc4fiCKfa
+                      hashmap-1.3.3@hashmap-1.3.3-6F5MsgNDasO6fIeStnUOf6
+                      integer-gmp-1.0.0.1 mtl-2.2.2@mtl-2.2.2-IUStvhCM9Fb6Pb0KlPCV7h
+                      parsec-3.1.13.0@parsec-3.1.13.0-5jBHpMDfG914ocK3TvC2E
+                      pretty-tree-0.1.0.0@pretty-tree-0.1.0.0-5ldf01HzJj05FtOtje7CSt
+                      split-0.2.3.3@split-0.2.3.3-KPq5EVv6rbi8XHTA0KJd3E
+                      text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ
+                      transformers-0.5.2.0@transformers-0.5.2.0
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+         binary-0.8.3.0@binary-0.8.3.0:Data.Binary.Generic
+         bytestring-0.10.8.1@bytestring-0.10.8.1:Data.ByteString.Builder
+         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+         hashable-1.2.7.0@hashable-1.2.7.0-3Ov9NDiX2mfFTkc4fiCKfa:Data.Hashable.Generic
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Show
+         transformers-0.5.2.0@transformers-0.5.2.0:Control.Monad.Trans.Error
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Complex base-4.9.1.0:Data.Either
+                         base-4.9.1.0:Data.Functor.Compose base-4.9.1.0:Data.Functor.Const
+                         base-4.9.1.0:Data.Functor.Identity
+                         base-4.9.1.0:Data.Functor.Product base-4.9.1.0:Data.Functor.Sum
+                         base-4.9.1.0:Data.List.NonEmpty base-4.9.1.0:Data.Monoid
+                         base-4.9.1.0:Data.Semigroup base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:Data.Version base-4.9.1.0:Data.Void
+                         base-4.9.1.0:GHC.Exts base-4.9.1.0:GHC.Generics
+                         base-4.9.1.0:GHC.IO.Exception base-4.9.1.0:GHC.TypeLits
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntMap.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntSet.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Map.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Sequence
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Set.Base
+                         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+                         wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Instructions
+import  -/  base-4.9.1.0:Data.Foldable 3e0b6967a1da89945d0e2d47266337a2
+import  -/  base-4.9.1.0:Data.Tuple 7dc4bbb45d2e69c991ffac438beeca11
+import  -/  base-4.9.1.0:GHC.Base c4231c43c07e46080a26bf94094c7aa1
+import  -/  base-4.9.1.0:GHC.List ab8c4e523e6c479c549d3bcd5fc4a439
+import  -/  base-4.9.1.0:GHC.Show a027f5ac24879eaba752f44aa90fe511
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  ghc-prim-0.5.0.0:GHC.Classes 0bdf3d057a415ec1b84a7b1994efbe47
+import  -/  ghc-prim-0.5.0.0:GHC.Types 89f8de4f08018c9177c98d979eae0e45
+import  -/  hashmap-1.3.3@hashmap-1.3.3-6F5MsgNDasO6fIeStnUOf6:Data.HashMap 21c21e30ca661fd288861556f5a56e8d
+import  -/  mtl-2.2.2@mtl-2.2.2-IUStvhCM9Fb6Pb0KlPCV7h:Control.Monad.State d4f0a0054f0eb52460aaa42097d4c0c3
+import  -/  mtl-2.2.2@mtl-2.2.2-IUStvhCM9Fb6Pb0KlPCV7h:Control.Monad.State.Class 353753d62a48dcd4d640d0eb74aa4d50
+import  -/  transformers-0.5.2.0@transformers-0.5.2.0:Control.Monad.Trans.State.Lazy 371607e50dde46b5f4103b3ab334a497
+import  -/  BackEnd.IR 881b5c7113579e9e0196d2b90545a438
+  exports: 6d764dfdda2ad49e5da2751723ca6e76
+  BINEXP 314d5c5ea0e7abb37509298c8f219809
+  CALL 3ea9e353cc093939205143f9affc94dd
+  CJUMP 8a9984cdeabb0729a12d302ee976c1ae
+  CONSTC d7c2d48ab024444ee1683add7101cf65
+  CONSTI 1e86d692b475a9afd7eb4a380c9df20a
+  EQ 6adbced130978fdfab51558428d57ef4
+  ESEQ 7747f3b871d1a0d32a6e9524e80b12be
+  EXP f4838f4c177709e7c7e70c0752435d8f
+  Exp 29a6c3cd3ea133857ec2f8677caa5fe0
+  JUMP eac31562bd601b25d94ceeeb566aa59e
+  LABEL c97b7be2ccf356961383cd3d9288f4e4
+  MEM b593e2a075e1ece03bfeed656ad0d462
+  MOV 06cbd5b3f416dbde4084d0dc86d79095
+  NAME 09e0af564273846ddfc4a8df2204c47b
+  NOP b03e7ae709d42a8a9ae7021ff91d4519
+  PLUS fbf0c26117466714144501139f520f88
+  POP 6668b454a821e04401bd00ff3ba590c7
+  PUSH 747fde67cb21ccf1612f512ef7204765
+  SEQ f05eb9a24fbe0c461a90502ed64bebc9
+  Stm 29a6c3cd3ea133857ec2f8677caa5fe0
+  TEMP fed6108e10e5807c38f5a398fcd57699
+import  -/  BackEnd.Temp 0c22f42d627493b2b3f13cd2a3ac5a46
+  exports: ecf0e74365e1a70f2572e5197e175ea3
+  Label ab7a275275a088fb10914e7eda58ce46
+  LabelAllocator 7133bcfcbc18cbbc113f9e0135903ce5
+  Temp 14024289252e98b781eb5778cbac8848
+  TempAllocator bdce2d3fdfa323e7fb6e0441a84ede78
+  newControlLabel e0f1c493c743ab50763f5aab8b4da255
+  newLabelAllocator e9ec3bab80f5b18e9df1fbb1e736e3e7
+  newTemp 8b95d76b77154b40029113217d048b32
+  newTempAllocator 1656e7b6841ac685e639c91435f4d93d
+import  -/  BackEnd.Translate f25829781727f8c89b1efb5ee803e929
+  exports: d00c5cdab9fae07fbdebcdfe18de688f
+  controlLabelAlloc 3b9cb15a736b8f79135686a7b13dc77a
+  newTranslateState b790d14e7539c88a6dc0cd476b1ce974
+  tempAlloc 399b2447dad408f0d246c1b097611ff6
+  translate c81bd549ed640df32bbad3b81be0eba1
+import  -/  FrontEnd.Parser dc168563fd1859eeec254be3c17e78ba
+  exports: 45bb2ab1df05f1264fee753899b5f469
+  parseFile 929aa559965a9236f270d400e22bd9ed
+import  -/  FrontEnd.SemanticAnalyzer 2f8f81b4dd9a2a3fbbaa2a032c60c1d3
+  exports: 3c3524b7a455b135a3bb7a20b10bc1fa
+  analyzeAST e5e0977902ab61dd8618d68f6e124446
+13247890bf4bc4ca89a3132137951224
+  $fEqCanonState :: GHC.Classes.Eq BackEnd.Canon.CanonState
+  DFunId
+  {- HasNoCafRefs, Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Canon.CanonState
+                  BackEnd.Canon.$fEqCanonState_$c==
+                  BackEnd.Canon.$fEqCanonState_$c/= -}
+13247890bf4bc4ca89a3132137951224
+  $fEqCanonState_$c/= ::
+    BackEnd.Canon.CanonState
+    -> BackEnd.Canon.CanonState -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(S(S(S))L),1*U(1*U(1*U(U)),1*U(1*U(U)))><S(S(S(S))L),1*U(1*U(1*U(U)),1*U(1*U(U)))>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (a :: BackEnd.Canon.CanonState)
+                   (b :: BackEnd.Canon.CanonState) ->
+                 case BackEnd.Canon.$fEqCanonState_$c== a b of wild {
+                   GHC.Types.False -> GHC.Types.True
+                   GHC.Types.True -> GHC.Types.False }) -}
+13247890bf4bc4ca89a3132137951224
+  $fEqCanonState_$c== ::
+    BackEnd.Canon.CanonState
+    -> BackEnd.Canon.CanonState -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S(S(S(S))L),1*U(1*U(1*U(U)),1*U(1*U(U)))><S(S(S(S))L),1*U(1*U(1*U(U)),1*U(1*U(U)))>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (2, True, False)
+                (\ (w :: BackEnd.Canon.CanonState)
+                   (w1 :: BackEnd.Canon.CanonState) ->
+                 case w of ww { BackEnd.Canon.CanonState ww1 ww2 ->
+                 case ww1 of ww3 { BackEnd.Temp.TempAllocator ww4 ->
+                 case ww4 of ww5 { GHC.Types.I# ww6 ->
+                 case w1 of ww7 { BackEnd.Canon.CanonState ww8 ww9 ->
+                 case ww8 of ww10 { BackEnd.Temp.TempAllocator ww11 ->
+                 case ww11 of ww12 { GHC.Types.I# ww13 ->
+                 BackEnd.Canon.$w$c== ww6 ww2 ww13 ww9 } } } } } }) -}
+13247890bf4bc4ca89a3132137951224
+  $fShowCanonState :: GHC.Show.Show BackEnd.Canon.CanonState
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Canon.CanonState
+                  BackEnd.Canon.$fShowCanonState_$cshowsPrec
+                  BackEnd.Canon.$fShowCanonState_$cshow
+                  BackEnd.Canon.$fShowCanonState_$cshowList -}
+13247890bf4bc4ca89a3132137951224
+  $fShowCanonState1 :: BackEnd.Canon.CanonState -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (\ (w :: BackEnd.Canon.CanonState)
+                   (w1 :: GHC.Base.String) ->
+                 case w of ww { BackEnd.Canon.CanonState ww1 ww2 ->
+                 BackEnd.Canon.$w$cshowsPrec 0# ww1 ww2 w1 }) -}
+041dd16b1a99a90da5b6f343b76dff9b
+  $fShowCanonState2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "CanonState {"#) -}
+68c8dc0eb2a911ebb40229f79e9b0ad2
+  $fShowCanonState3 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "}"#) -}
+b2c5efe2c0c69f63ed902595054eccfd
+  $fShowCanonState4 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString#
+                   "controlLabelAlloc = "#) -}
+2bd9303ac20cb61fc89ac226f33c69eb
+  $fShowCanonState5 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# ", "#) -}
+004d78e6f0c7b747cf2e25bb4203ed29
+  $fShowCanonState6 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "tempAlloc = "#) -}
+13247890bf4bc4ca89a3132137951224
+  $fShowCanonState_$cshow ::
+    BackEnd.Canon.CanonState -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U(1*U(1*U(U)),1*U(1*U(U)))>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (x :: BackEnd.Canon.CanonState) ->
+                 BackEnd.Canon.$fShowCanonState_$cshowsPrec
+                   GHC.Show.shows22
+                   x
+                   (GHC.Types.[] @ GHC.Types.Char)) -}
+13247890bf4bc4ca89a3132137951224
+  $fShowCanonState_$cshowList ::
+    [BackEnd.Canon.CanonState] -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (GHC.Show.showList__
+                   @ BackEnd.Canon.CanonState
+                   BackEnd.Canon.$fShowCanonState1) -}
+13247890bf4bc4ca89a3132137951224
+  $fShowCanonState_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Canon.CanonState -> GHC.Show.ShowS
+  {- Arity: 3,
+     Strictness: <S(S),1*U(U)><S,1*U(1*U(1*U(U)),1*U(1*U(U)))><L,U>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ (w :: GHC.Types.Int)
+                   (w1 :: BackEnd.Canon.CanonState)
+                   (w2 :: GHC.Base.String) ->
+                 case w of ww { GHC.Types.I# ww1 ->
+                 case w1 of ww2 { BackEnd.Canon.CanonState ww3 ww4 ->
+                 BackEnd.Canon.$w$cshowsPrec ww1 ww3 ww4 w2 } }) -}
+c25fd051855935c62b3d6997754c47a9
+  $tc'CanonState :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   11701886179146938873##
+                   11290995859677416347##
+                   BackEnd.Canon.$trModule
+                   BackEnd.Canon.$tc'CanonState1) -}
+0c0ec569a954f3cc7b9206aef6777533
+  $tc'CanonState1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'CanonState"#) -}
+8b8388373ea1f09da887135f7e808ab8
+  $tcCanonState :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   14538205815411287356##
+                   3357102358956898431##
+                   BackEnd.Canon.$trModule
+                   BackEnd.Canon.$tcCanonState1) -}
+3d976815db9d940a8afe8709e0547d73
+  $tcCanonState1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "CanonState"#) -}
+5bb71637eab651b3e0e53df0152b030e
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   BackEnd.Canon.$trModule2
+                   BackEnd.Canon.$trModule1) -}
+55e33675a40b3b108d1efba1ef501b77
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "BackEnd.Canon"#) -}
+4631c57b6b217c401e2fdbc9e9d2ab37
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   "wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"#) -}
+8dbede26e9354c7bd7a7bf5493c020a4
+  $w$c== ::
+    GHC.Prim.Int#
+    -> BackEnd.Temp.LabelAllocator
+    -> GHC.Prim.Int#
+    -> BackEnd.Temp.LabelAllocator
+    -> GHC.Types.Bool
+  {- Arity: 4, HasNoCafRefs,
+     Strictness: <S,U><L,1*U(1*U(U))><S,U><L,1*U(1*U(U))>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (ww1 :: BackEnd.Temp.LabelAllocator)
+                   (ww2 :: GHC.Prim.Int#)
+                   (ww3 :: BackEnd.Temp.LabelAllocator) ->
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.==# ww ww2) of wild {
+                   GHC.Types.False -> GHC.Types.False
+                   GHC.Types.True
+                   -> BackEnd.Temp.$fEqLabelAllocator_$c== ww1 ww3 }) -}
+d7f8931cace78241294849b627207f60
+  $w$cshowsPrec ::
+    GHC.Prim.Int#
+    -> BackEnd.Temp.TempAllocator
+    -> BackEnd.Temp.LabelAllocator
+    -> GHC.Base.String
+    -> GHC.Base.String
+  {- Arity: 4, Strictness: <S,U><L,1*U(1*U(U))><L,1*U(1*U(U))><L,U>,
+     Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (ww1 :: BackEnd.Temp.TempAllocator)
+                   (ww2 :: BackEnd.Temp.LabelAllocator)
+                   (w :: GHC.Base.String) ->
+                 let {
+                   g :: GHC.Base.String -> GHC.Base.String
+                     {- Arity: 1, Strictness: <L,1*U> -}
+                   = \ (x :: GHC.Base.String)[OneShot] ->
+                     GHC.Base.++
+                       @ GHC.Types.Char
+                       BackEnd.Canon.$fShowCanonState6
+                       (case ww1 of ww3 { BackEnd.Temp.TempAllocator ww4 ->
+                        BackEnd.Temp.$w$cshowsPrec1
+                          0#
+                          ww4
+                          (GHC.Base.++
+                             @ GHC.Types.Char
+                             BackEnd.Canon.$fShowCanonState5
+                             (GHC.Base.++
+                                @ GHC.Types.Char
+                                BackEnd.Canon.$fShowCanonState4
+                                (case ww2 of ww5 { BackEnd.Temp.LabelAllocator ww6 ->
+                                 BackEnd.Temp.$w$cshowsPrec
+                                   0#
+                                   ww6
+                                   (GHC.Base.++
+                                      @ GHC.Types.Char
+                                      BackEnd.Canon.$fShowCanonState3
+                                      x) }))) })
+                 } in
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.>=# ww 11#) of wild {
+                   GHC.Types.False
+                   -> GHC.Base.++
+                        @ GHC.Types.Char
+                        BackEnd.Canon.$fShowCanonState2
+                        (g w)
+                   GHC.Types.True
+                   -> GHC.Types.:
+                        @ GHC.Types.Char
+                        GHC.Show.shows7
+                        (GHC.Base.++
+                           @ GHC.Types.Char
+                           BackEnd.Canon.$fShowCanonState2
+                           (g (GHC.Types.: @ GHC.Types.Char GHC.Show.shows4 w))) }) -}
+ac081fea49e4dde4c6d4388c9a0e1ed1
+  $wlinear ::
+    BackEnd.IR.Stm
+    -> [BackEnd.IR.Stm] -> (# BackEnd.IR.Stm, [BackEnd.IR.Stm] #)
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><L,U>, Inline: [0] -}
+4bfda85edb9c4d1165af9019f2b5369c
+  $wtraceSchedule'' ::
+    GHC.Num.Num a =>
+    [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label a
+    -> (# [BackEnd.IR.Stm], Data.HashMap.Map BackEnd.Temp.Label a #)
+  {- Arity: 4,
+     Strictness: <L,1*U(A,A,A,A,A,A,1*C1(U))><S,1*U><L,U><L,1*U>,
+     Inline: [0] -}
+6e014504c37f96aec421eebe7e4f8d35
+  $wtraceSchedule''1 ::
+    [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label GHC.Integer.Type.Integer
+    -> (# [BackEnd.IR.Stm],
+          Data.HashMap.Map BackEnd.Temp.Label GHC.Integer.Type.Integer #)
+  {- Arity: 3, Strictness: <S,1*U><L,U><L,1*U>, Inline: [0] -}
+13247890bf4bc4ca89a3132137951224
+  data CanonState
+    = CanonState {tempAlloc :: BackEnd.Temp.TempAllocator,
+                  controlLabelAlloc :: BackEnd.Temp.LabelAllocator}
+955f784f96bf9b55fe34723520c27ae6
+  bLabel :: [BackEnd.IR.Stm] -> BackEnd.Temp.Label
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: [BackEnd.IR.Stm]) ->
+                 case ds of wild {
+                   [] -> BackEnd.Canon.bLabel1
+                   : ds1 ds2
+                   -> case ds1 of wild1 {
+                        DEFAULT -> BackEnd.Canon.bLabel1
+                        BackEnd.IR.LABEL label -> label } }) -}
+9fd572cfc1ef169a13f5dc817f9fcb47
+  bLabel1 :: BackEnd.Temp.Label
+  {- Strictness: x -}
+41d0672d2683c19b302ce8f33d256487
+  basicBlocks ::
+    [BackEnd.IR.Stm]
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState ([[BackEnd.IR.Stm]], BackEnd.Temp.Label)
+  {- Arity: 1, Strictness: <S,1*U> -}
+9bb371a04183a1c398631f2281c7ce77
+  commute :: BackEnd.IR.Exp -> BackEnd.IR.Stm -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><L,1*U>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (ds :: BackEnd.IR.Exp) (ds1 :: BackEnd.IR.Stm) ->
+                 case ds of wild {
+                   DEFAULT
+                   -> case ds1 of wild1 {
+                        DEFAULT -> GHC.Types.False BackEnd.IR.NOP -> GHC.Types.True }
+                   BackEnd.IR.CONSTI ds2 -> GHC.Types.True
+                   BackEnd.IR.CONSTC ds2 -> GHC.Types.True }) -}
+c2b42225d3c3421b1ac3d8240d96dde1
+  controlLabelAlloc ::
+    BackEnd.Canon.CanonState -> BackEnd.Temp.LabelAllocator
+  RecSel Left BackEnd.Canon.CanonState
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(LS),1*U(A,1*U(U))>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Canon.CanonState) ->
+                 case ds of wild { BackEnd.Canon.CanonState ds1 ds2 -> ds2 }) -}
+39b2195f1e94adf1b24298d0c171953c
+  doExp ::
+    BackEnd.IR.Exp
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState (BackEnd.IR.Stm, BackEnd.IR.Exp)
+  {- Arity: 1, Strictness: <S,1*U> -}
+d34b193f4c9029876a25cdf91dfbf481
+  doStm ::
+    BackEnd.IR.Stm
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState BackEnd.IR.Stm
+  {- Arity: 1, Strictness: <S,1*U> -}
+1df81f6195348a406793eacd5514fcd6
+  e1 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.e2) -}
+8592a54c46c22bf92a7162898ef9a050
+  e2 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 1#) -}
+698c82b8df3526148c476555f0f2cd37
+  isESEQ :: BackEnd.IR.Exp -> GHC.Types.Bool
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.IR.Exp) ->
+                 case ds of wild {
+                   DEFAULT -> GHC.Types.False
+                   BackEnd.IR.ESEQ ds1 ds2 -> GHC.Types.True }) -}
+a495c0cf58b1e91d1f0548131356210e
+  isOneLayer :: BackEnd.IR.Exp -> GHC.Types.Bool
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.IR.Exp) ->
+                 case ds of wild {
+                   DEFAULT -> GHC.Types.False
+                   BackEnd.IR.CONSTI ds1 -> GHC.Types.True
+                   BackEnd.IR.CONSTC ds1 -> GHC.Types.True
+                   BackEnd.IR.NAME ds1 -> GHC.Types.True
+                   BackEnd.IR.TEMP ds1 -> GHC.Types.True
+                   BackEnd.IR.MEM ds1 -> GHC.Types.True }) -}
+e00e51cc72850ad804923f5bcd64a7a9
+  label1 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "label1"#) -}
+26a7baddf63d97e93df31a31ec65b2c8
+  label2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "label2"#) -}
+2d9bf4cd06d791ffc9fd9d2d9a5f7340
+  label3 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "label3"#) -}
+6a1474ce022d9830925e62c754ae333a
+  linearize ::
+    BackEnd.IR.Stm
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState [BackEnd.IR.Stm]
+  {- Arity: 1, Strictness: <L,1*U>,
+     Unfolding: (\ (stm :: BackEnd.IR.Stm) ->
+                 let {
+                   m2 :: Control.Monad.Trans.State.Lazy.StateT
+                           BackEnd.Canon.CanonState
+                           Data.Functor.Identity.Identity
+                           BackEnd.IR.Stm
+                   = BackEnd.Canon.doStm stm
+                 } in
+                 (\ (s4 :: BackEnd.Canon.CanonState) ->
+                  let {
+                    ds :: Data.Functor.Identity.Identity
+                            (BackEnd.IR.Stm, BackEnd.Canon.CanonState)
+                    = m2
+                        `cast`
+                      (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <BackEnd.Canon.CanonState>_N
+                           <Data.Functor.Identity.Identity>_R
+                           <BackEnd.IR.Stm>_N)
+                        s4
+                  } in
+                  (case ds
+                          `cast`
+                        (Data.Functor.Identity.N:Identity[0]
+                             <(BackEnd.IR.Stm,
+                               BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                   case BackEnd.Canon.$wlinear
+                          a1
+                          (GHC.Types.[] @ BackEnd.IR.Stm) of ww { (#,#) ww1 ww2 ->
+                   GHC.List.filter
+                     @ BackEnd.IR.Stm
+                     BackEnd.Canon.linearize1
+                     (GHC.Types.: @ BackEnd.IR.Stm ww1 ww2) } },
+                   case ds
+                          `cast`
+                        (Data.Functor.Identity.N:Identity[0]
+                             <(BackEnd.IR.Stm,
+                               BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                   s' })
+                    `cast`
+                  (Sym (Data.Functor.Identity.N:Identity[0]
+                            <([BackEnd.IR.Stm], BackEnd.Canon.CanonState)>_R)))
+                   `cast`
+                 (Sym (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <BackEnd.Canon.CanonState>_N
+                           <Data.Functor.Identity.Identity>_R
+                           <[BackEnd.IR.Stm]>_N))) -}
+2d736770e17efb6f94159407e4a27bf3
+  linearize1 :: BackEnd.IR.Stm -> GHC.Types.Bool
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.IR.Stm) ->
+                 case BackEnd.IR.$fEqStm_$c== ds BackEnd.IR.NOP of wild {
+                   GHC.Types.False -> GHC.Types.True
+                   GHC.Types.True -> GHC.Types.False }) -}
+b6d2cde9fd4de2c6ab2edc3a75f20a03
+  newCanonState :: BackEnd.Canon.CanonState
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (BackEnd.Canon.CanonState
+                   BackEnd.Temp.newTempAllocator
+                   BackEnd.Temp.newLabelAllocator) -}
+ab9ed940f93b0f3a7cb66c3e336d6545
+  newControlLabel ::
+    Control.Monad.Trans.State.Lazy.State
+      BackEnd.Canon.CanonState BackEnd.Temp.Label
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(U,1*U(U(U)))>m,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.newControlLabel1
+                  `cast`
+                (Sym (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                          <BackEnd.Canon.CanonState>_N
+                          <Data.Functor.Identity.Identity>_R
+                          <BackEnd.Temp.Label>_N)) -}
+091b5c69b65ca3c9b579f5417707af21
+  newControlLabel1 ::
+    BackEnd.Canon.CanonState
+    -> Data.Functor.Identity.Identity
+         (BackEnd.Temp.Label, BackEnd.Canon.CanonState)
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(U,1*U(U(U)))>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Canon.CanonState) ->
+                 let {
+                   ds :: (BackEnd.Temp.LabelAllocator, BackEnd.Temp.Label)
+                   = case w of wild { BackEnd.Canon.CanonState ds1 ds2 ->
+                     case ds2 of ww { BackEnd.Temp.LabelAllocator ww1 ->
+                     case BackEnd.Temp.$wnewControlLabel ww1 of ww2 { (#,#) ww3 ww4 ->
+                     (ww3, ww4) } } }
+                 } in
+                 (case ds of wild { (,) alloc label -> label },
+                  case w of wild { BackEnd.Canon.CanonState ds1 ds2 ->
+                  BackEnd.Canon.CanonState
+                    ds1
+                    (case ds of wild1 { (,) alloc label -> alloc }) })
+                   `cast`
+                 (Sym (Data.Functor.Identity.N:Identity[0]
+                           <(BackEnd.Temp.Label, BackEnd.Canon.CanonState)>_R))) -}
+b062220cea2ecf47d01318ebd3c646ed
+  newTemp ::
+    Control.Monad.Trans.State.Lazy.State
+      BackEnd.Canon.CanonState BackEnd.Temp.Temp
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(1*U(U(U)),U)>m,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.newTemp1
+                  `cast`
+                (Sym (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                          <BackEnd.Canon.CanonState>_N
+                          <Data.Functor.Identity.Identity>_R
+                          <BackEnd.Temp.Temp>_N)) -}
+2cc244d8b27b3585f8ce78eb96ff258c
+  newTemp1 ::
+    BackEnd.Canon.CanonState
+    -> Data.Functor.Identity.Identity
+         (BackEnd.Temp.Temp, BackEnd.Canon.CanonState)
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U(1*U(U(U)),U)>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Canon.CanonState) ->
+                 let {
+                   ds :: (BackEnd.Temp.TempAllocator, BackEnd.Temp.Temp)
+                   = case w of wild { BackEnd.Canon.CanonState ds1 ds2 ->
+                     case ds1 of wild1 { BackEnd.Temp.TempAllocator i ->
+                     (BackEnd.Temp.TempAllocator
+                        (case i of wild2 { GHC.Types.I# x ->
+                         GHC.Types.I# (GHC.Prim.+# x 1#) }),
+                      i) } }
+                 } in
+                 (case ds of wild { (,) tempAlloc' temp -> temp },
+                  case w of wild { BackEnd.Canon.CanonState ds1 ds2 ->
+                  BackEnd.Canon.CanonState
+                    (case ds of wild1 { (,) tempAlloc' temp -> tempAlloc' })
+                    ds2 })
+                   `cast`
+                 (Sym (Data.Functor.Identity.N:Identity[0]
+                           <(BackEnd.Temp.Temp, BackEnd.Canon.CanonState)>_R))) -}
+941f6b8e560971f475fbd59368332c66
+  reorder ::
+    [BackEnd.IR.Exp]
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState (BackEnd.IR.Stm, [BackEnd.IR.Exp])
+  {- Arity: 1, Strictness: <S,1*U> -}
+0cb8b86c056ca0e8531210fd7c7c594f
+  reorderExp ::
+    [BackEnd.IR.Exp]
+    -> ([BackEnd.IR.Exp] -> BackEnd.IR.Exp)
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState (BackEnd.IR.Stm, BackEnd.IR.Exp)
+  {- Arity: 2, Strictness: <L,1*U><L,C(U)>,
+     Unfolding: (\ (exps :: [BackEnd.IR.Exp])
+                   (build :: [BackEnd.IR.Exp] -> BackEnd.IR.Exp) ->
+                 let {
+                   m2 :: Control.Monad.Trans.State.Lazy.StateT
+                           BackEnd.Canon.CanonState
+                           Data.Functor.Identity.Identity
+                           (BackEnd.IR.Stm, [BackEnd.IR.Exp])
+                   = BackEnd.Canon.reorder exps
+                 } in
+                 (\ (s4 :: BackEnd.Canon.CanonState) ->
+                  case (m2
+                          `cast`
+                        (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                             <BackEnd.Canon.CanonState>_N
+                             <Data.Functor.Identity.Identity>_R
+                             <(BackEnd.IR.Stm, [BackEnd.IR.Exp])>_N)
+                          s4)
+                         `cast`
+                       (Data.Functor.Identity.N:Identity[0]
+                            <((BackEnd.IR.Stm, [BackEnd.IR.Exp]),
+                              BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                  case a1 of wild1 { (,) stm' exps' ->
+                  ((stm', case exps' of vx { DEFAULT -> build vx }), s')
+                    `cast`
+                  (Sym (Data.Functor.Identity.N:Identity[0]
+                            <((BackEnd.IR.Stm, BackEnd.IR.Exp),
+                              BackEnd.Canon.CanonState)>_R)) } })
+                   `cast`
+                 (Sym (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <BackEnd.Canon.CanonState>_N
+                           <Data.Functor.Identity.Identity>_R
+                           <(BackEnd.IR.Stm, BackEnd.IR.Exp)>_N))) -}
+8c92a266c6d7fb4b29dd6a09a80fd1e8
+  reorderStm ::
+    [BackEnd.IR.Exp]
+    -> ([BackEnd.IR.Exp] -> BackEnd.IR.Stm)
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState BackEnd.IR.Stm
+  {- Arity: 2, Strictness: <L,1*U><L,C(U)>,
+     Unfolding: (\ (exps :: [BackEnd.IR.Exp])
+                   (build :: [BackEnd.IR.Exp] -> BackEnd.IR.Stm) ->
+                 let {
+                   m2 :: Control.Monad.Trans.State.Lazy.StateT
+                           BackEnd.Canon.CanonState
+                           Data.Functor.Identity.Identity
+                           (BackEnd.IR.Stm, [BackEnd.IR.Exp])
+                   = BackEnd.Canon.reorder exps
+                 } in
+                 (\ (s4 :: BackEnd.Canon.CanonState) ->
+                  case (m2
+                          `cast`
+                        (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                             <BackEnd.Canon.CanonState>_N
+                             <Data.Functor.Identity.Identity>_R
+                             <(BackEnd.IR.Stm, [BackEnd.IR.Exp])>_N)
+                          s4)
+                         `cast`
+                       (Data.Functor.Identity.N:Identity[0]
+                            <((BackEnd.IR.Stm, [BackEnd.IR.Exp]),
+                              BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                  case a1 of wild1 { (,) stm exps' ->
+                  (BackEnd.IR.SEQ
+                     stm
+                     (GHC.Base.$! @ [BackEnd.IR.Exp] @ BackEnd.IR.Stm build exps'),
+                   s')
+                    `cast`
+                  (Sym (Data.Functor.Identity.N:Identity[0]
+                            <(BackEnd.IR.Stm, BackEnd.Canon.CanonState)>_R)) } })
+                   `cast`
+                 (Sym (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <BackEnd.Canon.CanonState>_N
+                           <Data.Functor.Identity.Identity>_R
+                           <BackEnd.IR.Stm>_N))) -}
+2657dcfcedcf45ce465b53171569ecee
+  s1 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV BackEnd.Canon.t1 BackEnd.Canon.t2) -}
+48841ecdc8a79d94a41d0eaa63490b40
+  s2 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV BackEnd.Canon.t2 BackEnd.Canon.t0) -}
+3cf4a1bc191a090066e04695c6f82b65
+  t0 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m4,
+     Unfolding: (BackEnd.IR.TEMP BackEnd.Canon.t5) -}
+a6fc5df256cad8d1f258ab35d65e5bec
+  t1 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m4,
+     Unfolding: (BackEnd.IR.TEMP BackEnd.Canon.e2) -}
+8aa29a7c0351019f4816b8bcb4fbe491
+  t2 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m4,
+     Unfolding: (BackEnd.IR.TEMP BackEnd.Canon.t4) -}
+a970ce63ded6e08dc2bf2dc150770b27
+  t4 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 2#) -}
+763cb136da33a65774433a9e52162a61
+  t5 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 0#) -}
+9874a5edf52311eec9cbe73ec009a2f6
+  tempAlloc :: BackEnd.Canon.CanonState -> BackEnd.Temp.TempAllocator
+  RecSel Left BackEnd.Canon.CanonState
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(SL),1*U(1*U(U),A)>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Canon.CanonState) ->
+                 case ds of wild { BackEnd.Canon.CanonState ds1 ds2 -> ds1 }) -}
+780167ebbbb074c6343cca1f6bd43c2b
+  testBasicBlocks ::
+    [BackEnd.IR.Stm] -> GHC.Types.IO [[BackEnd.IR.Stm]]
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testBasicBlocks7
+                  `cast`
+                (<[BackEnd.IR.Stm]>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <[[BackEnd.IR.Stm]]>_R)) -}
+8f9dd65c0ca70cc9b22836f2b0cc695f
+  testBasicBlocks1 :: [t]
+  {- HasNoCafRefs,
+     Unfolding: InlineRule (0, True, True) GHC.Types.[] -}
+2e8094e6c5fa4c3b848d77a8aeda968c
+  testBasicBlocks10 :: BackEnd.IR.Stm
+  {- Strictness: m2,
+     Unfolding: (BackEnd.IR.JUMP
+                   BackEnd.Canon.e1
+                   BackEnd.Canon.testBasicBlocks11) -}
+64b04ae6e609a5f5462eae5400b16b73
+  testBasicBlocks11 :: [BackEnd.Temp.Label]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Label
+                   BackEnd.Canon.label1
+                   (GHC.Types.[] @ BackEnd.Temp.Label)) -}
+f21076057378f9acb4faba7f17c1507e
+  testBasicBlocks12 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV BackEnd.Canon.t0 BackEnd.Canon.t1) -}
+e52746c6f38a52e3ddac34d24af7f607
+  testBasicBlocks13 :: BackEnd.IR.Stm
+  {- Strictness: m6,
+     Unfolding: (BackEnd.IR.LABEL BackEnd.Canon.label1) -}
+ee6286c8bc84f56ea46a5ec1daba8840
+  testBasicBlocks14 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testBasicBlocks15) -}
+ac014f7307bb09fcbdaf5703ebcc67c7
+  testBasicBlocks15 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks20
+                   BackEnd.Canon.testBasicBlocks16) -}
+baebf91945069f18a1c1be7eaf99fb86
+  testBasicBlocks16 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.s2
+                   BackEnd.Canon.testBasicBlocks17) -}
+c50314830a13b569ff803b8a8f015a5c
+  testBasicBlocks17 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks18
+                   (GHC.Types.[] @ BackEnd.IR.Stm)) -}
+56b47849b2a515ecebd932add7c7a7cc
+  testBasicBlocks18 :: BackEnd.IR.Stm
+  {- Strictness: m2,
+     Unfolding: (BackEnd.IR.JUMP
+                   BackEnd.Canon.e1
+                   BackEnd.Canon.testBasicBlocks19) -}
+6800438c7ca175571f0a313bd0de56ef
+  testBasicBlocks19 :: [BackEnd.Temp.Label]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Label
+                   BackEnd.Canon.label2
+                   (GHC.Types.[] @ BackEnd.Temp.Label)) -}
+4df999a10dd6e86a9e5664516f4319f3
+  testBasicBlocks2 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks13
+                   BackEnd.Canon.testBasicBlocks8) -}
+3fa012a706c03debd43c0268d32a0560
+  testBasicBlocks20 :: BackEnd.IR.Stm
+  {- Strictness: m6,
+     Unfolding: (BackEnd.IR.LABEL BackEnd.Canon.label2) -}
+6fa14fafed5c28721d3dae083d7cb559
+  testBasicBlocks21 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testBasicBlocks22) -}
+6f432a3463b07219da50e77b1cbe5318
+  testBasicBlocks22 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks24
+                   BackEnd.Canon.testBasicBlocks23) -}
+99fbaf76d232aba5a0f2db6d3701e293
+  testBasicBlocks23 :: [BackEnd.IR.Stm]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.s2
+                   (GHC.Types.[] @ BackEnd.IR.Stm)) -}
+fc6e527ef795edc836addfc2a3848ea8
+  testBasicBlocks24 :: BackEnd.IR.Stm
+  {- Strictness: m4,
+     Unfolding: (BackEnd.IR.CJUMP
+                   BackEnd.IR.EQ
+                   BackEnd.Canon.e1
+                   BackEnd.Canon.testBasicBlocks25
+                   BackEnd.Canon.label1
+                   BackEnd.Canon.label2) -}
+06dcdae69945cd52b3558a78f034f8b5
+  testBasicBlocks25 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.t4) -}
+74521dfc7b129fdfbd3f2803e568b54c
+  testBasicBlocks3 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks13
+                   BackEnd.Canon.testBasicBlocks14) -}
+b0e61153ed02ffba61d29531842e4436
+  testBasicBlocks4 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks13
+                   BackEnd.Canon.testBasicBlocks21) -}
+df3aaa8cf001ca50ab1aa69cdffeb67b
+  testBasicBlocks7 ::
+    [BackEnd.IR.Stm]
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, [[BackEnd.IR.Stm]] #)
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (stms :: [BackEnd.IR.Stm])
+                   (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 (# eta1,
+                    case ((BackEnd.Canon.basicBlocks stms)
+                            `cast`
+                          (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                               <BackEnd.Canon.CanonState>_N
+                               <Data.Functor.Identity.Identity>_R
+                               <([[BackEnd.IR.Stm]], BackEnd.Temp.Label)>_N)
+                            BackEnd.Canon.newCanonState)
+                           `cast`
+                         (Data.Functor.Identity.N:Identity[0]
+                              <(([[BackEnd.IR.Stm]], BackEnd.Temp.Label),
+                                BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                    case a1 of wild1 { (,) bs ds -> bs } } #)) -}
+a53bbd60d447da8d09fb57de0c8381fe
+  testBasicBlocks8 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testBasicBlocks9) -}
+f7eac4ef0f6f8db9c725ec6af1590930
+  testBasicBlocks9 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks10
+                   (GHC.Types.[] @ BackEnd.IR.Stm)) -}
+c9a35194f167b0b4495f7f8e2ead0630
+  testBasicBlocksFile ::
+    GHC.Base.String -> GHC.Types.IO [[BackEnd.IR.Stm]]
+  {- Arity: 2, Strictness: <L,U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testBasicBlocksFile1
+                  `cast`
+                (<GHC.Base.String>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <[[BackEnd.IR.Stm]]>_R)) -}
+0cff7b9ef754d4a5470d4a366361e4df
+  testBasicBlocksFile1 ::
+    GHC.Base.String
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, [[BackEnd.IR.Stm]] #)
+  {- Arity: 2, Strictness: <L,U><S,U>,
+     Unfolding: (\ (file :: GHC.Base.String)
+                   (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 case FrontEnd.Parser.parseFile1
+                        file
+                        eta1 of ds1 { (#,#) ipv ipv1 ->
+                 case ipv1 of ww { FrontEnd.AST.Ann ww1 ww2 ->
+                 case ww1 of ww3 { FrontEnd.AST.Program ww4 ww5 ->
+                 case ww2 of ww6 { (,) ww7 ww8 ->
+                 case (FrontEnd.SemanticAnalyzer.$wanalyzeProgramF ww4 ww5 ww7 ww8)
+                        `cast`
+                      (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <FrontEnd.SemanticAnalyzer.AnalysisState>_N
+                           <Data.Either.Either GHC.Base.String>_R
+                           <FrontEnd.AST.ProgramF ()>_N)
+                        FrontEnd.SemanticAnalyzer.analyzeAST5 of wild {
+                   Data.Either.Left l
+                   -> case GHC.IO.Handle.Text.hPutStr2
+                             GHC.IO.Handle.FD.stdout
+                             FrontEnd.SemanticAnalyzer.analyzeAST4
+                             GHC.Types.True
+                             ipv of ds2 { (#,#) ipv2 ipv3 ->
+                      case System.Exit.exitWith1
+                             @ (FrontEnd.AST.ProgramF ())
+                             FrontEnd.SemanticAnalyzer.analyzeAST2
+                             ipv2
+                      ret_ty (# GHC.Prim.State# GHC.Prim.RealWorld, [[BackEnd.IR.Stm]] #)
+                      of {} }
+                   Data.Either.Right r
+                   -> (# ipv,
+                         let {
+                           ds :: Data.Functor.Identity.Identity
+                                   (BackEnd.IR.Stm, BackEnd.Translate.TranslateState)
+                           = case r of wild1 { (,) a1 ds2 ->
+                             case a1 of ww11 { FrontEnd.AST.Ann ww12 ww13 ->
+                             case ww12 of ww14 { FrontEnd.AST.Program ww15 ww16 ->
+                             case BackEnd.Translate.$wtranslateProgramF
+                                    ww15
+                                    ww16
+                                    BackEnd.Translate.newTranslateState of ww17 { (#,#) ww18 ww19 ->
+                             (ww18, ww19)
+                               `cast`
+                             (Sym (Data.Functor.Identity.N:Identity[0]
+                                       <(BackEnd.IR.Stm,
+                                         BackEnd.Translate.TranslateState)>_R)) } } } }
+                         } in
+                         let {
+                           ds2 :: BackEnd.Translate.TranslateState
+                           = case ds
+                                    `cast`
+                                  (Data.Functor.Identity.N:Identity[0]
+                                       <(BackEnd.IR.Stm,
+                                         BackEnd.Translate.TranslateState)>_R) of wild1 { (,) a1 s' ->
+                             s' }
+                         } in
+                         case ((BackEnd.Canon.transform'
+                                  (case ds
+                                          `cast`
+                                        (Data.Functor.Identity.N:Identity[0]
+                                             <(BackEnd.IR.Stm,
+                                               BackEnd.Translate.TranslateState)>_R) of wild1 { (,) a1 s' ->
+                                   BackEnd.IR.cleanStm a1 }))
+                                 `cast`
+                               (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                                    <BackEnd.Canon.CanonState>_N
+                                    <Data.Functor.Identity.Identity>_R
+                                    <[[BackEnd.IR.Stm]]>_N)
+                                 (BackEnd.Canon.CanonState
+                                    (BackEnd.Translate.tempAlloc ds2)
+                                    (BackEnd.Translate.controlLabelAlloc ds2)))
+                                `cast`
+                              (Data.Functor.Identity.N:Identity[0]
+                                   <([[BackEnd.IR.Stm]],
+                                     BackEnd.Canon.CanonState)>_R) of wild1 { (,) x ds3 ->
+                         x } #) } } } } }) -}
+fc80bbac7065f1e6a73cda9ce8b1f268
+  testCanon :: BackEnd.IR.Stm -> GHC.Types.IO [BackEnd.IR.Stm]
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testCanon1
+                  `cast`
+                (<BackEnd.IR.Stm>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <[BackEnd.IR.Stm]>_R)) -}
+e00d78be6dfe0808e9ec904bde51c542
+  testCanon1 ::
+    BackEnd.IR.Stm
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, [BackEnd.IR.Stm] #)
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (stm :: BackEnd.IR.Stm)
+                   (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 (# eta1,
+                    case ((BackEnd.Canon.transform stm)
+                            `cast`
+                          (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                               <BackEnd.Canon.CanonState>_N
+                               <Data.Functor.Identity.Identity>_R
+                               <[BackEnd.IR.Stm]>_N)
+                            BackEnd.Canon.newCanonState)
+                           `cast`
+                         (Data.Functor.Identity.N:Identity[0]
+                              <([BackEnd.IR.Stm],
+                                BackEnd.Canon.CanonState)>_R) of wild { (,) trace s ->
+                    trace } #)) -}
+83d4830d58961abd3cfbdfedde14e182
+  testCanonFile :: GHC.Base.String -> GHC.Types.IO [BackEnd.IR.Stm]
+  {- Arity: 2, Strictness: <L,U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testCanonFile1
+                  `cast`
+                (<GHC.Base.String>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <[BackEnd.IR.Stm]>_R)) -}
+fababc457248ed7d5bea2d0a7ca45619
+  testCanonFile1 ::
+    GHC.Base.String
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, [BackEnd.IR.Stm] #)
+  {- Arity: 2, Strictness: <L,U><S,U>,
+     Unfolding: (\ (file :: GHC.Base.String)
+                   (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 case FrontEnd.Parser.parseFile1
+                        file
+                        eta1 of ds1 { (#,#) ipv ipv1 ->
+                 case ipv1 of ww { FrontEnd.AST.Ann ww1 ww2 ->
+                 case ww1 of ww3 { FrontEnd.AST.Program ww4 ww5 ->
+                 case ww2 of ww6 { (,) ww7 ww8 ->
+                 case (FrontEnd.SemanticAnalyzer.$wanalyzeProgramF ww4 ww5 ww7 ww8)
+                        `cast`
+                      (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <FrontEnd.SemanticAnalyzer.AnalysisState>_N
+                           <Data.Either.Either GHC.Base.String>_R
+                           <FrontEnd.AST.ProgramF ()>_N)
+                        FrontEnd.SemanticAnalyzer.analyzeAST5 of wild {
+                   Data.Either.Left l
+                   -> case GHC.IO.Handle.Text.hPutStr2
+                             GHC.IO.Handle.FD.stdout
+                             FrontEnd.SemanticAnalyzer.analyzeAST4
+                             GHC.Types.True
+                             ipv of ds2 { (#,#) ipv2 ipv3 ->
+                      case System.Exit.exitWith1
+                             @ (FrontEnd.AST.ProgramF ())
+                             FrontEnd.SemanticAnalyzer.analyzeAST2
+                             ipv2
+                      ret_ty (# GHC.Prim.State# GHC.Prim.RealWorld, [BackEnd.IR.Stm] #)
+                      of {} }
+                   Data.Either.Right r
+                   -> (# ipv,
+                         let {
+                           ds :: Data.Functor.Identity.Identity
+                                   (BackEnd.IR.Stm, BackEnd.Translate.TranslateState)
+                           = case r of wild1 { (,) a1 ds2 ->
+                             case a1 of ww11 { FrontEnd.AST.Ann ww12 ww13 ->
+                             case ww12 of ww14 { FrontEnd.AST.Program ww15 ww16 ->
+                             case BackEnd.Translate.$wtranslateProgramF
+                                    ww15
+                                    ww16
+                                    BackEnd.Translate.newTranslateState of ww17 { (#,#) ww18 ww19 ->
+                             (ww18, ww19)
+                               `cast`
+                             (Sym (Data.Functor.Identity.N:Identity[0]
+                                       <(BackEnd.IR.Stm,
+                                         BackEnd.Translate.TranslateState)>_R)) } } } }
+                         } in
+                         let {
+                           ds2 :: BackEnd.Translate.TranslateState
+                           = case ds
+                                    `cast`
+                                  (Data.Functor.Identity.N:Identity[0]
+                                       <(BackEnd.IR.Stm,
+                                         BackEnd.Translate.TranslateState)>_R) of wild1 { (,) a1 s' ->
+                             s' }
+                         } in
+                         case ((BackEnd.Canon.transform
+                                  (case ds
+                                          `cast`
+                                        (Data.Functor.Identity.N:Identity[0]
+                                             <(BackEnd.IR.Stm,
+                                               BackEnd.Translate.TranslateState)>_R) of wild1 { (,) a1 s' ->
+                                   BackEnd.IR.cleanStm a1 }))
+                                 `cast`
+                               (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                                    <BackEnd.Canon.CanonState>_N
+                                    <Data.Functor.Identity.Identity>_R
+                                    <[BackEnd.IR.Stm]>_N)
+                                 (BackEnd.Canon.CanonState
+                                    (BackEnd.Translate.tempAlloc ds2)
+                                    (BackEnd.Translate.controlLabelAlloc ds2)))
+                                `cast`
+                              (Data.Functor.Identity.N:Identity[0]
+                                   <([BackEnd.IR.Stm],
+                                     BackEnd.Canon.CanonState)>_R) of wild1 { (,) x ds3 ->
+                         x } #) } } } } }) -}
+e1e95e7b87959081ff08d5fa1891850f
+  testDoExp :: BackEnd.IR.Exp -> GHC.Types.IO BackEnd.IR.Exp
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testDoExp1
+                  `cast`
+                (<BackEnd.IR.Exp>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <BackEnd.IR.Exp>_R)) -}
+ab5ac1419ab520691c37e98cd61ed593
+  testDoExp1 ::
+    BackEnd.IR.Exp
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, BackEnd.IR.Exp #)
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: (\ (exp :: BackEnd.IR.Exp)
+                   (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 let {
+                   ds :: (BackEnd.IR.Stm, BackEnd.IR.Exp, BackEnd.Canon.CanonState)
+                   = case ((BackEnd.Canon.doExp exp)
+                             `cast`
+                           (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                                <BackEnd.Canon.CanonState>_N
+                                <Data.Functor.Identity.Identity>_R
+                                <(BackEnd.IR.Stm, BackEnd.IR.Exp)>_N)
+                             BackEnd.Canon.newCanonState)
+                            `cast`
+                          (Data.Functor.Identity.N:Identity[0]
+                               <((BackEnd.IR.Stm, BackEnd.IR.Exp),
+                                 BackEnd.Canon.CanonState)>_R) of wild { (,) ds1 s ->
+                     case ds1 of wild1 { (,) stm exp' -> (stm, exp', s) } }
+                 } in
+                 (# eta1,
+                    BackEnd.IR.ESEQ
+                      (case ds of ds1 { (,,) stm exp' s -> stm })
+                      (case ds of ds1 { (,,) stm exp' s -> exp' }) #)) -}
+1470a7c5b9cde54c96dacc5b043dca78
+  testDoStm :: BackEnd.IR.Stm -> GHC.Types.IO BackEnd.IR.Stm
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testDoStm1
+                  `cast`
+                (<BackEnd.IR.Stm>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <BackEnd.IR.Stm>_R)) -}
+a6126c8666e145a52c575eb6b09a486f
+  testDoStm1 ::
+    BackEnd.IR.Stm
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, BackEnd.IR.Stm #)
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (stm :: BackEnd.IR.Stm)
+                   (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 (# eta1,
+                    case ((BackEnd.Canon.doStm stm)
+                            `cast`
+                          (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                               <BackEnd.Canon.CanonState>_N
+                               <Data.Functor.Identity.Identity>_R
+                               <BackEnd.IR.Stm>_N)
+                            BackEnd.Canon.newCanonState)
+                           `cast`
+                         (Data.Functor.Identity.N:Identity[0]
+                              <(BackEnd.IR.Stm,
+                                BackEnd.Canon.CanonState)>_R) of wild { (,) stm' s ->
+                    stm' } #)) -}
+8d2e0e0d877cf15d3a642b0af10dbd19
+  testESEQ1 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ
+                   BackEnd.IR.NOP
+                   BackEnd.Canon.testESEQ7) -}
+6660d3431860c8264a1a317ea9da7bb9
+  testESEQ10 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 5#) -}
+fac1eb2fbeb79a9f00528ca826aac89c
+  testESEQ11 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ
+                   BackEnd.Canon.s1
+                   BackEnd.Canon.testESEQ12) -}
+49407b401d4d9186ed4233f025c92be5
+  testESEQ12 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.testESEQ13) -}
+8f7f668b258602a8fe805841b556a272
+  testESEQ13 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 3#) -}
+565f54eeb61c1a595631cce171970ade
+  testESEQ14 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ
+                   BackEnd.Canon.testESEQ17
+                   BackEnd.Canon.testESEQ15) -}
+5a6644f947f7dfe6753207c582e8404b
+  testESEQ15 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.testESEQ16) -}
+54312ae5947713d18d7f37e6d847b76c
+  testESEQ16 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 79#) -}
+5de499215e73796af37cb5daef58277e
+  testESEQ17 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.testESEQ20
+                   BackEnd.Canon.testESEQ18) -}
+51d875f2d039b0805e6b2a6671e3601e
+  testESEQ18 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m4,
+     Unfolding: (BackEnd.IR.TEMP BackEnd.Canon.testESEQ19) -}
+f68b122aab47f99dd667c9d912ea53d7
+  testESEQ19 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 90#) -}
+edcf47029ac767b81900b8b0651c6e21
+  testESEQ2 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ
+                   BackEnd.IR.NOP
+                   BackEnd.Canon.testESEQ8) -}
+a783d9ed9a9f2c9b0342ac6b493f2362
+  testESEQ20 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m4,
+     Unfolding: (BackEnd.IR.TEMP BackEnd.Canon.testESEQ21) -}
+0a05fc06745a5fc0424ec211131f9dc2
+  testESEQ21 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 23#) -}
+09b7769fabfbe0dc39efd4de391e422c
+  testESEQ22 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testESEQ23) -}
+cb813408af411aa47d0225773dad8541
+  testESEQ23 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.testESEQ24) -}
+02b630b0b0b8e2e54683ea33e72821c0
+  testESEQ24 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 29#) -}
+48df27e0d8a691bad8b5391cb163c73f
+  testESEQ25 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m6,
+     Unfolding: (BackEnd.IR.MEM BackEnd.Canon.testESEQ26) -}
+8eb299ff2a9c3daa2018086249a46cd4
+  testESEQ26 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.testESEQ21) -}
+fa2a474373823e374be15664e67cee3a
+  testESEQ3 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.BINEXP
+                   BackEnd.IR.PLUS
+                   BackEnd.Canon.testESEQ11
+                   BackEnd.Canon.testESEQ9) -}
+a3426b24edba2236846a060371181b17
+  testESEQ4 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.BINEXP
+                   BackEnd.IR.PLUS
+                   BackEnd.Canon.e1
+                   BackEnd.Canon.testESEQ14) -}
+082780e0ba094cced3528f08adac7ecc
+  testESEQ5 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.BINEXP
+                   BackEnd.IR.PLUS
+                   BackEnd.Canon.testESEQ25
+                   BackEnd.Canon.testESEQ22) -}
+79f021c67f52df138b4ecc137cf1da43
+  testESEQ7 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ BackEnd.IR.NOP BackEnd.Canon.e1) -}
+fc18393c8621108a7b17f1cb6e5b2164
+  testESEQ8 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ BackEnd.Canon.s1 BackEnd.Canon.e1) -}
+c0b93f23d4cad48386ea320f580d5fd1
+  testESEQ9 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.testESEQ10) -}
+9cfe2656899c2ea346a34bbb3d279e2d
+  testLinear1 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.SEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testLinear11) -}
+c56991d1436e9c6ed1007a03c19e8634
+  testLinear11 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV BackEnd.Canon.t0 BackEnd.Canon.t2) -}
+fc68abb166f3a52e1e96a3dc36533eb3
+  testLinear12 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t0
+                   BackEnd.Canon.testLinear13) -}
+2389864ca7ad3174e343276f22578641
+  testLinear13 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.e1) -}
+d97f22d5a8fa6e1829e7700d9a440004
+  testLinear14 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t0
+                   BackEnd.Canon.testLinear15) -}
+e8fdebe16ef51555bcb1caa23805569a
+  testLinear15 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m8,
+     Unfolding: (BackEnd.IR.ESEQ
+                   BackEnd.Canon.testLinear16
+                   BackEnd.Canon.t2) -}
+5bc77ed87350810c5d1b86f8675d33ab
+  testLinear16 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV BackEnd.Canon.t2 BackEnd.Canon.e1) -}
+971ba61d1a5111c852629c61fd238f5e
+  testLinear17 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t0
+                   BackEnd.Canon.testESEQ3) -}
+535face048ac516f92b3768200ae1897
+  testLinear18 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t0
+                   BackEnd.Canon.testESEQ4) -}
+1375c08264e0b16d760ea41166bba0dd
+  testLinear19 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t0
+                   BackEnd.Canon.testESEQ5) -}
+d415b15f9be76c6f33d7799c24f971dd
+  testLinear2 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.SEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testLinear12) -}
+79d7705ef12b0fcc3b56ba053a749cd4
+  testLinear20 :: BackEnd.IR.Exp
+  {- Strictness: m7,
+     Unfolding: (BackEnd.IR.CALL
+                   BackEnd.Canon.testLinear21
+                   (GHC.Types.[] @ BackEnd.IR.Exp)) -}
+9fc79a4d9e636c2c5b34eff658b4424d
+  testLinear21 :: BackEnd.IR.Exp
+  {- Strictness: m3,
+     Unfolding: (BackEnd.IR.NAME BackEnd.Canon.testLinear22) -}
+cc2b27edcad8703b7f9f713d8ec49431
+  testLinear22 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "function"#) -}
+26ba40e9298875109df3bb665610ddc1
+  testLinear23 :: BackEnd.IR.Exp
+  {- Strictness: m7,
+     Unfolding: (BackEnd.IR.CALL
+                   BackEnd.Canon.testLinear21
+                   BackEnd.Canon.testLinear24) -}
+98b047cf12438ec359adc4ecc23f6371
+  testLinear24 :: [BackEnd.IR.Exp]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Exp
+                   BackEnd.Canon.e1
+                   BackEnd.Canon.testLinear25) -}
+8bd4ac8369553659a4d3b25a84bc477f
+  testLinear25 :: [BackEnd.IR.Exp]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Exp
+                   BackEnd.Canon.testLinear26
+                   (GHC.Types.[] @ BackEnd.IR.Exp)) -}
+8cb8c4cd9789db4db09328d6f8db2645
+  testLinear26 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.IR.CONSTI BackEnd.Canon.testLinear27) -}
+3cd56e2996e50f9baa72f8f5afb512e5
+  testLinear27 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 45#) -}
+4b0c14944bbb8bff828c57d823803763
+  testLinear28 :: BackEnd.IR.Exp
+  {- Strictness: m7,
+     Unfolding: (BackEnd.IR.CALL
+                   BackEnd.Canon.testLinear21
+                   BackEnd.Canon.testLinear29) -}
+e1a5a607d07d360549867d2db44c92ef
+  testLinear29 :: [BackEnd.IR.Exp]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Exp
+                   BackEnd.Canon.testLinear30
+                   (GHC.Types.[] @ BackEnd.IR.Exp)) -}
+3edaa134080ed384fdbfff04cde98059
+  testLinear3 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.SEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testLinear14) -}
+59acbff7022f3f55f5b0db359dbcefe6
+  testLinear30 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m6,
+     Unfolding: (BackEnd.IR.MEM BackEnd.Canon.testLinear31) -}
+ef53642ca437e1a0f67ee8ac413b409d
+  testLinear31 :: BackEnd.IR.Exp
+  {- HasNoCafRefs, Strictness: m4,
+     Unfolding: (BackEnd.IR.TEMP BackEnd.Canon.testLinear32) -}
+aa1e75d9079162f57a8217545186aad0
+  testLinear32 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 13#) -}
+c343b06e894d7b5afeeab2d51b693f00
+  testLinear4 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.SEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testLinear17) -}
+d0cb3ef5db3653518f891f1167599942
+  testLinear5 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.SEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testLinear18) -}
+ae51ca3b726b6c11f2942bb8d8a5ab05
+  testLinear6 :: BackEnd.IR.Stm
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.IR.SEQ
+                   BackEnd.Canon.testBasicBlocks12
+                   BackEnd.Canon.testLinear19) -}
+aa9ece867134f49814763548735753a6
+  testLinear7 :: BackEnd.IR.Stm
+  {- Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t0
+                   BackEnd.Canon.testLinear20) -}
+bee7a40f74284f0790a305d55107c6ca
+  testLinear8 :: BackEnd.IR.Stm
+  {- Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t1
+                   BackEnd.Canon.testLinear23) -}
+357a0891ecd2c954321de08a72eb46fa
+  testLinear9 :: BackEnd.IR.Stm
+  {- Strictness: m1,
+     Unfolding: (BackEnd.IR.MOV
+                   BackEnd.Canon.t0
+                   BackEnd.Canon.testLinear28) -}
+1a961bfb3bb501769722125e6b3973d1
+  testLinearize :: BackEnd.IR.Stm -> GHC.Types.IO [BackEnd.IR.Stm]
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testLinearize1
+                  `cast`
+                (<BackEnd.IR.Stm>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <[BackEnd.IR.Stm]>_R)) -}
+1b0cdbcc9365ce768c69dbb2c6a7a486
+  testLinearize1 ::
+    BackEnd.IR.Stm
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, [BackEnd.IR.Stm] #)
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: (\ (stm :: BackEnd.IR.Stm)
+                   (s :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 (# s,
+                    case ((BackEnd.Canon.doStm stm)
+                            `cast`
+                          (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                               <BackEnd.Canon.CanonState>_N
+                               <Data.Functor.Identity.Identity>_R
+                               <BackEnd.IR.Stm>_N)
+                            BackEnd.Canon.newCanonState)
+                           `cast`
+                         (Data.Functor.Identity.N:Identity[0]
+                              <(BackEnd.IR.Stm,
+                                BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                    case BackEnd.Canon.$wlinear
+                           a1
+                           (GHC.Types.[] @ BackEnd.IR.Stm) of ww { (#,#) ww1 ww2 ->
+                    GHC.List.filter
+                      @ BackEnd.IR.Stm
+                      BackEnd.Canon.linearize1
+                      (GHC.List.filter
+                         @ BackEnd.IR.Stm
+                         BackEnd.Canon.linearize1
+                         (GHC.Types.: @ BackEnd.IR.Stm ww1 ww2)) } } #)) -}
+f870ab655d46070441208891cb0ce9ec
+  testLinearizeFile ::
+    GHC.Base.String -> GHC.Types.IO [BackEnd.IR.Stm]
+  {- Arity: 2, Strictness: <L,U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                BackEnd.Canon.testLinearizeFile1
+                  `cast`
+                (<GHC.Base.String>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <[BackEnd.IR.Stm]>_R)) -}
+29b5e743d7a6dc1f0d51bbaefa6c2681
+  testLinearizeFile1 ::
+    GHC.Base.String
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, [BackEnd.IR.Stm] #)
+  {- Arity: 2, Strictness: <L,U><S,U>,
+     Unfolding: (\ (file :: GHC.Base.String)
+                   (eta1 :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 case FrontEnd.Parser.parseFile1
+                        file
+                        eta1 of ds1 { (#,#) ipv ipv1 ->
+                 case ipv1 of ww { FrontEnd.AST.Ann ww1 ww2 ->
+                 case ww1 of ww3 { FrontEnd.AST.Program ww4 ww5 ->
+                 case ww2 of ww6 { (,) ww7 ww8 ->
+                 case (FrontEnd.SemanticAnalyzer.$wanalyzeProgramF ww4 ww5 ww7 ww8)
+                        `cast`
+                      (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <FrontEnd.SemanticAnalyzer.AnalysisState>_N
+                           <Data.Either.Either GHC.Base.String>_R
+                           <FrontEnd.AST.ProgramF ()>_N)
+                        FrontEnd.SemanticAnalyzer.analyzeAST5 of wild {
+                   Data.Either.Left l
+                   -> case GHC.IO.Handle.Text.hPutStr2
+                             GHC.IO.Handle.FD.stdout
+                             FrontEnd.SemanticAnalyzer.analyzeAST4
+                             GHC.Types.True
+                             ipv of ds2 { (#,#) ipv2 ipv3 ->
+                      case System.Exit.exitWith1
+                             @ (FrontEnd.AST.ProgramF ())
+                             FrontEnd.SemanticAnalyzer.analyzeAST2
+                             ipv2
+                      ret_ty (# GHC.Prim.State# GHC.Prim.RealWorld, [BackEnd.IR.Stm] #)
+                      of {} }
+                   Data.Either.Right r
+                   -> (# ipv,
+                         case r of wild1 { (,) a1 ds2 ->
+                         case a1 of ww11 { FrontEnd.AST.Ann ww12 ww13 ->
+                         case ww12 of ww14 { FrontEnd.AST.Program ww15 ww16 ->
+                         case BackEnd.Translate.$wtranslateProgramF
+                                ww15
+                                ww16
+                                BackEnd.Translate.newTranslateState of ww17 { (#,#) ww18 ww19 ->
+                         case ((BackEnd.Canon.doStm (BackEnd.IR.cleanStm ww18))
+                                 `cast`
+                               (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                                    <BackEnd.Canon.CanonState>_N
+                                    <Data.Functor.Identity.Identity>_R
+                                    <BackEnd.IR.Stm>_N)
+                                 (BackEnd.Canon.CanonState
+                                    (BackEnd.Translate.tempAlloc ww19)
+                                    (BackEnd.Translate.controlLabelAlloc ww19)))
+                                `cast`
+                              (Data.Functor.Identity.N:Identity[0]
+                                   <(BackEnd.IR.Stm,
+                                     BackEnd.Canon.CanonState)>_R) of wild2 { (,) a2 s' ->
+                         case BackEnd.Canon.$wlinear
+                                a2
+                                (GHC.Types.[] @ BackEnd.IR.Stm) of ww20 { (#,#) ww21 ww22 ->
+                         GHC.List.filter
+                           @ BackEnd.IR.Stm
+                           BackEnd.Canon.linearize1
+                           (GHC.Types.:
+                              @ BackEnd.IR.Stm
+                              ww21
+                              ww22) } } } } } } #) } } } } }) -}
+1a97dbb7ecf59a0e3355f08b545c1fbb
+  testTraceSchedule1 :: [[BackEnd.IR.Stm]]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ [BackEnd.IR.Stm]
+                   BackEnd.Canon.testTraceSchedule4
+                   BackEnd.Canon.testTraceSchedule2) -}
+1d4aa88955a27959538743cfb0710f35
+  testTraceSchedule2 :: [[BackEnd.IR.Stm]]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ [BackEnd.IR.Stm]
+                   BackEnd.Canon.testTraceSchedule3
+                   (GHC.Types.[] @ [BackEnd.IR.Stm])) -}
+a348d0597f43fd470148ad9ef399212d
+  testTraceSchedule3 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks20
+                   BackEnd.Canon.testBasicBlocks17) -}
+c9b20696b2408873160698db7ac9b56e
+  testTraceSchedule4 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.Canon.testBasicBlocks13
+                   BackEnd.Canon.testTraceSchedule5) -}
+f12a6f63ca9b03552a5a5c5608b7fb78
+  testTraceSchedule5 :: [BackEnd.IR.Stm]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.IR.Stm
+                   BackEnd.IR.NOP
+                   BackEnd.Canon.testBasicBlocks17) -}
+c7583aa5fdc4b804eb6813f7931c14fb
+  traceSchedule :: [[BackEnd.IR.Stm]] -> [BackEnd.IR.Stm]
+  {- Arity: 1, Strictness: <S,U>,
+     Unfolding: (\ (blocks :: [[BackEnd.IR.Stm]]) ->
+                 BackEnd.Canon.traceSchedule_traceSchedule'
+                   blocks
+                   (BackEnd.Canon.traceSchedule_go
+                      blocks
+                      (Data.IntMap.Base.Nil
+                         @ (Data.HashMap.Some BackEnd.Temp.Label [BackEnd.IR.Stm]))
+                        `cast`
+                      (Sym (Data.HashMap.N:Map[0]
+                                <BackEnd.Temp.Label>_N <[BackEnd.IR.Stm]>_R)))
+                   (Data.IntMap.Base.Nil
+                      @ (Data.HashMap.Some BackEnd.Temp.Label GHC.Integer.Type.Integer))
+                     `cast`
+                   (Sym (Data.HashMap.N:Map[0]
+                             <BackEnd.Temp.Label>_N <GHC.Integer.Type.Integer>_R))) -}
+3d5354dde65123d9ff4a808e3ab762a7
+  traceSchedule' ::
+    GHC.Num.Num a =>
+    [[BackEnd.IR.Stm]]
+    -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label a
+    -> [BackEnd.IR.Stm]
+  {- Arity: 4,
+     Strictness: <L,U(A,A,A,A,A,A,C(U))><S,1*U><L,U><L,1*U>,
+     Unfolding: (\ @ a
+                   ($dNum :: GHC.Num.Num a)
+                   (eta1 :: [[BackEnd.IR.Stm]])
+                   (eta2 :: Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm])
+                   (eta3 :: Data.HashMap.Map BackEnd.Temp.Label a) ->
+                 letrec {
+                   traceSchedule'1 :: [[BackEnd.IR.Stm]]
+                                      -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+                                      -> Data.HashMap.Map BackEnd.Temp.Label a
+                                      -> [BackEnd.IR.Stm]
+                     {- Arity: 3, Strictness: <S,1*U><L,U><L,1*U> -}
+                   = \ (ds :: [[BackEnd.IR.Stm]])
+                       (ds1 :: Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm])
+                       (ds2 :: Data.HashMap.Map BackEnd.Temp.Label a) ->
+                     case ds of wild {
+                       [] -> GHC.Types.[] @ BackEnd.IR.Stm
+                       : block rest
+                       -> case BackEnd.Canon.$wtraceSchedule''
+                                 @ a
+                                 $dNum
+                                 block
+                                 ds1
+                                 ds2 of ww { (#,#) ww1 ww2 ->
+                          GHC.Base.++
+                            @ BackEnd.IR.Stm
+                            ww1
+                            (traceSchedule'1
+                               (GHC.List.filter
+                                  @ [BackEnd.IR.Stm]
+                                  (\ (b :: [BackEnd.IR.Stm]) ->
+                                   case b of wild1 {
+                                     [] -> case BackEnd.Canon.bLabel1 ret_ty GHC.Types.Bool of {}
+                                     : ds3 ds4
+                                     -> case ds3 of wild2 {
+                                          DEFAULT
+                                          -> case BackEnd.Canon.bLabel1 ret_ty GHC.Types.Bool of {}
+                                          BackEnd.IR.LABEL label
+                                          -> case Data.Hashable.Class.$w$cliftHashWithSalt
+                                                    @ GHC.Types.Char
+                                                    Data.Hashable.Class.$fHashableChar_$chashWithSalt
+                                                    -2578643520546668380#
+                                                    label of ww3 { DEFAULT ->
+                                             case Data.IntMap.Base.$wlookup
+                                                    @ (Data.HashMap.Some BackEnd.Temp.Label a)
+                                                    ww3
+                                                    ww2
+                                                      `cast`
+                                                    (Data.HashMap.N:Map[0]
+                                                         <BackEnd.Temp.Label>_N <a>_R) of wild3 {
+                                               GHC.Base.Nothing -> GHC.Types.True
+                                               GHC.Base.Just x
+                                               -> case x of wild4 {
+                                                    Data.HashMap.Only k' x1
+                                                    -> case GHC.Classes.$fOrd[]_$s$ccompare1
+                                                              label
+                                                              k' of wild5 {
+                                                         DEFAULT -> GHC.Types.True
+                                                         GHC.Types.EQ -> GHC.Types.False }
+                                                    Data.HashMap.More s
+                                                    -> case Data.Map.Base.lookup
+                                                              @ BackEnd.Temp.Label
+                                                              @ a
+                                                              GHC.Classes.$fOrd[]_$s$fOrd[]1
+                                                              label
+                                                              s of wild5 {
+                                                         GHC.Base.Nothing -> GHC.Types.True
+                                                         GHC.Base.Just ds5
+                                                         -> GHC.Types.False } } } } } })
+                                  rest)
+                               ds1
+                               ww2) } }
+                 } in
+                 traceSchedule'1 eta1 eta2 eta3) -}
+576ed3b09204d14679112b043c18f7fb
+  traceSchedule'' ::
+    GHC.Num.Num a =>
+    [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label a
+    -> ([BackEnd.IR.Stm], Data.HashMap.Map BackEnd.Temp.Label a)
+  {- Arity: 4,
+     Strictness: <L,1*U(A,A,A,A,A,A,1*C1(U))><S,1*U><L,U><L,1*U>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (4, True, False)
+                (\ @ a
+                   (w :: GHC.Num.Num a)
+                   (w1 :: [BackEnd.IR.Stm])
+                   (w2 :: Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm])
+                   (w3 :: Data.HashMap.Map BackEnd.Temp.Label a) ->
+                 case BackEnd.Canon.$wtraceSchedule''
+                        @ a
+                        w
+                        w1
+                        w2
+                        w3 of ww { (#,#) ww1 ww2 ->
+                 (ww1, ww2) }) -}
+adce674624d38846358f2ea38d406fdf
+  traceSchedule_go ::
+    [[BackEnd.IR.Stm]]
+    -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+  {- Arity: 2, Strictness: <S,1*U><S,1*U> -}
+588eaba1528eaeeed9656c8ea02e734a
+  traceSchedule_traceSchedule' ::
+    [[BackEnd.IR.Stm]]
+    -> Data.HashMap.Map BackEnd.Temp.Label [BackEnd.IR.Stm]
+    -> Data.HashMap.Map BackEnd.Temp.Label GHC.Integer.Type.Integer
+    -> [BackEnd.IR.Stm]
+  {- Arity: 3, Strictness: <S,1*U><L,U><L,1*U> -}
+2b20ca4d56fc1decc2f404c66aed3d45
+  transform ::
+    BackEnd.IR.Stm
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState [BackEnd.IR.Stm]
+  {- Arity: 1, Strictness: <L,1*U>,
+     Unfolding: (\ (stm :: BackEnd.IR.Stm) ->
+                 let {
+                   m2 :: Control.Monad.Trans.State.Lazy.StateT
+                           BackEnd.Canon.CanonState
+                           Data.Functor.Identity.Identity
+                           BackEnd.IR.Stm
+                   = BackEnd.Canon.doStm stm
+                 } in
+                 (\ (s4 :: BackEnd.Canon.CanonState) ->
+                  let {
+                    ds :: Data.Functor.Identity.Identity
+                            (([[BackEnd.IR.Stm]], BackEnd.Temp.Label),
+                             BackEnd.Canon.CanonState)
+                    = case (m2
+                              `cast`
+                            (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                                 <BackEnd.Canon.CanonState>_N
+                                 <Data.Functor.Identity.Identity>_R
+                                 <BackEnd.IR.Stm>_N)
+                              s4)
+                             `cast`
+                           (Data.Functor.Identity.N:Identity[0]
+                                <(BackEnd.IR.Stm,
+                                  BackEnd.Canon.CanonState)>_R) of ww { (,) ww1 ww2 ->
+                      case BackEnd.Canon.$wlinear
+                             ww1
+                             (GHC.Types.[] @ BackEnd.IR.Stm) of ww3 { (#,#) ww4 ww5 ->
+                      (BackEnd.Canon.basicBlocks
+                         (GHC.List.filter
+                            @ BackEnd.IR.Stm
+                            BackEnd.Canon.linearize1
+                            (GHC.Types.: @ BackEnd.IR.Stm ww4 ww5)))
+                        `cast`
+                      (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <BackEnd.Canon.CanonState>_N
+                           <Data.Functor.Identity.Identity>_R
+                           <([[BackEnd.IR.Stm]], BackEnd.Temp.Label)>_N)
+                        ww2 } }
+                  } in
+                  (case ds
+                          `cast`
+                        (Data.Functor.Identity.N:Identity[0]
+                             <(([[BackEnd.IR.Stm]], BackEnd.Temp.Label),
+                               BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                   case a1 of wild1 { (,) x ds1 -> BackEnd.Canon.traceSchedule x } },
+                   case ds
+                          `cast`
+                        (Data.Functor.Identity.N:Identity[0]
+                             <(([[BackEnd.IR.Stm]], BackEnd.Temp.Label),
+                               BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                   s' })
+                    `cast`
+                  (Sym (Data.Functor.Identity.N:Identity[0]
+                            <([BackEnd.IR.Stm], BackEnd.Canon.CanonState)>_R)))
+                   `cast`
+                 (Sym (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <BackEnd.Canon.CanonState>_N
+                           <Data.Functor.Identity.Identity>_R
+                           <[BackEnd.IR.Stm]>_N))) -}
+a5d8080e57c17d34abb1f8037bd21589
+  transform' ::
+    BackEnd.IR.Stm
+    -> Control.Monad.Trans.State.Lazy.State
+         BackEnd.Canon.CanonState [[BackEnd.IR.Stm]]
+  {- Arity: 1, Strictness: <L,1*U>,
+     Unfolding: (\ (stm :: BackEnd.IR.Stm) ->
+                 let {
+                   m2 :: Control.Monad.Trans.State.Lazy.StateT
+                           BackEnd.Canon.CanonState
+                           Data.Functor.Identity.Identity
+                           BackEnd.IR.Stm
+                   = BackEnd.Canon.doStm stm
+                 } in
+                 (\ (s4 :: BackEnd.Canon.CanonState) ->
+                  case (m2
+                          `cast`
+                        (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                             <BackEnd.Canon.CanonState>_N
+                             <Data.Functor.Identity.Identity>_R
+                             <BackEnd.IR.Stm>_N)
+                          s4)
+                         `cast`
+                       (Data.Functor.Identity.N:Identity[0]
+                            <(BackEnd.IR.Stm,
+                              BackEnd.Canon.CanonState)>_R) of ww { (,) ww1 ww2 ->
+                  case BackEnd.Canon.$wlinear
+                         ww1
+                         (GHC.Types.[] @ BackEnd.IR.Stm) of ww3 { (#,#) ww4 ww5 ->
+                  case ((BackEnd.Canon.basicBlocks
+                           (GHC.List.filter
+                              @ BackEnd.IR.Stm
+                              BackEnd.Canon.linearize1
+                              (GHC.Types.: @ BackEnd.IR.Stm ww4 ww5)))
+                          `cast`
+                        (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                             <BackEnd.Canon.CanonState>_N
+                             <Data.Functor.Identity.Identity>_R
+                             <([[BackEnd.IR.Stm]], BackEnd.Temp.Label)>_N)
+                          ww2)
+                         `cast`
+                       (Data.Functor.Identity.N:Identity[0]
+                            <(([[BackEnd.IR.Stm]], BackEnd.Temp.Label),
+                              BackEnd.Canon.CanonState)>_R) of wild { (,) a1 s' ->
+                  case a1 of wild1 { (,) stms' ds ->
+                  (stms', s')
+                    `cast`
+                  (Sym (Data.Functor.Identity.N:Identity[0]
+                            <([[BackEnd.IR.Stm]], BackEnd.Canon.CanonState)>_R)) } } } })
+                   `cast`
+                 (Sym (Control.Monad.Trans.State.Lazy.N:StateT[0]
+                           <BackEnd.Canon.CanonState>_N
+                           <Data.Functor.Identity.Identity>_R
+                           <[[BackEnd.IR.Stm]]>_N))) -}
+instance [safe] GHC.Classes.Eq [BackEnd.Canon.CanonState]
+  = BackEnd.Canon.$fEqCanonState
+instance [safe] GHC.Show.Show [BackEnd.Canon.CanonState]
+  = BackEnd.Canon.$fShowCanonState
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

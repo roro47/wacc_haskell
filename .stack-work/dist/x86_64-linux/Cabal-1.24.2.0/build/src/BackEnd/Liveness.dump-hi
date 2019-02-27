@@ -1,0 +1,1129 @@
+
+==================== FINAL INTERFACE ====================
+2019-02-27 09:56:05.908043598 UTC
+
+interface wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Liveness 8002
+  interface hash: 50d49589a01d0214fb1481454d64c006
+  ABI hash: dee7bf553aec99a8be5e144710481909
+  export-list hash: ad698b5df3297cfe49f3630ae169b395
+  orphan hash: ac161d84e94bd5f2726e56bff532f179
+  flag hash: 02b3c746106ad76f793f89ebc1f71840
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  BackEnd.Liveness.arm1
+  BackEnd.Liveness.calcLiveness
+  BackEnd.Liveness.calcLiveness'
+  BackEnd.Liveness.calcLiveness''
+  BackEnd.Liveness.def
+  BackEnd.Liveness.instr
+  BackEnd.Liveness.interferenceGraph
+  BackEnd.Liveness.succ
+  BackEnd.Liveness.testDef1
+  BackEnd.Liveness.testEdges1
+  BackEnd.Liveness.testFlowGraph1
+  BackEnd.Liveness.testLiveness
+  BackEnd.Liveness.testLivenessInstrs1
+  BackEnd.Liveness.testUse1
+  BackEnd.Liveness.use
+  BackEnd.Liveness.IGraph{BackEnd.Liveness.IGraph graph}
+  BackEnd.Liveness.LiveMap
+module dependencies: BackEnd.Assem BackEnd.FlowGraph BackEnd.IR
+                     BackEnd.Instructions BackEnd.MakeGraph BackEnd.Temp
+package dependencies: algebraic-graphs-0.3@algebraic-graphs-0.3-GMNCI0iOPDY8oGrd7FmxLZ
+                      array-0.5.1.1@array-0.5.1.1 base-4.9.1.0
+                      base-compat-0.10.5@base-compat-0.10.5-3zaoBe0vBrBwuLLp8tD2A
+                      binary-0.8.3.0@binary-0.8.3.0
+                      boxes-0.1.5@boxes-0.1.5-6DdHE3jJ0TwE6WTwMdCW4f
+                      bytestring-0.10.8.1@bytestring-0.10.8.1
+                      containers-0.5.7.1@containers-0.5.7.1
+                      deepseq-1.4.2.0@deepseq-1.4.2.0
+                      generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn
+                      ghc-prim-0.5.0.0
+                      hashable-1.2.7.0@hashable-1.2.7.0-3Ov9NDiX2mfFTkc4fiCKfa
+                      hashmap-1.3.3@hashmap-1.3.3-6F5MsgNDasO6fIeStnUOf6
+                      integer-gmp-1.0.0.1
+                      pretty-tree-0.1.0.0@pretty-tree-0.1.0.0-5ldf01HzJj05FtOtje7CSt
+                      split-0.2.3.3@split-0.2.3.3-KPq5EVv6rbi8XHTA0KJd3E
+                      text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+         binary-0.8.3.0@binary-0.8.3.0:Data.Binary.Generic
+         bytestring-0.10.8.1@bytestring-0.10.8.1:Data.ByteString.Builder
+         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+         hashable-1.2.7.0@hashable-1.2.7.0-3Ov9NDiX2mfFTkc4fiCKfa:Data.Hashable.Generic
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Show
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Complex base-4.9.1.0:Data.Either
+                         base-4.9.1.0:Data.Functor.Compose base-4.9.1.0:Data.Functor.Const
+                         base-4.9.1.0:Data.Functor.Identity
+                         base-4.9.1.0:Data.Functor.Product base-4.9.1.0:Data.Functor.Sum
+                         base-4.9.1.0:Data.List.NonEmpty base-4.9.1.0:Data.Monoid
+                         base-4.9.1.0:Data.Semigroup base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:Data.Version base-4.9.1.0:Data.Void
+                         base-4.9.1.0:GHC.Exts base-4.9.1.0:GHC.Generics
+                         base-4.9.1.0:GHC.IO.Exception base-4.9.1.0:GHC.TypeLits
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntMap.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntSet.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Map.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Sequence
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Set.Base
+                         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+                         wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Instructions
+import  -/  algebraic-graphs-0.3@algebraic-graphs-0.3-GMNCI0iOPDY8oGrd7FmxLZ:Algebra.Graph.AdjacencyMap 9c3cc63ba4118d5a8c498c56641d3e52
+import  -/  algebraic-graphs-0.3@algebraic-graphs-0.3-GMNCI0iOPDY8oGrd7FmxLZ:Algebra.Graph.AdjacencyMap.Internal eeb4eb1f6d3b1ced04cfad8445985111
+import  -/  base-4.9.1.0:Data.Foldable 3e0b6967a1da89945d0e2d47266337a2
+import  -/  base-4.9.1.0:GHC.Base c4231c43c07e46080a26bf94094c7aa1
+import  -/  base-4.9.1.0:GHC.List ab8c4e523e6c479c549d3bcd5fc4a439
+import  -/  base-4.9.1.0:GHC.Num 00bfaa7b2f9d6084913c0697a8a49ec8
+import  -/  base-4.9.1.0:GHC.Show a027f5ac24879eaba752f44aa90fe511
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  containers-0.5.7.1@containers-0.5.7.1:Data.Set 3ed2324fd1e757464a8ac2b636a64e5a
+import  -/  containers-0.5.7.1@containers-0.5.7.1:Data.Set.Base 69259e29eb6a13996a202cd7b2dae772
+import  -/  ghc-prim-0.5.0.0:GHC.Classes 0bdf3d057a415ec1b84a7b1994efbe47
+import  -/  hashmap-1.3.3@hashmap-1.3.3-6F5MsgNDasO6fIeStnUOf6:Data.HashMap 21c21e30ca661fd288861556f5a56e8d
+import  -/  BackEnd.Assem 0c2dd4117304a7718bc4adf283ae5e64
+  exports: 4e4b66683d488fa10cb15dfdfb0d7eda
+  IOPER 0614942d7d3e268dd4216142cfc25be0
+  Instr 7e9a983e644f74c95e69c7397c53736a
+  assem b4276578abb049b76c552630d13c0e62
+  dst 012515aa6f33827e26e559f8fe99f8f8
+  jump 8cac39b90464c1c2e917864fce4b17ac
+  src 7743602d68b4708d8dd1ad4396041690
+import  -/  BackEnd.FlowGraph 747b8b437b24c9af1bebae836d754b4b
+  exports: ff14a2b93ea1ff77ba8cddccd0fdae58
+  FlowGraph 3f52d0def1ba30258027078a2a9cec6e
+  control e4c0dc84644c8c16b516d77ecff09cf5
+  def c348439c87efa3f7bc2f88d9cf95e060
+  newFlowGraph 97ed7286203597c6d86edde594487c01
+  nodes be99f6bb0a085e59a2c3d82270711090
+  use 10813a79a025eacf2cff857b268c6d13
+import  -/  BackEnd.Instructions 4d01d75e375ace81049cc56959743d7f
+  exports: 05db9b415662c28923114b34233dccb8
+  AL 71f0108ba9d3f4e47eaac9d6626ee746
+  MC_ f42c1c5adf0f173687370f9cc4271b56
+  MOV 9220b70c7e9f83ae29ae465b4ad0192e
+  R 2879389a0f42cd51af7d0cba327d4812
+  R0 e6cc9e8c06e2cd562610a47a1c0a0449
+import  -/  BackEnd.MakeGraph 6cf1c897a9213eaf47f36b7532b0043b
+  exports: 51fc9dc47cff5cdcf3f5b1de08fd0154
+  instrsToGraph e2ec5a923a1152305f3694b7a836d87c
+import  -/  BackEnd.Temp 0c22f42d627493b2b3f13cd2a3ac5a46
+  exports: ecf0e74365e1a70f2572e5197e175ea3
+  Temp 14024289252e98b781eb5778cbac8848
+4b458c08c07b6c53371854843f61a543
+  $fShowIGraph :: GHC.Show.Show BackEnd.Liveness.IGraph
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Liveness.IGraph
+                  BackEnd.Liveness.$fShowIGraph_$cshowsPrec
+                  BackEnd.Liveness.$fShowIGraph_$cshow
+                  BackEnd.Liveness.$fShowIGraph_$cshowList -}
+4b458c08c07b6c53371854843f61a543
+  $fShowIGraph1 :: BackEnd.Liveness.IGraph -> GHC.Show.ShowS
+  {- Arity: 1,
+     Unfolding: (\ (w :: BackEnd.Liveness.IGraph) ->
+                 case w of ww { BackEnd.Liveness.IGraph ww1 ->
+                 BackEnd.Liveness.$w$cshowsPrec 0# ww1 }) -}
+5df6cd5c76c2392703b0769d846136cc
+  $fShowIGraph2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "}"#) -}
+deff23e5d97105b14290bfdd3d39213b
+  $fShowIGraph3 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "graph = "#) -}
+490769f425964734816e7bcfcd398746
+  $fShowIGraph4 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "IGraph {"#) -}
+bf26892016b32d847a1cb6112e093430
+  $fShowIGraph5 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 0#) -}
+44fbf90d91b482df6ba91a9955f686e6
+  $fShowIGraph6 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.Base.++
+                   @ GHC.Types.Char
+                   BackEnd.Liveness.$fShowIGraph2
+                   (GHC.Types.[] @ GHC.Types.Char)) -}
+4b458c08c07b6c53371854843f61a543
+  $fShowIGraph_$cshow :: BackEnd.Liveness.IGraph -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U(U)>, Inline: INLINE[0],
+     Unfolding: InlineRule (1, True, False)
+                (\ (w :: BackEnd.Liveness.IGraph) ->
+                 case w of ww { BackEnd.Liveness.IGraph ww1 ->
+                 BackEnd.Liveness.$w$cshow ww1 }) -}
+4b458c08c07b6c53371854843f61a543
+  $fShowIGraph_$cshowList ::
+    [BackEnd.Liveness.IGraph] -> GHC.Show.ShowS
+  {- Arity: 2,
+     Unfolding: (GHC.Show.showList__
+                   @ BackEnd.Liveness.IGraph
+                   BackEnd.Liveness.$fShowIGraph1) -}
+4b458c08c07b6c53371854843f61a543
+  $fShowIGraph_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Liveness.IGraph -> GHC.Show.ShowS
+  {- Arity: 2, Strictness: <S(S),1*U(U)><S,1*U(U)>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (2, True, False)
+                (\ (w :: GHC.Types.Int) (w1 :: BackEnd.Liveness.IGraph) ->
+                 case w of ww { GHC.Types.I# ww1 ->
+                 case w1 of ww2 { BackEnd.Liveness.IGraph ww3 ->
+                 BackEnd.Liveness.$w$cshowsPrec ww1 ww3 } }) -}
+c2d412117c3309dde352bb0718474777
+  $s$fEqSet :: GHC.Classes.Eq (Data.Set.Base.Set GHC.Types.Int)
+  {- HasNoCafRefs, Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ (Data.Set.Base.Set GHC.Types.Int)
+                  (Data.Set.Base.$fEqSet_$c== @ GHC.Types.Int GHC.Classes.$fEqInt)
+                  BackEnd.Liveness.$s$fEqSet_$s$fEqSet_$c/= -}
+22209dc57b933f492d4309f18dfa353b
+  $s$fEqSet_$s$fEqSet_$c/= ::
+    Data.Set.Base.Set GHC.Types.Int
+    -> Data.Set.Base.Set GHC.Types.Int -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,U><S,U>,
+     Inline: INLINE (sat-args=2),
+     Unfolding: InlineRule (2, False, False)
+                (\ (x :: Data.Set.Base.Set GHC.Types.Int)
+                   (y :: Data.Set.Base.Set GHC.Types.Int) ->
+                 GHC.Classes.not
+                   (Data.Set.Base.$fEqSet_$c==
+                      @ GHC.Types.Int
+                      GHC.Classes.$fEqInt
+                      x
+                      y)) -}
+21cc9cac37172197b59da13891719d67
+  $sfindWithDefault ::
+    a -> GHC.Types.Int -> Data.Map.Base.Map GHC.Types.Int a -> a
+  {- Arity: 3, HasNoCafRefs, Strictness: <L,U><S,1*U(U)><S,1*U>,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ @ a
+                   (w :: a)
+                   (w1 :: GHC.Types.Int)
+                   (w2 :: Data.Map.Base.Map GHC.Types.Int a) ->
+                 case w1 of ww { GHC.Types.I# ww1 ->
+                 BackEnd.Liveness.$w$sfindWithDefault @ a w ww1 w2 }) -}
+75129350449e13276fc690e703d0837e
+  $sfromList ::
+    [BackEnd.Temp.Temp] -> Data.Set.Base.Set BackEnd.Temp.Temp
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: (\ (ds :: [BackEnd.Temp.Temp]) ->
+                 case ds of wild {
+                   [] -> Data.Set.Base.Tip @ BackEnd.Temp.Temp
+                   : x ds1
+                   -> case ds1 of wild1 {
+                        []
+                        -> case x of dt { GHC.Types.I# ipv ->
+                           Data.Set.Base.Bin
+                             @ BackEnd.Temp.Temp
+                             1#
+                             dt
+                             (Data.Set.Base.Tip @ BackEnd.Temp.Temp)
+                             (Data.Set.Base.Tip @ BackEnd.Temp.Temp) }
+                        : ipv ipv1
+                        -> case x of wild2 { GHC.Types.I# x1 ->
+                           case ipv of wild3 { GHC.Types.I# y ->
+                           case GHC.Prim.tagToEnum#
+                                  @ GHC.Types.Bool
+                                  (GHC.Prim.>=# x1 y) of wild4 {
+                             GHC.Types.False
+                             -> BackEnd.Liveness.$wgo5
+                                  1#
+                                  (Data.Set.Base.Bin
+                                     @ BackEnd.Temp.Temp
+                                     1#
+                                     wild2
+                                     (Data.Set.Base.Tip @ BackEnd.Temp.Temp)
+                                     (Data.Set.Base.Tip @ BackEnd.Temp.Temp))
+                                  wild1
+                             GHC.Types.True
+                             -> BackEnd.Liveness.$sfromList_go5
+                                  (Data.Set.Base.Bin
+                                     @ BackEnd.Temp.Temp
+                                     1#
+                                     wild2
+                                     (Data.Set.Base.Tip @ BackEnd.Temp.Temp)
+                                     (Data.Set.Base.Tip @ BackEnd.Temp.Temp))
+                                  wild1 } } } } }) -}
+5c713765d29722d9b22f0b8bbdf2bd91
+  $sfromList_go5 ::
+    Data.Set.Base.Set BackEnd.Temp.Temp
+    -> [BackEnd.Temp.Temp] -> Data.Set.Base.Set BackEnd.Temp.Temp
+  {- Arity: 2, Strictness: <S,1*U><S,1*U> -}
+632cdc695643816d89eda4473fa2f083
+  $sunions_go5 ::
+    Data.Set.Base.Set BackEnd.Temp.Temp
+    -> [Data.Set.Base.Set BackEnd.Temp.Temp]
+    -> Data.Set.Base.Set BackEnd.Temp.Temp
+  {- Arity: 2, Strictness: <S,1*U><S,1*U> -}
+33cc54799f37a91bf9c195076638453a
+  $tc'IGraph :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   7173434715373617615##
+                   3149897818824102671##
+                   BackEnd.Liveness.$trModule
+                   BackEnd.Liveness.$tc'IGraph1) -}
+213515d0a438433f9708a50bdb41961e
+  $tc'IGraph1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'IGraph"#) -}
+80f3e94bb54663be1c5529bbe3b85893
+  $tcIGraph :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   9908974327894002832##
+                   4290536098138297360##
+                   BackEnd.Liveness.$trModule
+                   BackEnd.Liveness.$tcIGraph1) -}
+283c7910f44dcf2a9b15e8e0636df339
+  $tcIGraph1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "IGraph"#) -}
+4b0ca078eb3ed91e86e1b5a915c7cd11
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   BackEnd.Liveness.$trModule2
+                   BackEnd.Liveness.$trModule1) -}
+52327ccd5a987bca3fb90eed0a8284ef
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "BackEnd.Liveness"#) -}
+79a17801142554b4be10369c7ff90f51
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   "wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"#) -}
+1a8c4ed9a4ffd5ffea24b2e30cbc916c
+  $w$cshow ::
+    Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap GHC.Types.Int
+    -> GHC.Base.String
+  {- Arity: 1, Strictness: <L,U>, Inline: [0],
+     Unfolding: (\ (ww :: Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap
+                            GHC.Types.Int) ->
+                 GHC.Base.++
+                   @ GHC.Types.Char
+                   BackEnd.Liveness.$fShowIGraph4
+                   (GHC.Base.++
+                      @ GHC.Types.Char
+                      BackEnd.Liveness.$fShowIGraph3
+                      (Algebra.Graph.AdjacencyMap.Internal.$fShowAdjacencyMap_$cshowsPrec
+                         @ GHC.Types.Int
+                         GHC.Classes.$fOrdInt
+                         GHC.Show.$fShowInt
+                         BackEnd.Liveness.$fShowIGraph5
+                         ww
+                         BackEnd.Liveness.$fShowIGraph6))) -}
+18fd5635d779313e801ca9230f62ebea
+  $w$cshowsPrec ::
+    GHC.Prim.Int#
+    -> Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap GHC.Types.Int
+    -> GHC.Show.ShowS
+  {- Arity: 2, Strictness: <S,U><L,U>, Inline: [0],
+     Unfolding: (\ (ww :: GHC.Prim.Int#)
+                   (ww1 :: Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap
+                             GHC.Types.Int) ->
+                 let {
+                   f :: GHC.Base.String -> GHC.Base.String
+                   = Algebra.Graph.AdjacencyMap.Internal.$fShowAdjacencyMap_$cshowsPrec
+                       @ GHC.Types.Int
+                       GHC.Classes.$fOrdInt
+                       GHC.Show.$fShowInt
+                       BackEnd.Liveness.$fShowIGraph5
+                       ww1
+                 } in
+                 let {
+                   p :: GHC.Show.ShowS {- Arity: 1, Strictness: <L,1*U> -}
+                   = \ (x :: GHC.Base.String) ->
+                     GHC.Base.++
+                       @ GHC.Types.Char
+                       BackEnd.Liveness.$fShowIGraph4
+                       (GHC.Base.++
+                          @ GHC.Types.Char
+                          BackEnd.Liveness.$fShowIGraph3
+                          (f (GHC.Base.++
+                                @ GHC.Types.Char
+                                BackEnd.Liveness.$fShowIGraph2
+                                x)))
+                 } in
+                 case GHC.Prim.tagToEnum#
+                        @ GHC.Types.Bool
+                        (GHC.Prim.>=# ww 11#) of wild {
+                   GHC.Types.False -> p
+                   GHC.Types.True
+                   -> \ (x :: GHC.Base.String) ->
+                      GHC.Types.:
+                        @ GHC.Types.Char
+                        GHC.Show.shows7
+                        (p (GHC.Types.: @ GHC.Types.Char GHC.Show.shows4 x)) }) -}
+ca6a6b86b374426331421c30437dc8e0
+  $w$sfindWithDefault ::
+    a -> GHC.Prim.Int# -> Data.Map.Base.Map GHC.Types.Int a -> a
+  {- Arity: 3, HasNoCafRefs, Strictness: <L,U><L,U><S,1*U>,
+     Inline: [0],
+     Unfolding: (\ @ a
+                   (w :: a)
+                   (ww :: GHC.Prim.Int#)
+                   (w1 :: Data.Map.Base.Map GHC.Types.Int a) ->
+                 letrec {
+                   go4 :: Data.Map.Base.Map GHC.Types.Int a -> a
+                     {- Arity: 1, Strictness: <S,1*U> -}
+                   = \ (ds :: Data.Map.Base.Map GHC.Types.Int a) ->
+                     case ds of wild {
+                       Data.Map.Base.Bin dt kx x l r
+                       -> case kx of wild1 { GHC.Types.I# y# ->
+                          case GHC.Prim.tagToEnum#
+                                 @ GHC.Types.Bool
+                                 (GHC.Prim.<# ww y#) of wild2 {
+                            GHC.Types.False
+                            -> case GHC.Prim.tagToEnum#
+                                      @ GHC.Types.Bool
+                                      (GHC.Prim.==# ww y#) of wild3 {
+                                 GHC.Types.False -> go4 r GHC.Types.True -> x }
+                            GHC.Types.True -> go4 l } }
+                       Data.Map.Base.Tip -> w }
+                 } in
+                 go4 w1) -}
+1575a3927060472ad7d8eee6a44b2fbc
+  $w$sgo5 ::
+    GHC.Prim.Int#
+    -> Data.Set.Base.Set BackEnd.Temp.Temp
+    -> Data.Set.Base.Set BackEnd.Temp.Temp
+  {- Arity: 2, Strictness: <L,U><S,1*U>, Inline: [0] -}
+1c805486cd5282f6e8aaa28fb16e75e5
+  $wcalcLiveness ::
+    BackEnd.FlowGraph.FlowGraph
+    -> [BackEnd.Assem.Instr]
+    -> (# GHC.Types.Int,
+          (BackEnd.Liveness.LiveMap, BackEnd.Liveness.LiveMap) #)
+  {- Arity: 2, Strictness: <L,U(U,U,U,A,A)><S,1*U>, Inline: [0],
+     Unfolding: (\ (w :: BackEnd.FlowGraph.FlowGraph)
+                   (w1 :: [BackEnd.Assem.Instr]) ->
+                 case GHC.List.$wlenAcc
+                        @ BackEnd.Assem.Instr
+                        w1
+                        0# of ww2 { DEFAULT ->
+                 let {
+                   nodes :: [GHC.Types.Int]
+                   = GHC.List.reverse1
+                       @ GHC.Types.Int
+                       (GHC.Enum.eftInt 1# ww2)
+                       (GHC.Types.[] @ GHC.Types.Int)
+                 } in
+                 let {
+                   liveIn :: forall a.
+                             Data.HashMap.Map GHC.Types.Int (Data.Set.Base.Set a)
+                   = \ @ a ->
+                     BackEnd.Liveness.calcLiveness1
+                       @ a
+                       nodes
+                       (Data.IntMap.Base.Nil
+                          @ (Data.HashMap.Some GHC.Types.Int (Data.Set.Base.Set a)))
+                         `cast`
+                       (Sym (Data.HashMap.N:Map[0]
+                                 <GHC.Types.Int>_N <Data.Set.Base.Set a>_R))
+                 } in
+                 BackEnd.Liveness.$wcalcLiveness'
+                   nodes
+                   w
+                   BackEnd.Liveness.$fShowIGraph5
+                   (liveIn @ BackEnd.Temp.Temp)
+                   (liveIn @ BackEnd.Temp.Temp) }) -}
+477de071f764f8e972fa74d287898e57
+  $wcalcLiveness' ::
+    [GHC.Types.Int]
+    -> BackEnd.FlowGraph.FlowGraph
+    -> GHC.Types.Int
+    -> BackEnd.Liveness.LiveMap
+    -> BackEnd.Liveness.LiveMap
+    -> (# GHC.Types.Int,
+          (BackEnd.Liveness.LiveMap, BackEnd.Liveness.LiveMap) #)
+  {- Arity: 5, Strictness: <S,U><L,U(U,U,U,A,A)><L,U(U)><S,U><L,U>,
+     Inline: [0] -}
+d182e3f630940088a35f025afb132cd4
+  $wcalcLiveness'' ::
+    [GHC.Types.Int]
+    -> BackEnd.FlowGraph.FlowGraph
+    -> BackEnd.Liveness.LiveMap
+    -> BackEnd.Liveness.LiveMap
+    -> (# BackEnd.Liveness.LiveMap, BackEnd.Liveness.LiveMap #)
+  {- Arity: 4, Strictness: <S,1*U><L,U(U,U,U,A,A)><L,U><L,U>,
+     Inline: [0] -}
+83bb679e4fd02a0044dcef1354e26a12
+  $wgo5 ::
+    GHC.Prim.Int#
+    -> Data.Set.Base.Set BackEnd.Temp.Temp
+    -> [BackEnd.Temp.Temp]
+    -> Data.Set.Base.Set BackEnd.Temp.Temp
+  {- Arity: 3, Strictness: <L,U><S,1*U><S,1*U>, Inline: [0] -}
+0ca431e51235300131de8cfbd7177b20
+  $winterferenceGraph ::
+    BackEnd.FlowGraph.FlowGraph
+    -> BackEnd.Liveness.LiveMap
+    -> (# Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap
+            GHC.Types.Int #)
+  {- Arity: 2, Strictness: <L,1*U(A,U,A,1*U,A)><L,U>, Inline: [0],
+     Unfolding: (\ (w :: BackEnd.FlowGraph.FlowGraph)
+                   (w1 :: BackEnd.Liveness.LiveMap) ->
+                 (# case w of wild { BackEnd.FlowGraph.FlowGraph ds1 ds2 ds3 ds4 ds5 ->
+                    letrec {
+                      go :: [GHC.Types.Int]
+                            -> Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap
+                                 BackEnd.Temp.Temp
+                            -> Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap
+                                 BackEnd.Temp.Temp
+                        {- Arity: 2, Strictness: <S,1*U><S,1*U> -}
+                      = \ (ds :: [GHC.Types.Int])
+                          (eta :: Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap
+                                    BackEnd.Temp.Temp) ->
+                        case ds of wild1 {
+                          [] -> eta
+                          : y ys
+                          -> let {
+                               lvl2 :: [BackEnd.Temp.Temp]
+                               = Data.Set.Base.$fDataSet1
+                                   @ GHC.Types.Int
+                                   (GHC.Types.[] @ GHC.Types.Int)
+                                   (Data.HashMap.!
+                                      @ GHC.Types.Int
+                                      @ (Data.Set.Base.Set BackEnd.Temp.Temp)
+                                      Data.Hashable.Class.$fHashableInt
+                                      GHC.Classes.$fOrdInt
+                                      w1
+                                      y)
+                             } in
+                             letrec {
+                               go1 :: [BackEnd.Temp.Temp]
+                                      -> [(BackEnd.Temp.Temp, Data.Set.Base.Set BackEnd.Temp.Temp)]
+                                 {- Arity: 1, Strictness: <S,1*U> -}
+                               = \ (ds7 :: [BackEnd.Temp.Temp]) ->
+                                 case ds7 of wild2 {
+                                   []
+                                   -> GHC.Types.[]
+                                        @ (BackEnd.Temp.Temp, Data.Set.Base.Set BackEnd.Temp.Temp)
+                                   : y1 ys1
+                                   -> let {
+                                        z :: [(BackEnd.Temp.Temp,
+                                               Data.Set.Base.Set BackEnd.Temp.Temp)]
+                                        = go1 ys1
+                                      } in
+                                      letrec {
+                                        go2 :: [BackEnd.Temp.Temp]
+                                               -> [(BackEnd.Temp.Temp,
+                                                    Data.Set.Base.Set BackEnd.Temp.Temp)]
+                                          {- Arity: 1, Strictness: <S,1*U> -}
+                                        = \ (ds8 :: [BackEnd.Temp.Temp]) ->
+                                          case ds8 of wild3 {
+                                            [] -> z
+                                            : y2 ys2
+                                            -> GHC.Types.:
+                                                 @ (BackEnd.Temp.Temp,
+                                                    Data.Set.Base.Set BackEnd.Temp.Temp)
+                                                 (y1,
+                                                  Data.Set.Base.singleton @ BackEnd.Temp.Temp y2)
+                                                 (go2 ys2) }
+                                      } in
+                                      go2 lvl2 }
+                             } in
+                             go
+                               ys
+                               (Algebra.Graph.AdjacencyMap.overlay1
+                                  @ BackEnd.Temp.Temp
+                                  GHC.Classes.$fOrdInt
+                                  (Algebra.Graph.AdjacencyMap.path2
+                                     @ BackEnd.Temp.Temp
+                                     GHC.Classes.$fOrdInt
+                                     (go1
+                                        (Data.HashMap.!
+                                           @ GHC.Types.Int
+                                           @ [BackEnd.Temp.Temp]
+                                           Data.Hashable.Class.$fHashableInt
+                                           GHC.Classes.$fOrdInt
+                                           ds2
+                                           y)))
+                                    `cast`
+                                  (Sym (Algebra.Graph.AdjacencyMap.Internal.N:AdjacencyMap[0]
+                                            <BackEnd.Temp.Temp>_N))
+                                  eta)
+                                 `cast`
+                               (Sym (Algebra.Graph.AdjacencyMap.Internal.N:AdjacencyMap[0]
+                                         <BackEnd.Temp.Temp>_N)) }
+                    } in
+                    go
+                      ds4
+                      (Data.Map.Base.Tip
+                         @ BackEnd.Temp.Temp
+                         @ (Data.Set.Base.Set BackEnd.Temp.Temp))
+                        `cast`
+                      (Sym (Algebra.Graph.AdjacencyMap.Internal.N:AdjacencyMap[0]
+                                <BackEnd.Temp.Temp>_N)) } #)) -}
+4b458c08c07b6c53371854843f61a543
+  data IGraph
+    = IGraph {graph :: Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap
+                         GHC.Types.Int}
+5cf371c132fc915173d353f654b6c892
+  type LiveMap =
+    Data.HashMap.Map
+      GHC.Types.Int (Data.Set.Base.Set BackEnd.Temp.Temp)
+ff62df233f5df7ebd2645d2f89ef6f15
+  arm1 :: BackEnd.Instructions.Instr
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.MC_
+                   BackEnd.Liveness.arm3
+                   BackEnd.Instructions.R0
+                   BackEnd.Liveness.arm2) -}
+52083113a0714754aaddaa7ba90531de
+  arm2 :: BackEnd.Instructions.OP
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Instructions.R BackEnd.Instructions.R0) -}
+6a2a33db674125440e06405132049414
+  arm3 :: BackEnd.Instructions.Simple
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.MOV BackEnd.Instructions.AL) -}
+96801bc973d907a8826b7a9f27f9fd83
+  calcLiveness ::
+    BackEnd.FlowGraph.FlowGraph
+    -> [BackEnd.Assem.Instr]
+    -> (GHC.Types.Int,
+        (BackEnd.Liveness.LiveMap, BackEnd.Liveness.LiveMap))
+  {- Arity: 2, Strictness: <L,U(U,U,U,A,A)><S,1*U>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (2, True, False)
+                (\ (w :: BackEnd.FlowGraph.FlowGraph)
+                   (w1 :: [BackEnd.Assem.Instr]) ->
+                 case BackEnd.Liveness.$wcalcLiveness w w1 of ww { (#,#) ww1 ww2 ->
+                 (ww1, ww2) }) -}
+b0655398f50248daa656f95032b79a58
+  calcLiveness' ::
+    [GHC.Types.Int]
+    -> BackEnd.FlowGraph.FlowGraph
+    -> GHC.Types.Int
+    -> BackEnd.Liveness.LiveMap
+    -> BackEnd.Liveness.LiveMap
+    -> (GHC.Types.Int,
+        (BackEnd.Liveness.LiveMap, BackEnd.Liveness.LiveMap))
+  {- Arity: 5, Strictness: <S,U><L,U(U,U,U,A,A)><L,U(U)><S,U><L,U>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (5, True, False)
+                (\ (w :: [GHC.Types.Int])
+                   (w1 :: BackEnd.FlowGraph.FlowGraph)
+                   (w2 :: GHC.Types.Int)
+                   (w3 :: BackEnd.Liveness.LiveMap)
+                   (w4 :: BackEnd.Liveness.LiveMap) ->
+                 case BackEnd.Liveness.$wcalcLiveness'
+                        w
+                        w1
+                        w2
+                        w3
+                        w4 of ww { (#,#) ww1 ww2 ->
+                 (ww1, ww2) }) -}
+f07ced58fe5ec701694e8c00b439944d
+  calcLiveness'' ::
+    [GHC.Types.Int]
+    -> BackEnd.FlowGraph.FlowGraph
+    -> BackEnd.Liveness.LiveMap
+    -> BackEnd.Liveness.LiveMap
+    -> (BackEnd.Liveness.LiveMap, BackEnd.Liveness.LiveMap)
+  {- Arity: 4, Strictness: <S,1*U><L,U(U,U,U,A,A)><L,U><L,U>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (4, True, False)
+                (\ (w :: [GHC.Types.Int])
+                   (w1 :: BackEnd.FlowGraph.FlowGraph)
+                   (w2 :: BackEnd.Liveness.LiveMap)
+                   (w3 :: BackEnd.Liveness.LiveMap) ->
+                 case BackEnd.Liveness.$wcalcLiveness''
+                        w
+                        w1
+                        w2
+                        w3 of ww { (#,#) ww1 ww2 ->
+                 (ww1, ww2) }) -}
+70db41c1d0a23158486cb2eaeee75d76
+  calcLiveness1 ::
+    [GHC.Types.Int]
+    -> Data.HashMap.Map GHC.Types.Int (Data.Set.Base.Set a)
+    -> Data.HashMap.Map GHC.Types.Int (Data.Set.Base.Set a)
+  {- Arity: 2, Strictness: <S,1*U><S,1*U> -}
+6b2eff8949cce6a8d22dc4ea7bd7867b
+  def ::
+    GHC.Types.Int
+    -> BackEnd.FlowGraph.FlowGraph -> Data.Set.Base.Set GHC.Types.Int
+  {- Arity: 2, Strictness: <L,U><S(LSLLL),1*U(A,1*U,A,A,A)>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (n :: GHC.Types.Int) (fGraph :: BackEnd.FlowGraph.FlowGraph) ->
+                 case fGraph of wild { BackEnd.FlowGraph.FlowGraph ds1 ds2 ds3 ds4 ds5 ->
+                 BackEnd.Liveness.$sfromList
+                   (Data.HashMap.!
+                      @ GHC.Types.Int
+                      @ [BackEnd.Temp.Temp]
+                      Data.Hashable.Class.$fHashableInt
+                      GHC.Classes.$fOrdInt
+                      ds2
+                      n) }) -}
+dc0940c43df4e6db1a65e9f9b8b5779d
+  graph ::
+    BackEnd.Liveness.IGraph
+    -> Algebra.Graph.AdjacencyMap.Internal.AdjacencyMap GHC.Types.Int
+  RecSel Left BackEnd.Liveness.IGraph
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(S),1*U(1*U)>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Liveness.IGraph) ->
+                 case ds of wild { BackEnd.Liveness.IGraph ds1 -> ds1 }) -}
+56c1e1767e63e4728923dc714c58deea
+  instr :: BackEnd.Assem.Instr
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Assem.IOPER
+                   BackEnd.Liveness.arm1
+                   BackEnd.Liveness.instr1
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   (GHC.Types.[] @ GHC.Base.String)) -}
+be1949845af16439485b22a3387f0cb8
+  instr1 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Liveness.$fShowIGraph5
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+07b8c3e8c50fcf89c279b4811c2b09e9
+  interferenceGraph ::
+    BackEnd.FlowGraph.FlowGraph
+    -> BackEnd.Liveness.LiveMap -> BackEnd.Liveness.IGraph
+  {- Arity: 2, Strictness: <L,1*U(A,U,A,1*U,A)><L,U>m,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (2, True, False)
+                (\ (w :: BackEnd.FlowGraph.FlowGraph)
+                   (w1 :: BackEnd.Liveness.LiveMap) ->
+                 case BackEnd.Liveness.$winterferenceGraph w w1 of ww { Unit# ww1 ->
+                 BackEnd.Liveness.IGraph ww1 }) -}
+ae6062ed33990112ed1a05857a670b66
+  succ ::
+    GHC.Types.Int -> BackEnd.FlowGraph.FlowGraph -> [GHC.Types.Int]
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <S,1*U(U)><S(SLLLL),1*U(1*U,A,A,A,A)>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (n :: GHC.Types.Int) (fGraph :: BackEnd.FlowGraph.FlowGraph) ->
+                 case fGraph of wild { BackEnd.FlowGraph.FlowGraph ds1 ds2 ds3 ds4 ds5 ->
+                 Data.Set.Base.$fDataSet1
+                   @ GHC.Types.Int
+                   (GHC.Types.[] @ GHC.Types.Int)
+                   (BackEnd.Liveness.$sfindWithDefault
+                      @ (Data.Set.Base.Set GHC.Types.Int)
+                      (Data.Set.Base.Tip @ GHC.Types.Int)
+                      n
+                      ds1
+                        `cast`
+                      (Algebra.Graph.AdjacencyMap.Internal.N:AdjacencyMap[0]
+                           <GHC.Types.Int>_N)) }) -}
+04403ef6c18f5c10993561da5ad9870f
+  testDef1 :: Data.HashMap.Map GHC.Types.Int [BackEnd.Temp.Temp]
+  {- Unfolding: (Data.HashMap.fromList
+                   @ GHC.Types.Int
+                   @ [BackEnd.Temp.Temp]
+                   Data.Hashable.Class.$fHashableInt
+                   GHC.Classes.$fOrdInt
+                   BackEnd.Liveness.testDef2) -}
+79c9d74b0514231ac9b45104dfcb8e39
+  testDef10 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef11,
+                  GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+e5103e61a9508d74160ebc12fbaaf1a9
+  testDef11 :: GHC.Types.Int
+  {- HasNoCafRefs, Unfolding: (GHC.Types.I# 5#) -}
+f01b3331cfd8c24adc05188298bdfd18
+  testDef12 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef13,
+                  BackEnd.Liveness.instr1)) -}
+89949075ab4cc480e97da73add7d5bba
+  testDef13 :: GHC.Types.Int
+  {- HasNoCafRefs, Unfolding: (GHC.Types.I# 4#) -}
+f3c552b66f0ac4aab1ea434f0c4068b5
+  testDef14 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef17,
+                  BackEnd.Liveness.testDef15)) -}
+78619d65830a1502fe001b852ca7c989
+  testDef15 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Liveness.testDef16
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+3c12f4c28ca796a35f15e46d0f3b8fe3
+  testDef16 :: GHC.Types.Int
+  {- HasNoCafRefs, Unfolding: (GHC.Types.I# 2#) -}
+431c4bea5d26950db8c49dd43bbd4429
+  testDef17 :: GHC.Types.Int
+  {- HasNoCafRefs, Unfolding: (GHC.Types.I# 3#) -}
+eed6810a8640710cea93725743aa0dd4
+  testDef18 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef16,
+                  BackEnd.Liveness.testDef19)) -}
+104f4832a9afdc7b7e8bc3c0b8ea3c68
+  testDef19 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Liveness.testDef20
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+20eead450cff62293bf9331b2a0457ef
+  testDef2 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testDef21
+                   BackEnd.Liveness.testDef3) -}
+7b379c5989c55c2a88128da36b500514
+  testDef20 :: GHC.Types.Int
+  {- HasNoCafRefs, Unfolding: (GHC.Types.I# 1#) -}
+f2df60ad60378fb3c0616a2862359860
+  testDef21 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef20,
+                  BackEnd.Liveness.instr1)) -}
+85af9a049cc827787fdce4a9c58a543a
+  testDef3 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testDef18
+                   BackEnd.Liveness.testDef4) -}
+eff379f3a65e991f4fbfe1d6f9f4c4fe
+  testDef4 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testDef14
+                   BackEnd.Liveness.testDef5) -}
+4fb19759d938c183a1d1d8cdb983818f
+  testDef5 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testDef12
+                   BackEnd.Liveness.testDef6) -}
+77427bc4d6c6ccbf9f7610d3de62666b
+  testDef6 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testDef10
+                   BackEnd.Liveness.testDef7) -}
+71de921c9f941519c37a46a5350fbb84
+  testDef7 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testDef8
+                   (GHC.Types.[] @ (GHC.Types.Int, [BackEnd.Temp.Temp]))) -}
+2b0162abd77bcec843069d30f567896d
+  testDef8 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef9,
+                  GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+a1a91bf1ddc6f80f9e05d17d43fed7e5
+  testDef9 :: GHC.Types.Int
+  {- HasNoCafRefs, Unfolding: (GHC.Types.I# 6#) -}
+de6cffc9fd2643c61555e296ac11d2a6
+  testEdges1 :: [(GHC.Types.Int, GHC.Types.Int)]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, GHC.Types.Int)
+                   BackEnd.Liveness.testEdges12
+                   BackEnd.Liveness.testEdges2) -}
+c76405eea41c6bc418065fd50ae94518
+  testEdges10 :: (GHC.Types.Int, GHC.Types.Int)
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: ((BackEnd.Liveness.testDef17,
+                  BackEnd.Liveness.testDef13)) -}
+4a44886cd100f822a52db2f053b7b849
+  testEdges11 :: (GHC.Types.Int, GHC.Types.Int)
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: ((BackEnd.Liveness.testDef16,
+                  BackEnd.Liveness.testDef17)) -}
+5de09f7e34c80ab119272a02a5bb8cbb
+  testEdges12 :: (GHC.Types.Int, GHC.Types.Int)
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: ((BackEnd.Liveness.testDef20,
+                  BackEnd.Liveness.testDef16)) -}
+eb1914341768d4b85d2601df92a75b1e
+  testEdges2 :: [(GHC.Types.Int, GHC.Types.Int)]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, GHC.Types.Int)
+                   BackEnd.Liveness.testEdges11
+                   BackEnd.Liveness.testEdges3) -}
+3eb140ec3fb0c1a242e198a506828b9b
+  testEdges3 :: [(GHC.Types.Int, GHC.Types.Int)]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, GHC.Types.Int)
+                   BackEnd.Liveness.testEdges10
+                   BackEnd.Liveness.testEdges4) -}
+c814440247c8fb7ac3fda998b2c5e793
+  testEdges4 :: [(GHC.Types.Int, GHC.Types.Int)]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, GHC.Types.Int)
+                   BackEnd.Liveness.testEdges9
+                   BackEnd.Liveness.testEdges5) -}
+80987d045b2358f098488f3d1b9aa602
+  testEdges5 :: [(GHC.Types.Int, GHC.Types.Int)]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, GHC.Types.Int)
+                   BackEnd.Liveness.testEdges8
+                   BackEnd.Liveness.testEdges6) -}
+6f49373b4b2ce6b625700e15a020e327
+  testEdges6 :: [(GHC.Types.Int, GHC.Types.Int)]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, GHC.Types.Int)
+                   BackEnd.Liveness.testEdges7
+                   (GHC.Types.[] @ (GHC.Types.Int, GHC.Types.Int))) -}
+8f7837bbead79b7d9a34191a4cf78b50
+  testEdges7 :: (GHC.Types.Int, GHC.Types.Int)
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: ((BackEnd.Liveness.testDef11,
+                  BackEnd.Liveness.testDef9)) -}
+7c2531b14bf6968873de442e04f29035
+  testEdges8 :: (GHC.Types.Int, GHC.Types.Int)
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: ((BackEnd.Liveness.testDef11,
+                  BackEnd.Liveness.testDef16)) -}
+5dd238be146029048fc06e920f882364
+  testEdges9 :: (GHC.Types.Int, GHC.Types.Int)
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: ((BackEnd.Liveness.testDef13,
+                  BackEnd.Liveness.testDef11)) -}
+7bd0969a908ab239ca6ebc40305f29aa
+  testFlowGraph1 :: BackEnd.FlowGraph.FlowGraph
+  {- Strictness: m,
+     Unfolding: (BackEnd.FlowGraph.FlowGraph
+                   BackEnd.Liveness.testFlowGraph2
+                     `cast`
+                   (Sym (Algebra.Graph.AdjacencyMap.Internal.N:AdjacencyMap[0]
+                             <GHC.Types.Int>_N))
+                   BackEnd.Liveness.testDef1
+                   BackEnd.Liveness.testUse1
+                   (GHC.Types.[] @ GHC.Types.Int)
+                   (Data.IntMap.Base.Nil
+                      @ (Data.HashMap.Some GHC.Types.Int BackEnd.Assem.Instr))
+                     `cast`
+                   (Sym (Data.HashMap.N:Map[0]
+                             <GHC.Types.Int>_N <BackEnd.Assem.Instr>_R))) -}
+6c558acd9acd601f66beaa14a6104e4c
+  testFlowGraph2 ::
+    Data.Map.Base.Map GHC.Types.Int (Data.Set.Base.Set GHC.Types.Int)
+  {- Unfolding: (Algebra.Graph.AdjacencyMap.path2
+                   @ GHC.Types.Int
+                   GHC.Classes.$fOrdInt
+                   BackEnd.Liveness.testFlowGraph3) -}
+63939a8768cf125275aa45c1790f52a2
+  testFlowGraph3 ::
+    [(GHC.Types.Int, Data.Set.Base.Set GHC.Types.Int)]
+  {- Unfolding: (GHC.Base.map
+                   @ (GHC.Types.Int, GHC.Types.Int)
+                   @ (GHC.Types.Int, Data.Set.Base.Set GHC.Types.Int)
+                   (Algebra.Graph.AdjacencyMap.path1 @ GHC.Types.Int)
+                   BackEnd.Liveness.testEdges1) -}
+a82047eba479f10c2e4e609087a3a4d9
+  testLiveness ::
+    [BackEnd.Assem.Instr]
+    -> (GHC.Types.Int,
+        (BackEnd.Liveness.LiveMap, BackEnd.Liveness.LiveMap))
+  {- Arity: 1, Strictness: <S,U>m,
+     Unfolding: InlineRule (1, True, False)
+                (\ (instrs :: [BackEnd.Assem.Instr]) ->
+                 BackEnd.Liveness.calcLiveness
+                   (BackEnd.MakeGraph.instrsToGraph instrs)
+                   instrs) -}
+d2fc76a2eef785b4a0fa6d90dfa42e16
+  testLivenessInstrs1 :: [BackEnd.Assem.Instr]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Liveness.instr
+                   BackEnd.Liveness.testLivenessInstrs2) -}
+603146e17652827b299dd2299404c9fc
+  testLivenessInstrs2 :: [BackEnd.Assem.Instr]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Liveness.instr
+                   BackEnd.Liveness.testLivenessInstrs3) -}
+f1c92ccd160c4defa9b87bf41ef1b97d
+  testLivenessInstrs3 :: [BackEnd.Assem.Instr]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Liveness.instr
+                   BackEnd.Liveness.testLivenessInstrs4) -}
+9920d63d351537dea8270cb5bdf2a3e9
+  testLivenessInstrs4 :: [BackEnd.Assem.Instr]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Liveness.instr
+                   BackEnd.Liveness.testLivenessInstrs5) -}
+5ec929c69eac490aa015d1529a36efc8
+  testLivenessInstrs5 :: [BackEnd.Assem.Instr]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Liveness.instr
+                   BackEnd.Liveness.testLivenessInstrs6) -}
+2afc0a2bf31b83e40209d4cd9f7128f2
+  testLivenessInstrs6 :: [BackEnd.Assem.Instr]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Liveness.instr
+                   (GHC.Types.[] @ BackEnd.Assem.Instr)) -}
+fd990be85156349a08f6184b71464355
+  testUse1 :: Data.HashMap.Map GHC.Types.Int [BackEnd.Temp.Temp]
+  {- Unfolding: (Data.HashMap.fromList
+                   @ GHC.Types.Int
+                   @ [BackEnd.Temp.Temp]
+                   Data.Hashable.Class.$fHashableInt
+                   GHC.Classes.$fOrdInt
+                   BackEnd.Liveness.testUse2) -}
+8abfa419b892848849782808fb700586
+  testUse10 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef11,
+                  BackEnd.Liveness.instr1)) -}
+1190d86256732340becc0cdc75a6665d
+  testUse11 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef11,
+                  BackEnd.Liveness.testDef19)) -}
+00e94ba81a38495840002469432cb0e8
+  testUse12 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef13,
+                  BackEnd.Liveness.testDef19)) -}
+ecf7d0e02c42503844f70759b25cfb18
+  testUse13 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef17,
+                  BackEnd.Liveness.testUse14)) -}
+243c11ab3fef0ac2773d4eb1d56729a2
+  testUse14 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Liveness.testDef20
+                   BackEnd.Liveness.testDef15) -}
+3c1b2f6010cde4949a0b5c316d914559
+  testUse15 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef16,
+                  BackEnd.Liveness.instr1)) -}
+299fcb7381067a0b929df506320768c0
+  testUse16 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef20,
+                  GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+558b690644333d37a632626b1e8dd6cf
+  testUse2 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testUse16
+                   BackEnd.Liveness.testUse3) -}
+2632d459f00d6bd7b619d521b2af27ff
+  testUse3 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testUse15
+                   BackEnd.Liveness.testUse4) -}
+0b4839ec20ea4acbe27152d98783681e
+  testUse4 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testUse13
+                   BackEnd.Liveness.testUse5) -}
+27e44b954d8772413ad6039c980e0741
+  testUse5 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testUse12
+                   BackEnd.Liveness.testUse6) -}
+05058c4560f28e980cbb5e22cf0eef1d
+  testUse6 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testUse11
+                   BackEnd.Liveness.testUse7) -}
+5fe305abec2a86dc1a921de634ba893a
+  testUse7 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testUse10
+                   BackEnd.Liveness.testUse8) -}
+ca9069987fd764f7dbb2a6f0d382205e
+  testUse8 :: [(GHC.Types.Int, [BackEnd.Temp.Temp])]
+  {- HasNoCafRefs,
+     Unfolding: (GHC.Types.:
+                   @ (GHC.Types.Int, [BackEnd.Temp.Temp])
+                   BackEnd.Liveness.testUse9
+                   (GHC.Types.[] @ (GHC.Types.Int, [BackEnd.Temp.Temp]))) -}
+48889cd1f1988a1403d2c0f2a95580ee
+  testUse9 :: (GHC.Types.Int, [BackEnd.Temp.Temp])
+  {- HasNoCafRefs,
+     Unfolding: ((BackEnd.Liveness.testDef9,
+                  BackEnd.Liveness.testDef15)) -}
+307e40d211d74f15f7b816b4ff267137
+  use ::
+    GHC.Types.Int
+    -> BackEnd.FlowGraph.FlowGraph -> Data.Set.Base.Set GHC.Types.Int
+  {- Arity: 2, Strictness: <L,U><S(LLSLL),1*U(A,A,1*U,A,A)>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (n :: GHC.Types.Int) (fGraph :: BackEnd.FlowGraph.FlowGraph) ->
+                 case fGraph of wild { BackEnd.FlowGraph.FlowGraph ds1 ds2 ds3 ds4 ds5 ->
+                 BackEnd.Liveness.$sfromList
+                   (Data.HashMap.!
+                      @ GHC.Types.Int
+                      @ [BackEnd.Temp.Temp]
+                      Data.Hashable.Class.$fHashableInt
+                      GHC.Classes.$fOrdInt
+                      ds3
+                      n) }) -}
+instance GHC.Show.Show [BackEnd.Liveness.IGraph]
+  = BackEnd.Liveness.$fShowIGraph
+"SPEC/BackEnd.Liveness $fEqSet @ Int" [ALWAYS] forall ($dEq :: GHC.Classes.Eq
+                                                                 GHC.Types.Int)
+  Data.Set.Base.$fEqSet @ GHC.Types.Int $dEq
+  = BackEnd.Liveness.$s$fEqSet
+"SPEC/BackEnd.Liveness $fEqSet_$c/= @ Int" [ALWAYS] forall ($dEq :: GHC.Classes.Eq
+                                                                      GHC.Types.Int)
+  Data.Set.Base.$fEqSet_$c/= @ GHC.Types.Int $dEq
+  = BackEnd.Liveness.$s$fEqSet_$s$fEqSet_$c/=
+"SPEC/BackEnd.Liveness findWithDefault @ Int _" [ALWAYS] forall @ a
+                                                                ($dOrd :: GHC.Classes.Ord
+                                                                            GHC.Types.Int)
+  Data.Map.Strict.findWithDefault @ GHC.Types.Int @ a $dOrd
+  = BackEnd.Liveness.$sfindWithDefault @ a
+"SPEC/BackEnd.Liveness fromList @ Temp" [ALWAYS] forall ($dOrd :: GHC.Classes.Ord
+                                                                    BackEnd.Temp.Temp)
+  Data.Set.Base.fromList @ GHC.Types.Int $dOrd
+  = BackEnd.Liveness.$sfromList
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: none
+require own pkg trusted: False
+

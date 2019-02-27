@@ -1,0 +1,22 @@
+[1 of 2] Compiling Main             ( /tmp/stack32489/distributive-0.6/Setup.lhs, /tmp/stack32489/distributive-0.6/.stack-work/dist/x86_64-linux/Cabal-1.24.2.0/setup/Main.o )
+[2 of 2] Compiling StackSetupShim   ( /homes/qs4617/.stack/setup-exe-src/setup-shim-mPHDZzAJ.hs, /tmp/stack32489/distributive-0.6/.stack-work/dist/x86_64-linux/Cabal-1.24.2.0/setup/StackSetupShim.o )
+Linking /tmp/stack32489/distributive-0.6/.stack-work/dist/x86_64-linux/Cabal-1.24.2.0/setup/setup ...
+Warning: distributive.cabal: Unknown fields: build-tool-depends (line 107)
+Fields allowed in this section:
+type, main-is, test-module, buildable, build-tools, build-depends,
+cpp-options, cc-options, ld-options, pkgconfig-depends, frameworks,
+extra-framework-dirs, c-sources, js-sources, default-language,
+other-languages, default-extensions, other-extensions, extensions,
+extra-libraries, extra-ghci-libraries, extra-lib-dirs, includes,
+install-includes, include-dirs, hs-source-dirs, other-modules,
+ghc-prof-options, ghcjs-prof-options, ghc-shared-options,
+ghcjs-shared-options, ghc-options, ghcjs-options, jhc-options,
+hugs-options, nhc98-options
+Configuring distributive-0.6...
+Building distributive-0.6...
+Preprocessing library distributive-0.6...
+[1 of 2] Compiling Data.Distributive ( src/Data/Distributive.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Distributive.o )
+[2 of 2] Compiling Data.Distributive.Generic ( src/Data/Distributive/Generic.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Distributive/Generic.o )
+Installing library in
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/distributive-0.6-8Ey6D3eJvjR5TVJsiAzTx2
+Registering distributive-0.6...

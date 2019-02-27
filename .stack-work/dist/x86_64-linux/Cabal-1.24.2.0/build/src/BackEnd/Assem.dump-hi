@@ -1,0 +1,291 @@
+
+==================== FINAL INTERFACE ====================
+2019-02-27 09:56:05.420646141 UTC
+
+interface wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Assem 8002
+  interface hash: 356356658d4830a8600306c8a70f95f4
+  ABI hash: 0c2dd4117304a7718bc4adf283ae5e64
+  export-list hash: 4e4b66683d488fa10cb15dfdfb0d7eda
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 02b3c746106ad76f793f89ebc1f71840
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  BackEnd.Assem.containsDummy
+  BackEnd.Assem.normAssem
+  BackEnd.Assem.normInstr
+  BackEnd.Assem.Instr{BackEnd.Assem.ILABEL BackEnd.Assem.IMOV BackEnd.Assem.IOPER assem dst jump lab src}
+module dependencies: BackEnd.IR BackEnd.Instructions BackEnd.Temp
+package dependencies: array-0.5.1.1@array-0.5.1.1 base-4.9.1.0*
+                      boxes-0.1.5@boxes-0.1.5-6DdHE3jJ0TwE6WTwMdCW4f
+                      containers-0.5.7.1@containers-0.5.7.1
+                      deepseq-1.4.2.0@deepseq-1.4.2.0
+                      generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn
+                      ghc-prim-0.5.0.0 integer-gmp-1.0.0.1
+                      pretty-tree-0.1.0.0@pretty-tree-0.1.0.0-5ldf01HzJj05FtOtje7CSt
+                      split-0.2.3.3@split-0.2.3.3-KPq5EVv6rbi8XHTA0KJd3E
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Complex base-4.9.1.0:Data.Either
+                         base-4.9.1.0:Data.Functor.Const base-4.9.1.0:Data.Functor.Identity
+                         base-4.9.1.0:Data.List.NonEmpty base-4.9.1.0:Data.Monoid
+                         base-4.9.1.0:Data.Semigroup base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:Data.Version base-4.9.1.0:Data.Void
+                         base-4.9.1.0:GHC.Exts base-4.9.1.0:GHC.Generics
+                         base-4.9.1.0:GHC.IO.Exception base-4.9.1.0:GHC.TypeLits
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Sequence
+                         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+                         wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Instructions
+import  -/  base-4.9.1.0:GHC.Base c4231c43c07e46080a26bf94094c7aa1
+import  -/  base-4.9.1.0:GHC.Show a027f5ac24879eaba752f44aa90fe511
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  BackEnd.IR 881b5c7113579e9e0196d2b90545a438
+  exports: 6d764dfdda2ad49e5da2751723ca6e76
+import  -/  BackEnd.Instructions 4d01d75e375ace81049cc56959743d7f
+  exports: 05db9b415662c28923114b34233dccb8
+  Instr a0e755a8acd549de7649775f27d4f6ea
+  REG f9c2f353b25c612c1dc1d642efef0197
+  dummyInstr f80c4bd0cca39cfc83fa60dedc8e1527
+  normInstr 3035867af418dcfa6235f8add6e69414
+  output_show a0e755a8acd549de7649775f27d4f6ea
+import  -/  BackEnd.Temp 0c22f42d627493b2b3f13cd2a3ac5a46
+  exports: ecf0e74365e1a70f2572e5197e175ea3
+  Label ab7a275275a088fb10914e7eda58ce46
+  Temp 14024289252e98b781eb5778cbac8848
+7e9a983e644f74c95e69c7397c53736a
+  $fShowInstr :: GHC.Show.Show BackEnd.Assem.Instr
+  DFunId
+  {- Strictness: m, Inline: [ALWAYS] CONLIKE,
+     Unfolding: DFun:.
+                  @ BackEnd.Assem.Instr
+                  BackEnd.Assem.$fShowInstr_$cshowsPrec
+                  BackEnd.Assem.$fShowInstr_$cshow
+                  BackEnd.Assem.$fShowInstr_$cshowList -}
+7e9a983e644f74c95e69c7397c53736a
+  $fShowInstr1 ::
+    BackEnd.Assem.Instr -> GHC.Base.String -> [GHC.Types.Char]
+  {- Arity: 2,
+     Unfolding: (\ (x :: BackEnd.Assem.Instr)
+                   (s :: GHC.Base.String)[OneShot] ->
+                 GHC.Base.++
+                   @ GHC.Types.Char
+                   (BackEnd.Assem.$fShowInstr_$cshow x)
+                   s) -}
+7e9a983e644f74c95e69c7397c53736a
+  $fShowInstr_$cshow :: BackEnd.Assem.Instr -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: (\ (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   BackEnd.Assem.IOPER assem1 dst2 src2 jump2
+                   -> BackEnd.Instructions.output_show assem1
+                   BackEnd.Assem.ILABEL assem1 lab2
+                   -> BackEnd.Instructions.output_show assem1
+                   BackEnd.Assem.IMOV assem1 dst2 src2
+                   -> BackEnd.Instructions.output_show assem1 }) -}
+7e9a983e644f74c95e69c7397c53736a
+  $fShowInstr_$cshowList :: [BackEnd.Assem.Instr] -> GHC.Show.ShowS
+  {- Arity: 2, Strictness: <S,1*U><L,U>,
+     Unfolding: (\ (ls :: [BackEnd.Assem.Instr])
+                   (s :: GHC.Base.String) ->
+                 GHC.Show.showList__
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Assem.$fShowInstr1
+                   ls
+                   s) -}
+7e9a983e644f74c95e69c7397c53736a
+  $fShowInstr_$cshowsPrec ::
+    GHC.Types.Int -> BackEnd.Assem.Instr -> GHC.Show.ShowS
+  {- Arity: 3, Strictness: <L,A><S,1*U><L,1*U>,
+     Unfolding: InlineRule (3, True, False)
+                (\ (ds :: GHC.Types.Int)
+                   (x :: BackEnd.Assem.Instr)
+                   (s :: GHC.Base.String) ->
+                 GHC.Base.augment
+                   @ GHC.Types.Char
+                   (\ @ b
+                      (c :: GHC.Types.Char -> b -> b)[OneShot]
+                      (n :: b)[OneShot] ->
+                    GHC.Base.foldr
+                      @ GHC.Types.Char
+                      @ b
+                      c
+                      n
+                      (BackEnd.Assem.$fShowInstr_$cshow x))
+                   s) -}
+aa29e9d0312339dfa81aa145dd45db48
+  $tc'ILABEL :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   9756801952828391074##
+                   10593376030600898272##
+                   BackEnd.Assem.$trModule
+                   BackEnd.Assem.$tc'ILABEL1) -}
+21c8f42a21617169f0135b75dd3cd420
+  $tc'ILABEL1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'ILABEL"#) -}
+749a9f6c5a1d4d49bafb3c9177bfaeb0
+  $tc'IMOV :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   17476192920969234048##
+                   1672454648751238834##
+                   BackEnd.Assem.$trModule
+                   BackEnd.Assem.$tc'IMOV1) -}
+f4659d32faec1f72e47e1570562cc59f
+  $tc'IMOV1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'IMOV"#) -}
+3971f38590408d57d46e959940c60a53
+  $tc'IOPER :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   16208890862881546955##
+                   15496011685253518850##
+                   BackEnd.Assem.$trModule
+                   BackEnd.Assem.$tc'IOPER1) -}
+403c36014251d1b14179754099ed6576
+  $tc'IOPER1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'IOPER"#) -}
+b55f9ba0ad39fe6c9c7f89f6f1ffaed1
+  $tcInstr :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   12414318603644481915##
+                   17786091750705038072##
+                   BackEnd.Assem.$trModule
+                   BackEnd.Assem.$tcInstr1) -}
+03c62c335f103ef6bf0443ad62999ca4
+  $tcInstr1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Instr"#) -}
+6b995801ea98d6b9ec385e87fada24df
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   BackEnd.Assem.$trModule2
+                   BackEnd.Assem.$trModule1) -}
+9ddc421cef532cce6546acd5036650ac
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "BackEnd.Assem"#) -}
+b587d37e96a341a7b14808ea90185f90
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   "wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"#) -}
+7e9a983e644f74c95e69c7397c53736a
+  data Instr
+    = IOPER {assem :: BackEnd.Instructions.Instr,
+             dst :: [BackEnd.Temp.Temp],
+             src :: [BackEnd.Temp.Temp],
+             jump :: [GHC.Base.String]}
+    | ILABEL {assem :: BackEnd.Instructions.Instr,
+              lab :: BackEnd.Temp.Label}
+    | IMOV {assem :: BackEnd.Instructions.Instr,
+            dst :: [BackEnd.Temp.Temp],
+            src :: [BackEnd.Temp.Temp]}
+b4276578abb049b76c552630d13c0e62
+  assem :: BackEnd.Assem.Instr -> BackEnd.Instructions.Instr
+  RecSel Left BackEnd.Assem.Instr
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   BackEnd.Assem.IOPER ds1 ds2 ds3 ds4 -> ds1
+                   BackEnd.Assem.ILABEL ds1 ds2 -> ds1
+                   BackEnd.Assem.IMOV ds1 ds2 ds3 -> ds1 }) -}
+a854db65b99ead4e605c0750d138b23a
+  containsDummy :: BackEnd.Assem.Instr -> GHC.Types.Bool
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: (\ (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   BackEnd.Assem.IOPER assem1 ds1 ds2 ds3
+                   -> BackEnd.Instructions.dummyInstr assem1
+                   BackEnd.Assem.ILABEL assem1 ds1
+                   -> BackEnd.Instructions.dummyInstr assem1
+                   BackEnd.Assem.IMOV assem1 ds1 ds2
+                   -> BackEnd.Instructions.dummyInstr assem1 }) -}
+012515aa6f33827e26e559f8fe99f8f8
+  dst :: BackEnd.Assem.Instr -> [BackEnd.Temp.Temp]
+  RecSel Left BackEnd.Assem.Instr
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   BackEnd.Assem.IOPER ds1 ds2 ds3 ds4 -> ds2
+                   BackEnd.Assem.ILABEL ipv ipv1 -> BackEnd.Assem.dst1
+                   BackEnd.Assem.IMOV ds1 ds2 ds3 -> ds2 }) -}
+a03fd28f06a1a690bfc3ac9ba558b366
+  dst1 :: [BackEnd.Temp.Temp]
+  {- Strictness: x -}
+8cac39b90464c1c2e917864fce4b17ac
+  jump :: BackEnd.Assem.Instr -> [GHC.Base.String]
+  RecSel Left BackEnd.Assem.Instr
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   DEFAULT -> BackEnd.Assem.jump1
+                   BackEnd.Assem.IOPER ds1 ds2 ds3 ds4 -> ds4 }) -}
+520bce7e78e78e105834f908dbd5bc15
+  jump1 :: [GHC.Base.String]
+  {- Strictness: x -}
+5e929b27e18173de745af7ad343612fb
+  lab :: BackEnd.Assem.Instr -> BackEnd.Temp.Label
+  RecSel Left BackEnd.Assem.Instr
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   DEFAULT -> BackEnd.Assem.lab1
+                   BackEnd.Assem.ILABEL ds1 ds2 -> ds2 }) -}
+b5ffdf45983c3ccd8d5c012648c079ff
+  lab1 :: BackEnd.Temp.Label
+  {- Strictness: x -}
+896ee897304334c4456dd6ecf9752d66
+  normAssem ::
+    [(GHC.Types.Int, BackEnd.Instructions.REG)]
+    -> [BackEnd.Assem.Instr] -> [BackEnd.Assem.Instr]
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><S,1*U> -}
+97291c6d871ababf9d280f7b9b3b5233
+  normInstr ::
+    (BackEnd.Instructions.Instr -> BackEnd.Instructions.Instr)
+    -> BackEnd.Assem.Instr -> BackEnd.Assem.Instr
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,1*C1(U)><S,1*U>,
+     Unfolding: (\ (func :: BackEnd.Instructions.Instr
+                            -> BackEnd.Instructions.Instr)
+                   (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   BackEnd.Assem.IOPER assem1 dst2 src2 jump2
+                   -> BackEnd.Assem.IOPER (func assem1) dst2 src2 jump2
+                   BackEnd.Assem.ILABEL assem1 lab2
+                   -> BackEnd.Assem.ILABEL (func assem1) lab2
+                   BackEnd.Assem.IMOV assem1 dst2 src2
+                   -> BackEnd.Assem.IMOV (func assem1) dst2 src2 }) -}
+7743602d68b4708d8dd1ad4396041690
+  src :: BackEnd.Assem.Instr -> [BackEnd.Temp.Temp]
+  RecSel Left BackEnd.Assem.Instr
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: BackEnd.Assem.Instr) ->
+                 case ds of wild {
+                   BackEnd.Assem.IOPER ds1 ds2 ds3 ds4 -> ds3
+                   BackEnd.Assem.ILABEL ipv ipv1 -> BackEnd.Assem.src1
+                   BackEnd.Assem.IMOV ds1 ds2 ds3 -> ds3 }) -}
+83f9557d5dc0914e2a29366fcd98e192
+  src1 :: [BackEnd.Temp.Temp]
+  {- Strictness: x -}
+instance [safe] GHC.Show.Show [BackEnd.Assem.Instr]
+  = BackEnd.Assem.$fShowInstr
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

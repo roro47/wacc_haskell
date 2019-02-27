@@ -1,0 +1,37 @@
+Warning: generic-deriving.cabal: Unknown fields: build-tool-depends (line 99)
+Fields allowed in this section:
+type, main-is, test-module, buildable, build-tools, build-depends,
+cpp-options, cc-options, ld-options, pkgconfig-depends, frameworks,
+extra-framework-dirs, c-sources, js-sources, default-language,
+other-languages, default-extensions, other-extensions, extensions,
+extra-libraries, extra-ghci-libraries, extra-lib-dirs, includes,
+install-includes, include-dirs, hs-source-dirs, other-modules,
+ghc-prof-options, ghcjs-prof-options, ghc-shared-options,
+ghcjs-shared-options, ghc-options, ghcjs-options, jhc-options,
+hugs-options, nhc98-options
+Configuring generic-deriving-1.12.3...
+Building generic-deriving-1.12.3...
+Preprocessing library generic-deriving-1.12.3...
+[ 1 of 20] Compiling Paths_generic_deriving ( .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/autogen/Paths_generic_deriving.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Paths_generic_deriving.o )
+[ 2 of 20] Compiling Generics.Deriving.TH.Internal ( src/Generics/Deriving/TH/Internal.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/TH/Internal.o )
+[ 3 of 20] Compiling Generics.Deriving.TH.Post4_9 ( src/Generics/Deriving/TH/Post4_9.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/TH/Post4_9.o )
+[ 4 of 20] Compiling Generics.Deriving.TH ( src/Generics/Deriving/TH.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/TH.o )
+[ 5 of 20] Compiling Generics.Deriving.Base.Internal ( src/Generics/Deriving/Base/Internal.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Base/Internal.o )
+[ 6 of 20] Compiling Generics.Deriving.Instances ( src/Generics/Deriving/Instances.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Instances.o )
+[ 7 of 20] Compiling Generics.Deriving.Base ( src/Generics/Deriving/Base.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Base.o )
+[ 8 of 20] Compiling Generics.Deriving.ConNames ( src/Generics/Deriving/ConNames.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/ConNames.o )
+[ 9 of 20] Compiling Generics.Deriving.Copoint ( src/Generics/Deriving/Copoint.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Copoint.o )
+[10 of 20] Compiling Generics.Deriving.Eq ( src/Generics/Deriving/Eq.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Eq.o )
+[11 of 20] Compiling Generics.Deriving.Enum ( src/Generics/Deriving/Enum.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Enum.o )
+[12 of 20] Compiling Generics.Deriving.Foldable ( src/Generics/Deriving/Foldable.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Foldable.o )
+[13 of 20] Compiling Generics.Deriving.Functor ( src/Generics/Deriving/Functor.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Functor.o )
+[14 of 20] Compiling Generics.Deriving.Monoid ( src/Generics/Deriving/Monoid.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Monoid.o )
+[15 of 20] Compiling Generics.Deriving.Semigroup ( src/Generics/Deriving/Semigroup.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Semigroup.o )
+[16 of 20] Compiling Generics.Deriving.Show ( src/Generics/Deriving/Show.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Show.o )
+[17 of 20] Compiling Generics.Deriving.Traversable ( src/Generics/Deriving/Traversable.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Traversable.o )
+[18 of 20] Compiling Generics.Deriving.Uniplate ( src/Generics/Deriving/Uniplate.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Uniplate.o )
+[19 of 20] Compiling Generics.Deriving.Default ( src/Generics/Deriving/Default.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Default.o )
+[20 of 20] Compiling Generics.Deriving ( src/Generics/Deriving.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving.o )
+Installing library in
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn
+Registering generic-deriving-1.12.3...

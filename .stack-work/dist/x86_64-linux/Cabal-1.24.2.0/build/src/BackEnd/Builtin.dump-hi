@@ -1,0 +1,486 @@
+
+==================== FINAL INTERFACE ====================
+2019-02-27 09:56:05.483389233 UTC
+
+interface wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Builtin 8002
+  interface hash: 66112e3f6e718768fa8aca915f9b1e56
+  ABI hash: ed9d8a61a4fe433113515ad446c366fe
+  export-list hash: 0efa3a64647a63ce77aebf0b789b849f
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 02b3c746106ad76f793f89ebc1f71840
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  BackEnd.Builtin.add_label
+  BackEnd.Builtin.cmp_r0
+  BackEnd.Builtin.end
+  BackEnd.Builtin.jump_to_label
+  BackEnd.Builtin.ld_cond_msg_toR0
+  BackEnd.Builtin.ld_msg_toR0
+  BackEnd.Builtin.ljump_cond
+  BackEnd.Builtin.ljump_to_label
+  BackEnd.Builtin.move_to_r
+  BackEnd.Builtin.poppc
+  BackEnd.Builtin.pushlr
+  BackEnd.Builtin.r0_add4
+  BackEnd.Builtin.r0_clear
+module dependencies: BackEnd.Assem BackEnd.Frame BackEnd.IR
+                     BackEnd.Instructions BackEnd.Temp FrontEnd.AST FrontEnd.Lexer
+package dependencies: array-0.5.1.1@array-0.5.1.1 base-4.9.1.0*
+                      binary-0.8.3.0@binary-0.8.3.0
+                      boxes-0.1.5@boxes-0.1.5-6DdHE3jJ0TwE6WTwMdCW4f
+                      bytestring-0.10.8.1@bytestring-0.10.8.1
+                      containers-0.5.7.1@containers-0.5.7.1
+                      deepseq-1.4.2.0@deepseq-1.4.2.0
+                      generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn
+                      ghc-prim-0.5.0.0 integer-gmp-1.0.0.1
+                      mtl-2.2.2@mtl-2.2.2-IUStvhCM9Fb6Pb0KlPCV7h
+                      parsec-3.1.13.0@parsec-3.1.13.0-5jBHpMDfG914ocK3TvC2E
+                      pretty-tree-0.1.0.0@pretty-tree-0.1.0.0-5ldf01HzJj05FtOtje7CSt
+                      split-0.2.3.3@split-0.2.3.3-KPq5EVv6rbi8XHTA0KJd3E
+                      text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ
+                      transformers-0.5.2.0@transformers-0.5.2.0
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+         binary-0.8.3.0@binary-0.8.3.0:Data.Binary.Generic
+         bytestring-0.10.8.1@bytestring-0.10.8.1:Data.ByteString.Builder
+         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Show
+         transformers-0.5.2.0@transformers-0.5.2.0:Control.Monad.Trans.Error
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Complex base-4.9.1.0:Data.Either
+                         base-4.9.1.0:Data.Functor.Const base-4.9.1.0:Data.Functor.Identity
+                         base-4.9.1.0:Data.List.NonEmpty base-4.9.1.0:Data.Monoid
+                         base-4.9.1.0:Data.Semigroup base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:Data.Version base-4.9.1.0:Data.Void
+                         base-4.9.1.0:GHC.Exts base-4.9.1.0:GHC.Generics
+                         base-4.9.1.0:GHC.IO.Exception base-4.9.1.0:GHC.TypeLits
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntMap.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntSet.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Map.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Sequence
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Set.Base
+                         generic-deriving-1.12.3@generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn:Generics.Deriving.Instances
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text
+                         text-1.2.3.1@text-1.2.3.1-FiKShuz66xXAoRKdCDhKNQ:Data.Text.Lazy
+                         wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2:BackEnd.Instructions
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  mtl-2.2.2@mtl-2.2.2-IUStvhCM9Fb6Pb0KlPCV7h:Control.Monad.State.Lazy f8e741bf4d853e8c9e1e41041ac4e6b4
+import  -/  BackEnd.Assem 0c2dd4117304a7718bc4adf283ae5e64
+  exports: 4e4b66683d488fa10cb15dfdfb0d7eda
+  ILABEL 5d206a480b086065a1277d09570f1ed2
+  IMOV 3e0ac68f750efe372136242554bdca96
+  IOPER 0614942d7d3e268dd4216142cfc25be0
+  assem b4276578abb049b76c552630d13c0e62
+  dst 012515aa6f33827e26e559f8fe99f8f8
+  jump 8cac39b90464c1c2e917864fce4b17ac
+  lab 5e929b27e18173de745af7ad343612fb
+  src 7743602d68b4708d8dd1ad4396041690
+import  -/  BackEnd.Frame 2a16ec41ca683a4c04bc531bc13d071b
+  exports: ff876c8d53ae8d9cc84a5698ff7b815b
+  fp 580da9e0b0080cc1e0c65032dd5bff72
+  lr 28eccfe9e7eccd80ae5dc2a2cb3a283f
+  pc 4b283bb9ccaeccc5f95d9b0bd3b4141d
+import  -/  BackEnd.Instructions 4d01d75e375ace81049cc56959743d7f
+  exports: 05db9b415662c28923114b34233dccb8
+  ADD 53d6297a8ebfbcdb3d868b4176f410af
+  AL 71f0108ba9d3f4e47eaac9d6626ee746
+  BL 98be4a2444de6dc4bcff7225e1b391a9
+  BRANCH_ 21e979553c00166dade29e2b4ac52f38
+  CBS_ 92654cea7c830fb069fe0b8b0652e384
+  CMP 17d45495abcaac183f44c8ae15fc0f5d
+  IMM f6471e293b63d1597e4cbf39cf655499
+  LAB 0e21587c486a54e60eb370b096720078
+  LDR 94c0368f2649bfbb8ab90e3275173c70
+  LR fafc5439dfd7faa8b9283b12d75a21b5
+  L_ 051d3563297aa675364743ae580fde1a
+  MC_ f42c1c5adf0f173687370f9cc4271b56
+  MOV 9220b70c7e9f83ae29ae465b4ad0192e
+  MSG 08c82d61d700ad40001693aab99f5f4c
+  NoSuffix 8fdd08444bb0e14d9f67c55216d738d2
+  PC 7746b65c8fbd1f68b9ccadd6932125f5
+  POP eb4d6ea290c988876c422ae4fe31cc0d
+  PUSH 580f600e55652335bf27380bfdba585a
+  R 2879389a0f42cd51af7d0cba327d4812
+  R0 e6cc9e8c06e2cd562610a47a1c0a0449
+  RTEMP 714e021c5d4ed8a746e447698c2cd6e0
+  STACK_ 8e654d770bedd182411dbe263b9e3324
+  S_ 97ae5f7f5040d2950cf70d231f890c96
+  W e03587dcef19a3d775cd6afb4b5add30
+import  -/  BackEnd.Temp 0c22f42d627493b2b3f13cd2a3ac5a46
+  exports: ecf0e74365e1a70f2572e5197e175ea3
+import  -/  FrontEnd.AST 13c4a14be76ce51c011789d09991ee7e
+  exports: c71a8578c05d8981bdbdc0f839e79cdc
+55484bef3159742f18a9fe575e088b17
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   BackEnd.Builtin.$trModule2
+                   BackEnd.Builtin.$trModule1) -}
+1e7e804dfc72c8e3796cdc1a831b698b
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "BackEnd.Builtin"#) -}
+0aca684d60242352e8d5de769ac94def
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   "wacc32-0.1.0.0-3oOtzXerc607YIePR0qNZ2"#) -}
+153c07ca4e580aa4b7ddd038d5adfd78
+  add_label :: GHC.Base.String -> BackEnd.Assem.Instr
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U>m2,
+     Unfolding: InlineRule (1, True, False)
+                (\ (s :: GHC.Base.String) ->
+                 BackEnd.Assem.ILABEL (BackEnd.Instructions.LAB s) s) -}
+da7d267edf5a34655e1faa8cb7ddb769
+  cmp_r0 :: BackEnd.Assem.Instr
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Assem.IOPER
+                   BackEnd.Builtin.cmp_r3
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   BackEnd.Builtin.cmp_r1
+                   (GHC.Types.[] @ GHC.Base.String)) -}
+634f2cf31eba0741e3f51a04fa804a03
+  cmp_r1 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Builtin.cmp_r2
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+8305b35067fede0015f2cbebaf85071b
+  cmp_r2 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 0#) -}
+698a42d610272fa3d69794d0e5d8bc68
+  cmp_r3 :: BackEnd.Instructions.Instr
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.MC_
+                   BackEnd.Builtin.cmp_r5
+                   BackEnd.Instructions.R0
+                   BackEnd.Builtin.cmp_r4) -}
+c60d3636ecebb6b2f8756b990aee00c4
+  cmp_r4 :: BackEnd.Instructions.OP
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.IMM BackEnd.Builtin.cmp_r2) -}
+3a79f69a79f0a134e88c996197efa362
+  cmp_r5 :: BackEnd.Instructions.Simple
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Instructions.CMP BackEnd.Instructions.AL) -}
+e668ea769be96a65a41782736483a720
+  end :: [BackEnd.Assem.Instr]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Builtin.r0_add4
+                   BackEnd.Builtin.end1) -}
+25e415ddcbb2d5ae2c272f3a08b50cea
+  end1 :: [BackEnd.Assem.Instr]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Builtin.end10
+                   BackEnd.Builtin.end2) -}
+4d9c098e27f7882b6fc4efcd09ce1fa9
+  end10 :: BackEnd.Assem.Instr
+  {- Strictness: m1,
+     Unfolding: (BackEnd.Assem.IOPER
+                   BackEnd.Builtin.end12
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   BackEnd.Builtin.cmp_r1
+                   BackEnd.Builtin.end11) -}
+9e679798625087f2e094a3993276d956
+  end11 :: [GHC.Base.String]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ GHC.Base.String
+                   BackEnd.Builtin.end_s1
+                   (GHC.Types.[] @ GHC.Base.String)) -}
+8989445af06c8ad15cb3a842db992b5b
+  end12 :: BackEnd.Instructions.Instr
+  {- Strictness: m3,
+     Unfolding: (BackEnd.Instructions.BRANCH_
+                   BackEnd.Builtin.end9
+                   BackEnd.Builtin.end13) -}
+357ed5a7e339074c12bd751771970c59
+  end13 :: BackEnd.Instructions.Lable
+  {- Strictness: m1,
+     Unfolding: (BackEnd.Instructions.L_ BackEnd.Builtin.end_s1) -}
+afa632c8787d54b9037089a873559a3d
+  end2 :: [BackEnd.Assem.Instr]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Builtin.r0_clear
+                   BackEnd.Builtin.end3) -}
+70e4e9dd72e38eb440cc11e128d165c9
+  end3 :: [BackEnd.Assem.Instr]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Builtin.end5
+                   BackEnd.Builtin.end4) -}
+617187d7d5e6d2831eb3a88ebe3bcf69
+  end4 :: [BackEnd.Assem.Instr]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Assem.Instr
+                   BackEnd.Builtin.poppc
+                   (GHC.Types.[] @ BackEnd.Assem.Instr)) -}
+8e4cde1abd00cd7d359a2100c63000bd
+  end5 :: BackEnd.Assem.Instr
+  {- Strictness: m1,
+     Unfolding: (BackEnd.Assem.IOPER
+                   BackEnd.Builtin.end7
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   BackEnd.Builtin.cmp_r1
+                   BackEnd.Builtin.end6) -}
+2ea6a6f07f2cbbbd7e94fd4f98a31834
+  end6 :: [GHC.Base.String]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ GHC.Base.String
+                   BackEnd.Builtin.end_s
+                   (GHC.Types.[] @ GHC.Base.String)) -}
+72846584847b6d83d12fa67f7ea117a1
+  end7 :: BackEnd.Instructions.Instr
+  {- Strictness: m3,
+     Unfolding: (BackEnd.Instructions.BRANCH_
+                   BackEnd.Builtin.end9
+                   BackEnd.Builtin.end8) -}
+46c7cba697f9830bc3cf32dbc13d1531
+  end8 :: BackEnd.Instructions.Lable
+  {- Strictness: m1,
+     Unfolding: (BackEnd.Instructions.L_ BackEnd.Builtin.end_s) -}
+d3245f7ab0b8585307eb95e9a7eb80ec
+  end9 :: BackEnd.Instructions.Branch
+  {- HasNoCafRefs,
+     Unfolding: (BackEnd.Instructions.BL BackEnd.Instructions.AL) -}
+8a34f01596d602ddbf4e5a9a1345c4da
+  end_s :: GHC.Base.String
+  {- Unfolding: (GHC.CString.unpackCString# "fflush"#) -}
+8484c61199d480598e76c1c9afee5c23
+  end_s1 :: GHC.Base.String
+  {- Unfolding: (GHC.CString.unpackCString# "printf"#) -}
+b7a5c37c331feb0e369f21cfeac3b6fc
+  jump_to_label :: GHC.Base.String -> BackEnd.Assem.Instr
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U>m1,
+     Unfolding: InlineRule (1, True, False)
+                (\ (s :: GHC.Base.String) ->
+                 BackEnd.Assem.IOPER
+                   (BackEnd.Instructions.BRANCH_
+                      BackEnd.Builtin.end9
+                      (BackEnd.Instructions.L_ s))
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   (GHC.Types.:
+                      @ GHC.Base.String
+                      s
+                      (GHC.Types.[] @ GHC.Base.String))) -}
+c5e2a614b59e7567844c030ed44d0a4c
+  ld_cond_msg_toR0 ::
+    GHC.Base.String -> BackEnd.Instructions.Cond -> BackEnd.Assem.Instr
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,U><L,U>m3,
+     Unfolding: InlineRule (2, True, False)
+                (\ (msg :: GHC.Base.String) (c :: BackEnd.Instructions.Cond) ->
+                 BackEnd.Assem.IMOV
+                   (BackEnd.Instructions.S_
+                      (BackEnd.Instructions.LDR BackEnd.Instructions.W c)
+                      BackEnd.Instructions.R0
+                      (BackEnd.Instructions.MSG msg))
+                   BackEnd.Builtin.cmp_r1
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+bb498321d203cdfeffc5fd4bc68ce16d
+  ld_msg_toR0 :: GHC.Base.String -> BackEnd.Assem.Instr
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U>m3,
+     Unfolding: InlineRule (1, True, False)
+                (\ (msg :: GHC.Base.String) ->
+                 BackEnd.Assem.IMOV
+                   (BackEnd.Instructions.S_
+                      BackEnd.Builtin.ld_msg_toR1
+                      BackEnd.Instructions.R0
+                      (BackEnd.Instructions.MSG msg))
+                   BackEnd.Builtin.cmp_r1
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+47cb851607ea3e040ccb77a513584c39
+  ld_msg_toR1 :: BackEnd.Instructions.SL
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Instructions.LDR
+                   BackEnd.Instructions.W
+                   BackEnd.Instructions.AL) -}
+d6e09457130ae72cd31266beaf549554
+  ljump_cond ::
+    GHC.Base.String -> BackEnd.Instructions.Cond -> BackEnd.Assem.Instr
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,U><L,U>m1,
+     Unfolding: InlineRule (2, True, False)
+                (\ (s :: GHC.Base.String) (c :: BackEnd.Instructions.Cond) ->
+                 BackEnd.Assem.IOPER
+                   (BackEnd.Instructions.BRANCH_
+                      (BackEnd.Instructions.BL c)
+                      (BackEnd.Instructions.L_ s))
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   BackEnd.Builtin.cmp_r1
+                   (GHC.Types.:
+                      @ GHC.Base.String
+                      s
+                      (GHC.Types.[] @ GHC.Base.String))) -}
+416760141121340715b746a82f6bf439
+  ljump_to_label :: GHC.Base.String -> BackEnd.Assem.Instr
+  {- Arity: 1, HasNoCafRefs, Strictness: <L,U>m1,
+     Unfolding: InlineRule (1, True, False)
+                (\ (s :: GHC.Base.String) ->
+                 BackEnd.Assem.IOPER
+                   (BackEnd.Instructions.BRANCH_
+                      (BackEnd.Instructions.BL BackEnd.Instructions.AL)
+                      (BackEnd.Instructions.L_ s))
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)
+                   BackEnd.Builtin.cmp_r1
+                   (GHC.Types.:
+                      @ GHC.Base.String
+                      s
+                      (GHC.Types.[] @ GHC.Base.String))) -}
+06ecf2576e989356374d6185bae02685
+  move_to_r ::
+    BackEnd.Temp.Temp -> BackEnd.Temp.Temp -> BackEnd.Assem.Instr
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,U><L,U>m3,
+     Unfolding: InlineRule (2, True, False)
+                (\ (t :: BackEnd.Temp.Temp) (r :: BackEnd.Temp.Temp) ->
+                 BackEnd.Assem.IMOV
+                   (BackEnd.Instructions.MC_
+                      BackEnd.Builtin.r0_clear2
+                      (BackEnd.Instructions.RTEMP r)
+                      (BackEnd.Instructions.R (BackEnd.Instructions.RTEMP t)))
+                   (GHC.Types.:
+                      @ BackEnd.Temp.Temp
+                      r
+                      (GHC.Types.[] @ BackEnd.Temp.Temp))
+                   (GHC.Types.:
+                      @ BackEnd.Temp.Temp
+                      t
+                      (GHC.Types.[] @ BackEnd.Temp.Temp))) -}
+03660254a44cbdd15adf6335754a19b5
+  poppc :: BackEnd.Assem.Instr
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Assem.IOPER
+                   BackEnd.Builtin.poppc3
+                   BackEnd.Builtin.poppc2
+                   BackEnd.Builtin.poppc1
+                   (GHC.Types.[] @ GHC.Base.String)) -}
+f8fd9d755427f6969691824403a7e546
+  poppc1 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Frame.pc
+                   BackEnd.Builtin.poppc2) -}
+3a9386f9bb74c4cbbee2d8aa697ddbb5
+  poppc2 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Frame.fp
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+f3698e7e464568967ed80afff660b7b1
+  poppc3 :: BackEnd.Instructions.Instr
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.Instructions.STACK_
+                   BackEnd.Builtin.poppc5
+                   BackEnd.Builtin.poppc4) -}
+5a1359448130a56b980d60106a24e1ea
+  poppc4 :: [BackEnd.Instructions.REG]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Instructions.REG
+                   BackEnd.Instructions.PC
+                   (GHC.Types.[] @ BackEnd.Instructions.REG)) -}
+0df7ba0ecbee8b3cb19b860d99c300eb
+  poppc5 :: BackEnd.Instructions.StackOP
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.POP BackEnd.Instructions.AL) -}
+5577f894b6d9bb1d8c7998b71dd95e72
+  pushlr :: BackEnd.Assem.Instr
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Assem.IOPER
+                   BackEnd.Builtin.pushlr2
+                   BackEnd.Builtin.poppc2
+                   BackEnd.Builtin.pushlr1
+                   (GHC.Types.[] @ GHC.Base.String)) -}
+a32dfc36f51a88e3493162d484ab45dd
+  pushlr1 :: [BackEnd.Temp.Temp]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Temp.Temp
+                   BackEnd.Frame.lr
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+43bd1d02a4d5c1c1fb0bd6a04e5be843
+  pushlr2 :: BackEnd.Instructions.Instr
+  {- HasNoCafRefs, Strictness: m5,
+     Unfolding: (BackEnd.Instructions.STACK_
+                   BackEnd.Builtin.pushlr4
+                   BackEnd.Builtin.pushlr3) -}
+5c5024f742cbade6b448bf2d75340398
+  pushlr3 :: [BackEnd.Instructions.REG]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ BackEnd.Instructions.REG
+                   BackEnd.Instructions.LR
+                   (GHC.Types.[] @ BackEnd.Instructions.REG)) -}
+850493f72b6783b47432b43ba896398d
+  pushlr4 :: BackEnd.Instructions.StackOP
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Instructions.PUSH BackEnd.Instructions.AL) -}
+75066eef204724c81fe42977acd9aabe
+  r0_add1 :: BackEnd.Instructions.Instr
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Instructions.CBS_
+                   BackEnd.Builtin.r0_add5
+                   BackEnd.Instructions.R0
+                   BackEnd.Instructions.R0
+                   BackEnd.Builtin.r0_add2) -}
+63b2f6dfaebc1204df7e1b9372bc94f1
+  r0_add2 :: BackEnd.Instructions.OP
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.IMM BackEnd.Builtin.r0_add3) -}
+e701234a1ebf45b4ede47b1fa5f98950
+  r0_add3 :: GHC.Types.Int
+  {- HasNoCafRefs, Strictness: m, Unfolding: (GHC.Types.I# 4#) -}
+c0299da2ab21d361bc7aefe2adfb9ed7
+  r0_add4 :: BackEnd.Assem.Instr
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Assem.IOPER
+                   BackEnd.Builtin.r0_add1
+                   BackEnd.Builtin.cmp_r1
+                   BackEnd.Builtin.cmp_r1
+                   (GHC.Types.[] @ GHC.Base.String)) -}
+b0a5b904bb8acabcf694bb80e4801848
+  r0_add5 :: BackEnd.Instructions.Calc
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (BackEnd.Instructions.ADD
+                   BackEnd.Instructions.NoSuffix
+                   BackEnd.Instructions.AL) -}
+b2a3d6d06e5127bd9318d7f6392e6eff
+  r0_clear :: BackEnd.Assem.Instr
+  {- HasNoCafRefs, Strictness: m3,
+     Unfolding: (BackEnd.Assem.IMOV
+                   BackEnd.Builtin.r0_clear1
+                   BackEnd.Builtin.cmp_r1
+                   (GHC.Types.[] @ BackEnd.Temp.Temp)) -}
+7242da98ad92f34ef28a33bafe55eee9
+  r0_clear1 :: BackEnd.Instructions.Instr
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.MC_
+                   BackEnd.Builtin.r0_clear2
+                   BackEnd.Instructions.R0
+                   BackEnd.Builtin.cmp_r4) -}
+d093d49f69b63bddffa8cdcf62b620a0
+  r0_clear2 :: BackEnd.Instructions.Simple
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (BackEnd.Instructions.MOV BackEnd.Instructions.AL) -}
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+
