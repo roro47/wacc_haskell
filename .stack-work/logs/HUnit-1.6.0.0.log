@@ -8,5 +8,5 @@ Preprocessing library HUnit-1.6.0.0...
 [5 of 6] Compiling Test.HUnit       ( src/Test/HUnit.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Test/HUnit.o )
 [6 of 6] Compiling Paths_HUnit      ( .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/autogen/Paths_HUnit.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Paths_HUnit.o )
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/HUnit-1.6.0.0-F165Ngv75NiGmJtBpw4iK4
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/HUnit-1.6.0.0-F165Ngv75NiGmJtBpw4iK4
 Registering HUnit-1.6.0.0...

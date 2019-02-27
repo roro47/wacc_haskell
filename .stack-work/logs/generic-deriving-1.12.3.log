@@ -33,5 +33,5 @@ Preprocessing library generic-deriving-1.12.3...
 [19 of 20] Compiling Generics.Deriving.Default ( src/Generics/Deriving/Default.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving/Default.o )
 [20 of 20] Compiling Generics.Deriving ( src/Generics/Deriving.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Generics/Deriving.o )
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/generic-deriving-1.12.3-HPQduUg70uzIWqANLW8iZn
 Registering generic-deriving-1.12.3...

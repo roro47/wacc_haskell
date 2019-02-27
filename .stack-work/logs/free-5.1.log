@@ -22,5 +22,5 @@ Preprocessing library free-5.1...
 [19 of 20] Compiling Control.Alternative.Free.Final ( src/Control/Alternative/Free/Final.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Control/Alternative/Free/Final.o )
 [20 of 20] Compiling Control.Alternative.Free ( src/Control/Alternative/Free.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Control/Alternative/Free.o )
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/free-5.1-8rG0NAVlJWWA1XVIx4CQvP
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/free-5.1-8rG0NAVlJWWA1XVIx4CQvP
 Registering free-5.1...

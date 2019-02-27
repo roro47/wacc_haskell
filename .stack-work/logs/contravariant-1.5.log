@@ -6,5 +6,5 @@ Preprocessing library contravariant-1.5...
 [3 of 4] Compiling Data.Functor.Contravariant.Compose ( src/Data/Functor/Contravariant/Compose.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Functor/Contravariant/Compose.o )
 [4 of 4] Compiling Data.Functor.Contravariant.Generic ( src/Data/Functor/Contravariant/Generic.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/Functor/Contravariant/Generic.o )
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/contravariant-1.5-KpjAR0Q4Gdx23WGiFufh1T
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/contravariant-1.5-KpjAR0Q4Gdx23WGiFufh1T
 Registering contravariant-1.5...

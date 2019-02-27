@@ -66,5 +66,5 @@ src/System/Log/Logger.hs:201:1: warning: [-Wdeprecations]
     Module ‘Control.Monad.Error’ is deprecated:
       Use "Control.Monad.Except" instead
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/hslogger-1.2.12-9EWW1Mdz43h8QJHH7D0aud
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/hslogger-1.2.12-9EWW1Mdz43h8QJHH7D0aud
 Registering hslogger-1.2.12...

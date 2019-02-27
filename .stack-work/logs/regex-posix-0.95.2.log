@@ -12,5 +12,5 @@ Text/Regex/Posix.hs:72:13: warning: [-Wdeprecations]
     In the use of ‘versionTags’ (imported from Data.Version):
     Deprecated: "See GHC ticket #2496"
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/regex-posix-0.95.2-DqBrGVkCSgwKH47WudwsWy
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/regex-posix-0.95.2-DqBrGVkCSgwKH47WudwsWy
 Registering regex-posix-0.95.2...

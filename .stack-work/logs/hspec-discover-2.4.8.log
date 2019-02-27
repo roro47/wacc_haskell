@@ -9,7 +9,7 @@ Preprocessing executable 'hspec-discover' for hspec-discover-2.4.8...
 [1 of 1] Compiling Main             ( driver/hspec-discover.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/hspec-discover/hspec-discover-tmp/Main.o )
 Linking .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/hspec-discover/hspec-discover ...
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/hspec-discover-2.4.8-LlNlsptiybgHFXBBsmNjVn
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/hspec-discover-2.4.8-LlNlsptiybgHFXBBsmNjVn
 Installing executable(s) in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/bin
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/bin
 Registering hspec-discover-2.4.8...

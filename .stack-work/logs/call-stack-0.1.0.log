@@ -5,5 +5,5 @@ Preprocessing library call-stack-0.1.0...
 [2 of 3] Compiling Data.SrcLoc      ( src/Data/SrcLoc.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/SrcLoc.o )
 [3 of 3] Compiling Data.CallStack   ( src/Data/CallStack.hs, .stack-work/dist/x86_64-linux/Cabal-1.24.2.0/build/Data/CallStack.o )
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/call-stack-0.1.0-FYVrCPXGP9EGAuTW32963O
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/call-stack-0.1.0-FYVrCPXGP9EGAuTW32963O
 Registering call-stack-0.1.0...

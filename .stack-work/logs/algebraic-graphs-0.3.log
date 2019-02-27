@@ -38,5 +38,5 @@ src/Algebra/Graph/NonEmpty.hs:60:1: warning: [-Wunused-imports]
       except perhaps to import instances from ‘Data.Semigroup’
     To import instances alone, use: import Data.Semigroup()
 Installing library in
-/home/parallels/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/algebraic-graphs-0.3-GMNCI0iOPDY8oGrd7FmxLZ
+/homes/qs4617/lab/wacc_32/.stack-work/install/x86_64-linux/ghc-8.0.2/8.0.2/lib/x86_64-linux-ghc-8.0.2/algebraic-graphs-0.3-GMNCI0iOPDY8oGrd7FmxLZ
 Registering algebraic-graphs-0.3...
