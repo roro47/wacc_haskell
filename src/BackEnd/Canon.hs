@@ -8,6 +8,7 @@ import FrontEnd.SemanticAnalyzer
 import qualified BackEnd.Translate as Translate
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
+import Data.List hiding(insert)
 
 data CanonState =
   CanonState { tempAlloc :: Temp.TempAllocator,
@@ -184,6 +185,10 @@ isESEQ (ESEQ _ _) = True
 isESEQ _ = False
 
 reorder :: [Exp] -> State CanonState (Stm, [Exp])
+reorder (exp@(CALL (NAME n) _):rest)
+ | "#" `isPrefixOf` n = do
+   (stm, exps) <- reorder $! rest
+   return (stm, (exp:exps))
 reorder (exp@(CALL _ _):rest) = do
   temp <- newTemp
   reorder $! ((ESEQ (MOV (TEMP temp) exp) (TEMP temp)):rest)
@@ -217,7 +222,6 @@ doStm (MOV (MEM e) (CALL (NAME f) es))
 
 doStm (MOV (TEMP t) (CALL e es))
   = reorderStm (e:es) (\(e:es) -> MOV (TEMP t) (CALL e es))
-
 
 doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)

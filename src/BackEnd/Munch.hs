@@ -97,6 +97,12 @@ munchExp (CALL (NAME "#p_read_int") [MEM e]) = do
       putchar = ljump_to_label "p_read_int"
   return (i ++ [mv, putchar], dummy)
 
+munchExp (CALL (NAME "#p_read_char") [MEM e]) = do
+  (i, t) <- munchExp e
+  let mv = move_to_r t 0
+      putchar = ljump_to_label "p_read_int"
+  return (i ++ [mv, putchar], dummy)
+
 munchExp (CALL (NAME "#p_putchar") [e]) = do
   (i, t) <- munchExp e
   let mv = move_to_r t 0
