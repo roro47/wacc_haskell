@@ -331,6 +331,7 @@ analyzeFile file = do
     Left e -> putStrLn "#syntax_error#" >>
               exitWith (ExitFailure 100)
     Right r -> analyzeAST r
+
 analyzeAST :: ProgramF () -> IO (ProgramF ())
 analyzeAST ast = do
   case evalStateT (analyzeProgramF ast) (([], HashMap.empty), Main) of
