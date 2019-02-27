@@ -211,6 +211,9 @@ doStm :: Stm -> State CanonState Stm
 doStm (MOV (TEMP t) (CALL (NAME f) es))
   = reorderStm es (\es -> MOV (TEMP t) (CALL (NAME f) es))
   
+doStm (MOV (MEM e) (CALL (NAME f) es))
+  = reorderStm (e:es) (\(e:es) -> MOV (MEM e) (CALL (NAME f) es))
+ 
 doStm (MOV (TEMP t) (CALL e es))
   = reorderStm (e:es) (\(e:es) -> MOV (TEMP t) (CALL e es))
  

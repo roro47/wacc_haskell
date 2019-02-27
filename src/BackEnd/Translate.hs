@@ -62,9 +62,8 @@ translateFile :: String -> IO Stm
 translateFile file = do
   ast <- parseFile file
   ast' <- analyzeAST ast
-  let { (stm, s) = runState (translate ast') newTranslateState;
-        (Frame.PROC procFrag _) = head (procFrags s) }
-  return (SEQ stm (procFrag))
+  let { (stm, s) = runState (translate ast') newTranslateState }
+  return (seq ((map (\(Frame.PROC stm _) -> stm) (procFrags s)) ++ [stm]))
 
 translate :: ProgramF () -> State TranslateState Stm
 translate program = do

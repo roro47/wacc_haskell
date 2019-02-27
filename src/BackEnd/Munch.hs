@@ -643,9 +643,40 @@ munch file = do
       totalOut = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
                  (map show (out' ++ out))
-  mapM putStrLn $ zipWith (++) (map (\x -> (show x) ++"  ") [0..]) totalOut
-  putStrLn ""
-  return ()
+  mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
+  return out
+     
+  where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
+        genProcFrags ids = do
+          let gens = map (\n -> genBuiltIns !! n) ids
+          pfrags <- foldM (\acc f -> f >>= \pfrag -> return $ acc ++ [pfrag]) [] gens
+          return pfrags
+
+
+showAssem builtInFrags dataFrags out
+  = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
+                 concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
+                 (map show (out)) 
+
+testMunch file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState
+      (builtInFrags, s') = runState (genProcFrags (Set.toList $ builtInSet s)) s -- generate builtIn
+      userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
+      dataFrags = map munchDataFrag ( Translate.dataFrags s' )
+      canonState = CanonState { C.tempAlloc = Translate.tempAlloc s',
+                                C.controlLabelAlloc = Translate.controlLabelAlloc s'}
+      (stm', s'') = runState (transform stm) canonState
+      transState = s' { Translate.tempAlloc = C.tempAlloc s'',
+                        Translate.controlLabelAlloc = C.controlLabelAlloc s'' }
+      (userFrags', s''') = runState (mapM munchStm userFrags) transState -- munch functions
+      arms = evalState (munchmany stm') s'''
+      substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] arms)
+      out = filter (\x -> not $ containsDummy x) substitute
+      substitute' = map (\f -> optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] f)) userFrags'
+      out' = map (filter (\x -> not $ containsDummy x)) substitute'
+  return $ (out' ++ [out], dataFrags, builtInFrags)
                       
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do

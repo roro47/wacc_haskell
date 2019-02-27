@@ -1,5 +1,5 @@
 module BackEnd.Assem where
-
+import Data.List as List
 import BackEnd.Temp as Temp
 import qualified BackEnd.Instructions as Arm
 import BackEnd.IR
@@ -13,13 +13,37 @@ data Instr = IOPER  { assem :: Arm.Instr,
            | IMOV   { assem :: Arm.Instr,
                       dst  :: [Temp.Temp],
                       src :: [Temp.Temp] }
+            deriving (Eq)
            -- deriving Show
              -- for IMOV, length dst == 1, length src == 1
+
+assemReg (IOPER _ d s _) = nub $ d ++ s
+assemReg (IMOV _ d s) = nub $ d ++ s 
+assemReg _ = []
 
 instance Prelude.Show Instr where
     show (IOPER assem dst src jump) = Arm.output_show assem
     show (ILABEL assem lab) = Arm.output_show assem
     show (IMOV assem dst src) = Arm.output_show assem
+
+intToReg :: Int -> Arm.REG
+intToReg 0 = Arm.R0
+intToReg 1 = Arm.R1
+intToReg 2 = Arm.R2
+intToReg 3 = Arm.R3
+intToReg 4 = Arm.R4
+intToReg 5 = Arm.R5
+intToReg 6 = Arm.R6
+intToReg 7 = Arm.R7
+intToReg 8 = Arm.R8
+intToReg 9 = Arm.R9
+intToReg 10 = Arm.R10
+intToReg 11 = Arm.R11
+intToReg 12 = Arm.R12
+intToReg 13 = Arm.SP
+intToReg 14 = Arm.LR
+intToReg 15 = Arm.PC
+
 
 normInstr :: (Arm.Instr -> Arm.Instr) -> Instr -> Instr
 normInstr func (IOPER assem dst src jump) = IOPER (func assem) dst src jump
@@ -29,6 +53,12 @@ normInstr func (IMOV assem dst src) = IMOV (func assem) dst src
 normAssem ::[(Int, Arm.REG)] -> [Instr] -> [Instr]
 normAssem ((i, r):ls) instrs = normAssem ls (map (normInstr $ Arm.normInstr i r) instrs)
 normAssem [] instrs = instrs
+
+normAssem' ::[(Int, Int)] -> [Instr] -> [Instr]
+normAssem' ((i, r):ls) instrs = 
+    normAssem' ls (map (normInstr $ Arm.normInstr i (intToReg r)) instrs)
+normAssem' [] instrs = instrs
+
 
 containsDummy :: Instr -> Bool
 containsDummy (IOPER assem _ _ _) = Arm.dummyInstr assem

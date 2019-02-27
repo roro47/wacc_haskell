@@ -2,9 +2,14 @@ module BackEnd.MakeGraph where
 
 import Data.HashMap as HashMap hiding (map)
 import Algebra.Graph.AdjacencyMap as AdjGraph
+import BackEnd.Munch as Munch
 import BackEnd.FlowGraph
 import BackEnd.Assem as Assem
 
+
+testInstrsToGraphFile file = do
+  (out, _, _) <- testMunch file
+  return $ instrsToGraph (concat out)
 
 -- transform instructions to contro flow graph
 instrsToGraph :: [Assem.Instr] -> FlowGraph
@@ -26,31 +31,36 @@ instrsToGraph instrs = fGraph { nodes = map fst indexed,
         instrsToGraph' :: [(Int, Assem.Instr)] -> FlowGraph -> FlowGraph
         instrsToGraph' [] fGraph = fGraph
 
-        instrsToGraph' (curr@(index, instr@(IOPER _ dst src _)):rest) fGraph =
+        instrsToGraph' ((index, (IOPER _ dst' src' js)):rest) fGraph =
           instrsToGraph' rest $ fGraph { control = adjGraph', def = def', use = use' }
           where
-            targets = map (\l -> labelTable ! l) (jump instr)
+            targets = map (\l -> labelTable ! l) js
             adjGraph' =
               case targets of
                 [] -> if length rest == 0
                       then control fGraph
                       else overlay (edge index (index+1)) (control fGraph)
                 otherwise -> foldl (\acc t -> overlay (edge index t) acc) (control fGraph) targets 
-            def' = insertWith (++) index dst (def fGraph)
-            use' = insertWith (++) index src (use fGraph)
+            def' = insertWith (++) index dst' (def fGraph)
+            use' = insertWith (++) index src' (use fGraph)
 
-        instrsToGraph' (curr@(index, ILABEL _ _):rest) fGraph =
+        instrsToGraph' ((index, (ILABEL _ _)):rest) fGraph =
           instrsToGraph' rest $ fGraph { control = adjGraph'}
           where adjGraph' =
                   if length rest == 0
                   then control fGraph
                   else overlay (edge index (index+1)) (control fGraph)
 
-        instrsToGraph' ((index, (IMOV _ (dst:_) (src:_))):rest) fGraph =
+        instrsToGraph' ((index, (IMOV _ (dst':_) (src':_))):rest) fGraph =
           instrsToGraph' rest $ fGraph { control = adjGraph',
-                                         def = insertWith (++) index [dst] (def fGraph),
-                                         use = insertWith (++) index [src] (use fGraph) }
+                                         def = insertWith (++) index [dst'] (def fGraph),
+                                         use = insertWith (++) index [src'] (use fGraph) }
           where adjGraph' =
                   if length rest == 0
                   then control fGraph
                   else overlay (edge index (index+1)) (control fGraph)
+
+        instrsToGraph' ((index, (IMOV _ _ _)):rest) fGraph = undefined
+
+      --  instrsToGraph' ((index, _):rest) fGraph = fGraph
+
