@@ -202,23 +202,25 @@ munchExp (ESEQ stm e) = do
 
 -- TODO: add function type information
 -- push all the parameters to the stack
+-- passing input in reverse sequence
 munchExp (CALL (NAME f) es) = do
   pushParams <- mapM munchStm (concat (map pushParam es))
-  return (concat pushParams ++ [bToFunc] ++ adjustSP, 0)
+  return (concat (reverse pushParams) ++ [bToFunc] ++ adjustSP, 0)
   where pushParam exp =
-          [IR.MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4)),
-           IR.MOV (MEM (TEMP Frame.sp)) exp]
+          [IR.MOV (MEM (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4))) exp,
+           IR.MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4))]
         adjustSP = if totalParamSize == 0 then [] else
           [IOPER { assem = CBS_ (ADD NoSuffix AL) SP SP (IMM totalParamSize),
                   src = [Frame.sp],
                   dst = [Frame.sp],
                   jump = [] }]
         bToFunc =
-          IOPER { assem = BRANCH_ (B AL) (L_ f),
+          IOPER { assem = BRANCH_ (BL AL) (L_ fname),
                   src = [],
                   dst = [],
-                  jump = [f] }
+                  jump = [fname] }
         totalParamSize = (length es) * 4
+        fname = "f_" ++ f
 
 
 munchExp (CALL f es) = do
@@ -381,22 +383,32 @@ munchMem e = do
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
+---IMMEDIATE ---
+-- optimise ((IOPER { assem = (CBS_ c (RTEMP t11) SP (IMM int))}) :
+--           (IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
+--   | (stackEqualCond c sl) && t22 == t11
+--     = optimise (IMOV { assem = (S_ sl (RTEMP t21) (Imm SP (opVal c * int))),src = [13], dst = [t21] }:remain)
 optimise (IOPER {assem = CBS_ a@(ADD NoSuffix AL) SP SP (IMM 0)} : remain) = optimise remain
 optimise (IOPER { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} : -- remoge this after unified
           IMOV { assem = S_ op (RTEMP t3) (Imm (RTEMP t4) i')}:remain)
-  | t4 == t1 = (IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}):(optimise remain)
+  | t4 == t1 = optimise ((IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}): remain)
 optimise (IMOV { assem = CBS_ a@(ADD NoSuffix AL) (RTEMP t1) SP (IMM i)} :
           IMOV { assem = S_ op (RTEMP t3) (Imm (RTEMP t4) i')}:remain)
-  | t4 == t1 = (IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}):(optimise remain)
-
+  | t4 == t1 = optimise ((IMOV { assem = S_ op (RTEMP t3) (Imm SP (i+i')), src = [13], dst = [t3]}): remain)
+-- PRE-INDEX --
 optimise ((IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :
           (IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}) :remain)
   | (stackEqualCond c sl) && t11 == t12 && t22 == t11
-          = IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
-                : optimise remain
--- PRE-INDEX --
+        = optimise (IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
+                : remain)
+optimise ((IMOV { assem = (S_ sl (RTEMP t21) (Imm (RTEMP t22) 0))}):
+          (IOPER { assem = (CBS_ c (RTEMP t11) (RTEMP t12) (IMM int))}) :remain)
+  | (stackEqualCond c sl) && t11 == t12 && t22 == t11
+        = optimise (IMOV { assem = (S_ sl (RTEMP t21) (PRE (RTEMP t11) (opVal c * int))),src = [t11], dst = [t12]}
+                : remain)
 optimise ((IMOV { assem = MC_ (ARM.MOV _) a (R b)}):remain)
   | a == b = optimise remain
+
 -- optimise lables but it is dangerous ..
 optimise ((IOPER { assem = (BRANCH_ (B AL) (L_ a))}) : (ILABEL {assem = (LAB b)}) : remain)
   | a == b = optimise remain

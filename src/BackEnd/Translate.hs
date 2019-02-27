@@ -256,7 +256,7 @@ translateFuncF (Ann (Func t id ps stm) _) = do
         addParam :: Int -> (Type, String) -> State TranslateState Int
         addParam offset (t, s) = do
           frame <- getCurrFrame
-          addVarEntry s t (Access frame (Frame.InFrame offset))
+          addVarEntry s t (Access frame (Frame.InFrame $ offset+4))
           return (offset + Frame.typeSize t)
 
 translateProgramF :: ProgramF () -> State TranslateState Stm
