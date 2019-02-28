@@ -111,7 +111,7 @@ regAllocAssem' (assems, dataFrags, builtInFrags) = do
       meta = map snd states
       colorMap' =  map Hash.toList colorMap
       final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
-      totalOut = showAssem builtInFrags dataFrags (concat final)
+      totalOut = Assem.showAssem builtInFrags dataFrags (concat final)
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
   mapM_ (\a -> putStrLn (concat $ map (\(id,a') -> show id ++ " " ++ Assem.showInstr a' ++ "\n") (zip [0..] a ))) assems
   return meta
@@ -140,7 +140,7 @@ regAllocAssem (assems, dataFrags, builtInFrags) = do
       meta = map snd states
       colorMap' =  map Hash.toList colorMap
       final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
-      totalOut = showAssem builtInFrags dataFrags (concat final)
+      totalOut = Assem.showAssem builtInFrags dataFrags (concat final)
   let assemOut = map (\s -> s ++ "\n") totalOut
   return (concat $ List.filter (\x -> not $ and $ map (=='\n') x) assemOut)
 

@@ -33,6 +33,11 @@ showInstr (IMOV assem d s) =
 showInstr (ILABEL assem l) =
     Arm.output_show assem ++ " label: " ++ show l
 
+showAssem :: [[Instr]] -> [[Instr]]-> [Instr] -> [String]
+showAssem builtInFrags dataFrags out
+  = intercalate ["\n"] (([[".data"]] ++ map (lines . show) (concat dataFrags)) ++
+                        ([[".text"], ["\n"], [".global main"]] ++ [map show out]) ++
+                        (map (map show) builtInFrags))
 
 instance Prelude.Show Instr where
     show (IOPER assem dst src jump) = "    " ++ Arm.output_show assem

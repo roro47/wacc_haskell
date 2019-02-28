@@ -639,7 +639,7 @@ munchInterface ast =   (out' ++ [out], dataFrags, builtInFrags)
         substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] arms)
         out = filter (\x -> not $ containsDummy x) substitute
         substitute' = map (\u -> optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] u))  userFrags'
-        out' = map (filter (\x -> not $ containsDummy x)) substitute' 
+        out' = map (filter (\x -> not $ containsDummy x)) substitute'
 
         genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
@@ -674,12 +674,6 @@ munch file = do
           let gens = map (\n -> genBuiltIns !! n) ids
           pfrags <- foldM (\acc f -> f >>= \pfrag -> return $ acc ++ [pfrag]) [] gens
           return pfrags
-
-showAssem :: [[ASSEM.Instr]] -> [[ASSEM.Instr]]-> [ASSEM.Instr] -> [String]
-showAssem builtInFrags dataFrags out
-  = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
-                 concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
-                 (map show (out))
 
 testMunch file = do
   ast <- parseFile file
