@@ -1,8 +1,10 @@
 module Main where
 
 import System.Environment
+import System.FilePath
 import FrontEnd.Parser
 import FrontEnd.SemanticAnalyzer
+import BackEnd.CodeGen
 
 main :: IO ()
 main = do
@@ -13,10 +15,10 @@ main = do
     otherwise -> fail "Multiple file compilation is not supported"
   return ()
 
-compile file = do
-  ast <- parseFile file 
+compile path = do
+  let (_, file) = splitFileName path
+      assemFile = replaceExtensions file ".s"
+  ast <- parseFile path
   analyzeAST ast
-  return ()
-
-
-    
+  code <- codeGen ast
+  writeFile assemFile code
