@@ -18,16 +18,16 @@ data Instr = IOPER  { assem :: Arm.Instr,
              -- for IMOV, length dst == 1, length src == 1
 
 assemReg (IOPER _ d s _) = nub $ d ++ s
-assemReg (IMOV _ d s) = nub $ d ++ s 
+assemReg (IMOV _ d s) = nub $ d ++ s
 assemReg _ = []
 
 
-showInstr (IOPER assem d s jump) = 
-    Arm.output_show assem ++ " dst : " ++ show d ++ 
+showInstr (IOPER assem d s jump) =
+    Arm.output_show assem ++ " dst : " ++ show d ++
     " src: " ++ show s ++ " jump: " ++ show jump
 
-showInstr (IMOV assem d s) = 
-    Arm.output_show assem ++ " dst : " ++ show d ++ 
+showInstr (IMOV assem d s) =
+    Arm.output_show assem ++ " dst : " ++ show d ++
     " src: " ++ show s
 
 showInstr (ILABEL assem l) =
@@ -35,9 +35,9 @@ showInstr (ILABEL assem l) =
 
 
 instance Prelude.Show Instr where
-    show (IOPER assem dst src jump) = Arm.output_show assem
+    show (IOPER assem dst src jump) = "    " ++ Arm.output_show assem
     show (ILABEL assem lab) = Arm.output_show assem
-    show (IMOV assem dst src) = Arm.output_show assem
+    show (IMOV assem dst src) = "    " ++ Arm.output_show assem
 
 intToReg :: Int -> Arm.REG
 intToReg 0 = Arm.R0
@@ -68,7 +68,7 @@ normAssem ((i, r):ls) instrs = normAssem ls (map (normInstr $ Arm.normInstr i r)
 normAssem [] instrs = instrs
 
 normAssem' ::[(Int, Int)] -> [Instr] -> [Instr]
-normAssem' ((i, r):ls) instrs = 
+normAssem' ((i, r):ls) instrs =
     normAssem' ls (map (normInstr $ Arm.normInstr i (intToReg r)) instrs)
 normAssem' [] instrs = instrs
 

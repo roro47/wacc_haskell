@@ -371,7 +371,7 @@ translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
   e' <- mapM unEx e
   addBuiltIn id_p_check_array_bounds
  -- typeLen
-  return $ Ex (CALL (NAME "#arrayelem") ((CONSTI 4):i:e'))
+  return $ Ex $ MEM (CALL (NAME "#arrayelem") ((CONSTI 4):i:e'))
 
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
@@ -385,10 +385,11 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
         moveElem = f (TEMP temp) 0 elemSize (exps' ++ [CONSTI arrayLen]) }
   return $ Ex (ESEQ (SEQ (EXP call) moveElem) (TEMP temp))
   where f temp index elemSize [exp]
-          = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index)))) exp
+          = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * (arrayLen - index))))) exp
         f temp index elemSize (exp:exps)
-          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize*index)))) exp)
+          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize*(arrayLen - index))))) exp)
                 (f temp (index+1) elemSize exps)
+        arrayLen = length exprs
 
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
 translateExprF (Ann (IdentExpr id) (_, t)) = do
