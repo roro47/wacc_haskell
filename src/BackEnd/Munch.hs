@@ -210,11 +210,12 @@ munchExp (ESEQ stm e) = do
 
 -- passing input in reverse sequence
 munchExp (CALL (NAME f) es) = do
-  pushParams <- mapM munchStm (concat (map pushParam es))
+  pushParams <- (mapM pushParam es)
   return (concat (reverse pushParams) ++ [bToFunc] ++ adjustSP, 0)
-  where pushParam exp =
-          [IR.MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4)),
-           IR.MOV (MEM (TEMP Frame.sp)) exp] -- fix here !!
+  where pushParam exp = do
+          (i, t) <- munchExp exp
+          return $ i ++ [IOPER {assem = S_ (STR W AL) (RTEMP t) (PRE  SP 4),
+                                src = [t, 13], dst = [13], jump = []}]
         adjustSP = if totalParamSize == 0 then [] else
           [IOPER { assem = CBS_ (ADD NoSuffix AL) SP SP (IMM totalParamSize),
                   src = [Frame.sp],
