@@ -4,31 +4,37 @@ import os
 import sys
 
 testDir = sys.argv[1]
-testFileNames = []
+testFilePaths = []
+
 
 #get test file names
 def getTestFiles():
     if os.path.isfile(testDir):
-        testFileNames.append(testDir)
+        testFilePaths.append(testDir)
     for root, dirs, files in os.walk(testDir, topdown=False):
        for name in files:
-          testFileNames.append(os.path.join(root, name))
-       for name in dirs:
-          testFileNames.append(os.path.join(root, name))
+          testFilePaths.append(os.path.join(root, name))
+       # for name in dirs:
+       #    testFilePaths.append(os.path.join(root, name))
 
 
 # get correct output from one test files
 # replace print.s with our output
-def singleTest(test):
+#test is the path of the test file
+def singleTest(path):
+    subprocess.call(["./compile",  path])
+    testName = path.split('.')[-2].split('/')[-1]
+    assemFileName = testName + ".s"
     exitCode = 0
-    subprocess.call(["arm-linux-gnueabi-gcc", "-o", "exit_machinecode", "-mcpu=arm1176jzf-s", "-mtune=arm1176jzf-s", "exitsimple.s"])
+    subprocess.call(["arm-linux-gnueabi-gcc", "-o", testName, "-mcpu=arm1176jzf-s", "-mtune=arm1176jzf-s",  assemFileName])
     try:
-        out = subprocess.check_output(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/", "exit_machinecode"]).decode()
+        out = subprocess.check_output(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/", testName]).decode()
     except subprocess.CalledProcessError as e:
         exitCode = e.returncode
         out = e.output.decode()
 
-    with open(test) as file:
+
+    with open(path) as file:
         lines = file.readlines()
     correctOutput = str()
     correctExitCode = 0
@@ -47,7 +53,8 @@ def singleTest(test):
             line = line[2:]
             correctExitCode = int(line)
 
-    print("Testing :" + test)
+
+    print("----------Testing : " + testName + ".wacc----------")
     if correctOutput == out:
         print("\N{white heavy check mark} results correct")
     else:
@@ -61,11 +68,13 @@ def singleTest(test):
         print("\N{cross mark} exit code incorrect")
         print("exit code should be: " + str(correctExitCode))
         print("out exit code: " + str(exitCode))
+    print("\n")
 
 def testAll():
+    subprocess.call(["make"])
     getTestFiles()
-    for test in testFileNames:
-        singleTest(test)
+    for path in testFilePaths:
+        singleTest(path)
 
 testAll()
 
