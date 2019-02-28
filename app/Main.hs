@@ -19,6 +19,6 @@ compile path = do
   let (_, file) = splitFileName path
       assemFile = replaceExtensions file ".s"
   ast <- parseFile path
-  analyzeAST ast
-  code <- codeGen ast
+  ast' <- analyzeAST ast
+  code <- codeGen ast'
   writeFile assemFile code

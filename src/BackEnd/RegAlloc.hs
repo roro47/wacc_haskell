@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, RankNTypes #-} 
+{-# LANGUAGE TemplateHaskell, RankNTypes #-}
 module BackEnd.RegAlloc where
 
 
@@ -130,7 +130,7 @@ regAllocAssem' (assems, dataFrags, builtInFrags) = do
           return $ (_color regState', (_liveOut regState'))
           --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
           --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
-        
+
 
 
 regAllocAssem :: ([[Assem.Instr]], [[Assem.Instr]], [[Assem.Instr]]) -> IO String
@@ -141,8 +141,8 @@ regAllocAssem (assems, dataFrags, builtInFrags) = do
       colorMap' =  map Hash.toList colorMap
       final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
       totalOut = showAssem builtInFrags dataFrags (concat final)
-  let assemOut = map (\(id, s) -> show id ++ " " ++ s ++ "\n") (zip [1..] totalOut)
-  return (concat assemOut)
+  let assemOut = map (\s -> s ++ "\n") totalOut
+  return (concat $ List.filter (\x -> not $ and $ map (=='\n') x) assemOut)
 
   where regAllocAssem' assem = do
           let flow = instrsToGraph assem
@@ -158,13 +158,13 @@ regAllocAssem (assems, dataFrags, builtInFrags) = do
           return $ (_color regState', (_liveOut regState'))
           --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
           --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
-        
+
 
 regAlloc :: State RegAllocState ()
 regAlloc = do
-  build 
+  build
   makeWorkList
-  regAlloc' 
+  regAlloc'
   assignColors
   where regAlloc' :: State RegAllocState ()
         regAlloc' = do
@@ -176,14 +176,14 @@ regAlloc = do
 
         regAlloc'' ::  Set.Set Temp.Temp ->  Set.Set Instr
                  -> Set.Set Temp.Temp ->  Set.Set Temp.Temp
-                 -> State RegAllocState () 
+                 -> State RegAllocState ()
         regAlloc'' simplifyWorkList workListMoves freezeWorkList spillWorkList
-          | not (Set.null simplifyWorkList) = do { simplify; regAlloc' } 
-          | not (Set.null workListMoves) = do { coalesce; regAlloc' } 
+          | not (Set.null simplifyWorkList) = do { simplify; regAlloc' }
+          | not (Set.null workListMoves) = do { coalesce; regAlloc' }
           | not (Set.null freezeWorkList) = do { freeze; regAlloc'}
           | not (Set.null spillWorkList) = do { selectSpill; regAlloc' }
           | otherwise = return ()
-          
+
 
 
 build :: State RegAllocState ()
@@ -203,14 +203,14 @@ build = do
           else do
             let live' = Set.toList live
             mapM_ addEdge [(d, l) | d <- def', l <- live']
-          
+
 
 
         addMoveNodes :: Instr -> Temp.Temp -> State RegAllocState ()
         addMoveNodes inst n = do
           moveList %= Hash.insertWith (Set.union) n (Set.singleton inst)
 
-          
+
 
 
 
@@ -226,7 +226,7 @@ addEdge (u, v) = do
     when (not (elem u preCol)) $ do
       adjList %= (\list -> Hash.insertWith (Set.union) u (Set.singleton v) list)
       degree %= (\degree' -> Hash.insertWith (+) u 1 degree')
-    when (not (elem v preCol)) $ do 
+    when (not (elem v preCol)) $ do
       adjList %= (\list -> Hash.insertWith (Set.union) v (Set.singleton u) list)
       degree %= (\degree' -> Hash.insertWith (+) v 1 degree')
   else return ()
@@ -282,7 +282,7 @@ enableMoves nodes = do
         g m = do
           activeMoves' <- use activeMoves
           when (Set.member m activeMoves') $ do
-            activeMoves %= Set.delete m 
+            activeMoves %= Set.delete m
             workListMoves %= Set.insert m
 
 decrementDegree :: Temp.Temp -> State RegAllocState ()
@@ -346,7 +346,7 @@ combine (u, v) = do
   then do { freezeWorkList %= Set.delete v }
   else do { spillWorkList %= Set.delete v }
   coalescedNodes %= Set.insert v
-  alias %= insert v u 
+  alias %= insert v u
   uMoveList <- uses moveList (\l -> l ! u)
   vMoveList <- uses moveList (\l -> l ! v)
   enableMoves [v]
@@ -358,7 +358,7 @@ combine (u, v) = do
   when (d >= k && isUFrozen) $ do
     freezeWorkList %= Set.delete u
     spillWorkList %= Set.insert u
- 
+
 freezeMoves :: Temp.Temp -> State RegAllocState ()
 freezeMoves u = do
   nodeMoves' <- nodeMoves u
@@ -404,7 +404,7 @@ coalesce = do
   workListMoves %= Set.delete m
   -- prepare values for conditional operations in f
   adj <- use adjSet
-  preCol <- use precoloured 
+  preCol <- use precoloured
   adjV <- adjacent v
   allOK <- mapM (\t-> ok t u) adjV
   adjU <- adjacent u
@@ -418,7 +418,7 @@ coalesce = do
           | u == v = do
               coalescedMoves %= Set.insert m
               addWorkList u
-          | elem v preCol || Set.member (u, v) adj' = do 
+          | elem v preCol || Set.member (u, v) adj' = do
               constrainedMoves %= Set.insert m
               addWorkList u
               addWorkList v
@@ -447,8 +447,8 @@ assignColors = do
           else do
             coloredNodes %= Set.insert n
             let { c = head okColors' }
-            color %= Hash.insert n c 
-        
+            color %= Hash.insert n c
+
         filterColor :: [Temp.Temp] -> Temp.Temp -> State RegAllocState [Temp.Temp]
         filterColor okColors w = do
           w' <- getAlias w
@@ -467,4 +467,3 @@ assignColors = do
 
 rewriteProgram :: State RegAllocState ()
 rewriteProgram = undefined
-

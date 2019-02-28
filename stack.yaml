@@ -63,5 +63,5 @@ extra-deps:
 - unordered-containers-0.2.10.0
 - vector-0.12.0.2
 - void-0.7.2
-- cabal-doctest-1.0.6@sha256:c0b4a5b1ff38d2867e7003b4be59f3bd7e8e204ab8c988d96d3a77472ae671cd
+- cabal-doctest-1.0.6
 resolver: ghc-8.0.2

@@ -73,7 +73,7 @@ typeError msg pos expected actual =
 
 paramLenError :: IdentF () -> Int -> Int -> String
 paramLenError symbol paramLen exprLen =
-  "For " ++ functionType symbol ++ ", require " ++ 
+  "For " ++ functionType symbol ++ ", require " ++
   show paramLen ++ " parameters, " ++
   show exprLen ++ " are given.\n"
 
@@ -84,13 +84,13 @@ functionType (Ann (Ident s) (pos, _))
   | otherwise = "function " ++ "\"" ++ s ++ "\"" ++ " defined at " ++ show pos
 
 pushScope :: Analyzer ()
-pushScope = do 
-  ((tables, fTable), context) <- get 
+pushScope = do
+  ((tables, fTable), context) <- get
   put ((HashMap.empty:tables, fTable), context)
 
 -- pre : stack of scope must be not empty
 popScope :: Analyzer ()
-popScope = do 
+popScope = do
   ((tables, fTable), context) <- get
   put ((tail tables, fTable), context)
 
@@ -126,7 +126,7 @@ lookUpFunction id = do
   ((_, fTable),  _) <- get
   return $ HashMap.lookup symbol fTable
   where Ann (Ident symbol) _ = id
-    
+
 setContext :: Context -> Analyzer ()
 setContext c = do { (tables, _) <- get; put (tables, c) }
 
@@ -194,7 +194,7 @@ analyzeFuncAppF (Ann (FuncApp _ symbol exprs) (pos, _)) = do
         evalT ((TFunc allowedT (paramT:paramTs) returnT), ps') expr@(Ann _ (_, t))
           = match errT expr allowedT >>= \_ ->
             decideT t paramT >>= \passT ->
-            return $ (TFunc [] (map (\t -> if t == T then passT else t) paramTs) 
+            return $ (TFunc [] (map (\t -> if t == T then passT else t) paramTs)
                                (replace passT returnT), ps' ++ [t])
 
         checkParamLen :: IdentF () -> SourcePos -> Int -> Int -> Analyzer ()
@@ -209,7 +209,7 @@ analyzeFuncAppF (Ann (FuncApp _ symbol exprs) (pos, _)) = do
         decideT (TArray t)    (TArray T) = return t
         decideT t T = return t
         decide _ = None
-        
+
         replace :: Type -> Type -> Type
         replace passT (TPair t1 t2) =
           TPair (replace passT t1) (replace passT t2)
@@ -335,7 +335,6 @@ analyzeFile file = do
 analyzeAST :: ProgramF () -> IO (ProgramF ())
 analyzeAST ast = do
   case evalStateT (analyzeProgramF ast) (([], HashMap.empty), Main) of
-    Left e -> putStrLn "#semantic_error#" >> 
+    Left e -> putStrLn "#semantic_error#" >>
               exitWith (ExitFailure 200)
     Right p' -> return p'
-
