@@ -54,8 +54,8 @@ munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
       singleIndex size t (p:ps) = do
         (pi, pt) <- munchExp p
         let op = if size == 1 then (R (RTEMP pt)) else (LSL_ (RTEMP pt) 2)
-            ldr = IMOV { assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
-                        src = [t], dst = [t]}
+            ldr = IOPER { assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
+                        src = [t], dst = [t], jump = []}
             m0 = move_to_r pt 0
             m1 = move_to_r t 1
             bl = IOPER {assem = BRANCH_ (BL AL) (L_ "p_check_array_bounds"),
@@ -88,8 +88,8 @@ munchExp (CALL (NAME "#!") [e]) = do
 
 munchExp (CALL (NAME "#len") [e]) = do
   (i, t) <- munchExp e
-  return (i ++ [IMOV {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
-                       src = [t], dst = [t]}], t)
+  return (i ++ [IOPER {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
+                       src = [t], dst = [t], jump = []}], t)
 
 munchExp (CALL (NAME "#skip") _) = return ([], dummy)
 
@@ -463,14 +463,16 @@ munchStm (SEQ s1 s2) = do
 
 munchStm (CJUMP rop e1 (CONSTI i) t f) = do -- ASSUME CANONICAL
   (i1, t1) <- munchExp e1
-  let compare = IMOV {assem = MC_ (ARM.CMP AL) (RTEMP t1) (IMM i), dst = [], src = [t1]}
+  let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (IMM i), dst = [],
+                       src = [t1], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
 munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
-  let compare = IMOV {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [t1], src = [t2]}
+  let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [t1],
+                       src = [t2], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
