@@ -799,7 +799,7 @@ p_print_reference = do
 p_check_null_pointer :: GenBuiltIn
 p_check_null_pointer = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg "\"NullReferenceError: dereference a null reference\n\\0\"")
+  addFragment (Frame.STRING msg "\"NullReferenceError: dereference a null reference\\0\"")
   let s = "p_throw_runtime_error"
   return $[add_label "p_check_null_pointer",
           pushlr,
@@ -840,7 +840,7 @@ p_read str =  do
 p_free_pair :: GenBuiltIn
 p_free_pair = do
   msg <- newDataLabel
-  let str = "\"NullReferenceError: dereference a null reference\n\\0\""
+  let str = "\"NullReferenceError: dereference a null reference\\0\""
       runTimeError = "p_throw_runtime_error"
   addFragment (Frame.STRING msg str)
   return [add_label "p_free_pair",
@@ -863,8 +863,8 @@ p_check_array_bounds :: GenBuiltIn
 p_check_array_bounds = do
   msgneg <- newDataLabel
   msgover <- newDataLabel
-  addFragment (Frame.STRING msgneg "\"ArrayIndexOutOfBoundsError: negative index\n\\0\"")
-  addFragment (Frame.STRING msgover "\"ArrayIndexOutOfBoundsError: index too large\n\\0\"")
+  addFragment (Frame.STRING msgneg "\"ArrayIndexOutOfBoundsError: negative index\\0\"")
+  addFragment (Frame.STRING msgover "\"ArrayIndexOutOfBoundsError: index too large\\0\"")
   return [add_label "p_check_array_bounds",
           pushlr,
           cmp_r0,
@@ -882,7 +882,7 @@ p_throw_overflow_error :: GenBuiltIn
 p_throw_overflow_error = do
   msg <- newDataLabel
   addFragment (Frame.STRING msg $ "\"OverflowError: the result is too small/large"
-                                   ++ " to store in a 4-byte signed-integer.\n\"")
+                                   ++ " to store in a 4-byte signed-integer.\"")
   return [add_label "p_throw_overflow_error",
           ld_msg_toR0 msg, ljump_to_label "p_throw_runtime_error"]
 
@@ -890,7 +890,7 @@ p_throw_overflow_error = do
 p_check_divide_by_zero :: GenBuiltIn
 p_check_divide_by_zero = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg "\"DivideByZeroError: divide or modulo by zero\n\\0\"")
+  addFragment (Frame.STRING msg "\"DivideByZeroError: divide or modulo by zero\\0\"")
   return [add_label "p_check_divide_by_zero",
           pushlr,
           IOPER {assem = MC_ (CMP AL) R1 (IMM 0), src = [1], dst = [], jump = []},

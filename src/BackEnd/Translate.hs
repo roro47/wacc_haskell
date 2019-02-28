@@ -201,8 +201,10 @@ getVarEntry symbol = do
     Frame.InReg temp -> return $ TEMP temp
     Frame.InFrame offset -> do
       let { prevLevels = takeWhile notFound (levels state);
+            prevSize = sum ( map (\l -> Frame.frameSize (levelFrame l)) prevLevels) +
+                       Frame.frameSize ((levelFrame ((levels state) !! (length prevLevels))));
             offset' = foldl f offset prevLevels }
-      return $ CALL (NAME "#memaccess") [(CONSTI $  (frametotal+offset'))]
+      return $ CALL (NAME "#memaccess") [(CONSTI $  (prevSize - abs offset'))]
 
   where find' :: [Level] -> State TranslateState EnvEntry
         find' levels =
