@@ -211,6 +211,14 @@ doStm (MOV (TEMP t) b)
 doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b)
   | isOneLayer e1 && isOneLayer e2 && isOneLayer b =
       return stm
+ -- else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
+
+{-
+doStm stm@(MOV (MEM e) b) = do
+  if isOneLayer e && isOneLayer b
+  then return stm
+  else reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
+-}
 
 doStm stm@(MOV (MEM (TEMP t)) (ESEQ s e)) = do
   s' <- doStm s

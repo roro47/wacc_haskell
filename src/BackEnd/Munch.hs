@@ -16,40 +16,39 @@ import BackEnd.Translate as Translate
 import BackEnd.Frame as Frame
 import BackEnd.Builtin
 import BackEnd.Canon as C hiding (newTemp)
-
-{-Change IR binary operator to Arm binary operator-}
+--how to know scope ?? when frame is changed ???
+--TODO : difference between b and bl ??
+-- REGISTER SAVE??
+-- STRING ASSIGNMENT?
+-- how to know if something is to store on the stack? -- after ir is fixed, add sp cases of minus
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
   = lookup bop [(IR.PLUS, ARM.ADD), (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
             (IR.LSHIFT, ARM.LSL), (IR.RSHIFT, ARM.LSR), (IR.MINUS, ARM.SUB)]
 
-{-Chane IR expression to a pair with arm instruction and the register containing
-  the result of the expressi -}
-munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
--- ord, chr
-munchExp (CALL (NAME "#retVal") [e]) = do
+justret e = do
   (i, t) <- munchExp e
   return (i , t)
 
--- Stack memory access
+munchExp :: Exp -> State TranslateState ([ASSEM.Instr], Temp)
+munchExp (CALL (NAME "#retVal") [e]) = justret e
+
 munchExp (CALL (NAME "#memaccess") [CONSTI i]) = do
   t <- newTemp
   return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP t) SP (IMM i),
                  src = [13], dst = [t], jump = []}], t)
 
--- system malloc
 munchExp (CALL (NAME "malloc") [CONSTI i, TEMP t]) = do
   let ldr = IOPER { assem = S_ (LDR W AL) (R0) (NUM (i)),
                   src = [], dst = [0], jump = []}
       move = move_to_r 0 t
   return ([ldr, ljump_to_label "malloc", move], t) --malloc notice dummy here
 
--- return address of the specified array element
 munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
   (ii, it) <- munchExp ident
   result <- singleIndex size it pos
   return (ii ++ result, it)
-    where -- recursively find the address of the array element
+    where
       singleIndex :: Int -> Temp -> [Exp] -> State TranslateState [ASSEM.Instr]
       singleIndex _ _ [] = return []
       singleIndex size t (p:ps) = do
@@ -68,7 +67,6 @@ munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
         rest <- singleIndex size t ps
         return (pi ++ [ldr, m0, m1, bl, skiplen, topos] ++ rest)
 
--- return negative value of i
 munchExp (CALL (NAME "#neg") [(CONSTI i)]) = do
   t <- newTemp
   let ldr = IOPER { assem = S_ (LDR W AL) (RTEMP t) (NUM (-i)),
@@ -83,20 +81,17 @@ munchExp (CALL (NAME "#neg") [e]) = do
                      src = [], dst = [], jump =["p_throw_overflow_error"] }
   return (i ++ [rsbs, check] , t)
 
--- NOT
 munchExp (CALL (NAME "#!") [e]) = do
   (i, t) <- munchExp e
   return (i ++ [IOPER {assem = CBS_ (EOR NoSuffix AL) (RTEMP t) (RTEMP t)(IMM 1),
                        src = [t], dst = [t], jump = []}], t)
 
--- Length of array/string
 munchExp (CALL (NAME "#len") [e]) = do
   (i, t) <- munchExp e
   return (i ++ [IOPER {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
                        src = [t], dst = [t], jump = []}], t)
 
--- skip is poppc
-munchExp (CALL (NAME "#skip") _) = return ([poppc], dummy)
+munchExp (CALL (NAME "#skip") _) = return ([], dummy)
 
 munchExp (CALL (NAME "#p_print_ln") es) = do
   ls <- mapM (liftM fst.munchExp) es
@@ -140,13 +135,11 @@ munchExp (CALL (NAME "exit") [e]) = do
       mv <- munchStm (IR.MOV (TEMP 0) e)
       return (mv ++ [exit], dummy)
 
--- handles all the printing
 munchExp (CALL (NAME n) [e])
   | "#p_" `isPrefixOf` n = do
     (i, t) <- munchExp e
     return  (i++ [(move_to_r t 0), (ljump_to_label (drop 1 n))], dummy)
 
--- handles all pair related functionalities
 munchExp (CALL (NAME n) e)
   | "#fst" `isPrefixOf` n = accessPair True n e
   | "#snd" `isPrefixOf` n = accessPair False n e
@@ -156,7 +149,7 @@ munchExp (CALL (NAME n) e)
       fst = (ls !! 1)
       snd = (ls !! 2)
 
-{- Divide r0 / r1 : result in r0 -}
+{- r0 / r1 : result in r0 -}
 munchExp (BINEXP DIV e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2 --divisor
@@ -169,7 +162,7 @@ munchExp (BINEXP DIV e1 e2) = do
                       src = [0, 1], dst = [0], jump = [divLabel]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, check, divInstr], 0)
 
-{- Modulus r0 % r1 : result in r1 -}
+{- r0 % r1 : result in r1 -}
 munchExp (BINEXP MOD e1 e2) = do
   (i1, t1) <- munchExp e1 -- dividend
   (i2, t2) <- munchExp e2  --divisor
@@ -182,9 +175,7 @@ munchExp (BINEXP MOD e1 e2) = do
                   src = [0, 1], dst = [1], jump = [modLabel]} in
       return $ (i1 ++ i2 ++ [moveDividend, moveDivisor, check ,modInstr], 1)
 
-{- match all conditionals : simplify if possible
-  If munched stm is of length 2 here then it must be a SEQ conaing a naive
-  stm and a label -}
+{-If munched stm is of length 2 here then it must be a SEQ conaing a naive stm and a label -}
 munchExp (ESEQ (SEQ cjump@(CJUMP rop _ _ _ _) (SEQ false true)) e) = do
   cinstr <- munchStm cjump
   state <- get
@@ -218,7 +209,7 @@ munchExp (ESEQ stm e) = do
   (i, t) <- munchExp e
   return (ls++i, t)
 
--- handle user function calls; passing input in reverse sequence
+-- passing input in reverse sequence
 munchExp (CALL (NAME f) es) = do
   pushParams <- (mapM pushParam es)
   return (concat (reverse pushParams) ++ [bToFunc] ++ adjustSP, 0)
@@ -246,9 +237,10 @@ munchExp (CALL f es) = do
   let returnVal = move_to_r ft 0
   return ((concat ls) ++ fi ++ [returnVal], 0) -- returned in reg 0
 
+-- NO CALLER / CALLEE SAVE CONVENTION YET !!
+
 munchExp (TEMP t) = return ([],t)
 
--- Multiply
 munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
@@ -263,12 +255,10 @@ munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
                    src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ (i1 ++ i2 ++ [smull, cmp, throw], tLo)
 
--- all the remaining cases are with condition AL
 munchExp x = do
   c <- condExp x
   return $ c AL
 
--- Handles operators with LSL
 lslOP :: Exp -> Exp -> BOp -> Int -> State TranslateState (Cond -> ([ASSEM.Instr], Temp))
 lslOP e1 e2 bop int = do
   (i1, t1) <- munchExp e1
@@ -286,7 +276,6 @@ plusMinus destination source op srcreg srcinstr = do
                     src = [], dst = [], jump = ["p_throw_overflow_error"]}
   return $ \c -> (i1++srcinstr++[calc, br], t1)
 
--- Handle all the conditional expressions
 condExp :: Exp -> State TranslateState (Cond -> ([ASSEM.Instr], Temp))
 -- LSL inside ADD SUB  ** ugly pattern match to avoid run time loop --
 condExp (BINEXP bop (BINEXP MUL e1 (CONSTI int)) e2)
@@ -374,7 +363,7 @@ condExp (MEM m) = do
   return $ \c -> (i ++ [IOPER {assem = S_ (ARM.LDR W c) (RTEMP newt) (Imm (RTEMP t) 0)
                         , dst = [newt], src = [t], jump = []}], newt)
 
---wrap assembly with ASSEM.Instr : only AL is of type IMOV
+--only AL is of type IMOV
 wrapAssem :: Cond -> (Cond -> ARM.Instr) -> [Temp] -> [Temp] -> ASSEM.Instr
 wrapAssem AL instr s@(s':_) d@(d':_) = IMOV {assem = instr AL, src = s, dst = d}
 wrapAssem c instr s d = IOPER {assem = instr c, src = s, dst = d, jump = []}
@@ -443,7 +432,6 @@ optimise ((IOPER { assem = (BRANCH_ (B AL) (L_ a))}) : l@(ILABEL {assem = (LAB b
 optimise (x:xs) = x : (optimise xs)
 optimise [] = []
 
--- test if the calc operator is add/sub and if the ldr and the add have same condition
 stackEqualCond :: Calc -> SL -> Bool
 stackEqualCond (ARM.ADD _ c1) (LDR _ c2) = c1 == c2
 stackEqualCond (ARM.ADD _ c1) (STR _ c2) = c1 == c2
@@ -455,7 +443,6 @@ opVal :: Calc -> Int
 opVal (ARM.ADD _ _) = 1
 opVal _ = -1
 
--- generates arm code for statements
 munchStm :: Stm -> State TranslateState [ASSEM.Instr] -- everything with out condition
 munchStm (EXP call@(CALL _ _)) = do
   (intrs, reg) <- munchExp call
@@ -478,22 +465,20 @@ munchStm (SEQ s1 s2) = do
   l2 <- munchStm s2
   return $ l1 ++ l2
 
--- ASSUME CANONICAL --
--- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY --
-munchStm (CJUMP rop e1 (CONSTI i) t f) = do
+munchStm (CJUMP rop e1 (CONSTI i) t f) = do -- ASSUME CANONICAL
   (i1, t1) <- munchExp e1
   let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (IMM i), dst = [],
                        src = [t1], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
   return $ i1 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
-munchStm (CJUMP rop e1 e2 t f) = do
+munchStm (CJUMP rop e1 e2 t f) = do -- ASSUME CANONICAL
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
   let compare = IOPER {assem = MC_ (ARM.CMP AL) (RTEMP t1) (R (RTEMP t2)), dst = [t1],
                        src = [t2], jump = []}
       jtrue = IOPER {assem = BRANCH_ (ARM.B (same rop)) (L_ t), dst = [], src = [], jump = [t]}
-  return $ i1 ++ i2 ++ [compare, jtrue]
+  return $ i1 ++ i2 ++ [compare, jtrue] -- NO JFALSE AS FALSE BRANCH FOLLOWS THIS DIRECTLY
 
 munchStm (EXP e) = do
   (i, t) <- munchExp e
@@ -527,16 +512,15 @@ suffixStm (IR.MOV e (MEM me)) = do -- LDR
     return (\c -> (\suff -> i ++ l ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0),
                                        src = [s], dst = [t], jump = []}]))
 
---generates arm code for statements that allow for conditions to change
-condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])
+condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
 
 condStm ir@(IR.MOV e (MEM me)) = do
   ret <- suffixStm ir
   return (\c -> ret c W)
 
--- condStm ir@(IR.MOV (MEM me) (CONSTC chr)) = do  -- remove this case if align
---   ret <- suffixStm ir
---   return (\c -> ret c B_)
+condStm ir@(IR.MOV (MEM me) (CONSTC chr)) = do  -- remove this case if align
+  ret <- suffixStm ir
+  return (\c -> ret c B_)
 
 condStm ir@(IR.MOV (MEM me) e) = do
   ret <- suffixStm ir
@@ -584,18 +568,15 @@ condStm (NOP) = return $ \c -> []
 
 condStm t = fail $ show t
 
--- generates arm code for built-in function fragments
 munchBuiltInFuncFrag :: Fragment -> State TranslateState [ASSEM.Instr]
 munchBuiltInFuncFrag (PROC stm frame) = do
   munch <- munchStm stm
   return (pushlr : munch ++ [poppc])
 
--- generates arm code for data fragments
 munchDataFrag :: Fragment -> [ASSEM.Instr]
 munchDataFrag (STRING label str)
   = [ILABEL {assem = (M label (length str) str), lab = label}]
 
--- utility for handle creation of pair
 createPair :: String -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
 -- pre : exps contains only two param
 createPair s1 s2 exps = do
@@ -620,7 +601,6 @@ createPair s1 s2 exps = do
   return ([ld8, malloc, strPairAddr] ++ i1 ++ [ld4, malloc, savefst, strfstaddr]
            ++ i2 ++ [ld4, malloc, savesnd, strsndaddr, strpaironstack], dummy)
 
--- utility handle access of pair
 accessPair :: Bool -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
 accessPair isfst typestr [e] = do
   (i, t) <- munchExp e
@@ -640,17 +620,12 @@ condARM = [ARM.EQ, ARM.LT, ARM.LE, ARM.GT, ARM.GE, ARM.NE]
 invert :: ROp -> Cond
 invert a = fromJust $ lookup a (zip condIR (reverse condARM))
 
--- given a IR condition, return a ARM condition with the same meaning
 same :: ROp -> Cond
 same a = fromJust $ lookup a (zip condIR condARM)
 
--- given a IR condition, return a ARM condition with the opposite meaning
 deSeq :: Stm -> (Stm, Stm)
 deSeq (SEQ s1 s2) = (s1, s2)
 
-<<<<<<< HEAD
--- print the munch of the specified file on screen
-=======
 
 munchInterface :: ProgramF () -> ([[ASSEM.Instr]], [[ASSEM.Instr]], [[ASSEM.Instr]])
 munchInterface ast =   (out' ++ [out], dataFrags, builtInFrags)
@@ -673,7 +648,6 @@ munchInterface ast =   (out' ++ [out], dataFrags, builtInFrags)
           return pfrags
 
 
->>>>>>> 97d38d22c0baf615c7d5c1eb3986727b5d161a64
 munch file = do
   putStrLn ""
   ast <- parseFile file
@@ -701,10 +675,7 @@ munch file = do
           pfrags <- foldM (\acc f -> f >>= \pfrag -> return $ acc ++ [pfrag]) [] gens
           return pfrags
 
-<<<<<<< HEAD
-=======
 showAssem :: [[ASSEM.Instr]] -> [[ASSEM.Instr]]-> [ASSEM.Instr] -> [String]
->>>>>>> 97d38d22c0baf615c7d5c1eb3986727b5d161a64
 showAssem builtInFrags dataFrags out
   = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
@@ -733,14 +704,12 @@ testMunch file = do
           pfrags <- foldM (\acc f -> f >>= \pfrag -> return $ acc ++ [pfrag]) [] gens
           return pfrags
 
--- munch a list of statements
 munchmany [] = return []
 munchmany (x:xs) = do
   m <- munchStm x
   ms <- munchmany xs
   return $ (m++ms)
 
---- ALL the built in function fragments ---
 type GenBuiltIn = State TranslateState [ASSEM.Instr]
 
 genBuiltIns = [p_print_ln,
