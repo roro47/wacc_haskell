@@ -397,6 +397,13 @@ munchMem e = do
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
+optimise ((IOPER { assem = (CBS_ c reg0 reg1 (IMM i))}):remain)
+  | i > 1024 && reg0 == reg1
+    =  ((IOPER { assem = (CBS_ c reg0 reg1 (IMM 1024)),
+                src = [toNum reg0], dst = [toNum reg1], jump = []}) :
+        (IOPER { assem = (CBS_ c reg0 reg1 (IMM (i - 1024))),
+                    src = [toNum reg0], dst = [toNum reg1], jump = []}):(optimise remain))
+-- load large number?
 ---IMMEDIATE ---
 optimise ((IOPER { assem = (CBS_ c reg0 reg1 (IMM 0))}) :
           (IOPER { assem = (S_ sl reg3 (Imm reg2 0))}) :remain)
