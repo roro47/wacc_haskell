@@ -39,6 +39,13 @@ data Instr = CBS_ Calc REG REG OP | MC_ Simple REG OP |
              STACK_ StackOP [REG] | S_ SL REG SLOP2 |
              C3_ Calc3 REG REG REG | LAB String | M String Int String deriving Eq
 
+toNum :: REG -> Int
+toNum (RTEMP i) = i
+toNum (PC) = 15
+toNum (LR) = 14
+toNum (SP) = 13
+toNum x = read (drop 1 (show x)) :: Int
+
 
 instance GShow Cond
 

@@ -22,11 +22,11 @@ assemReg (IMOV _ d s) = nub $ d ++ s
 assemReg _ = []
 
 
-showInstr (IOPER assem d s jump) =
+showInstr (IOPER assem d s jump) = "IOPER " ++
     Arm.output_show assem ++ " dst : " ++ show d ++
     " src: " ++ show s ++ " jump: " ++ show jump
 
-showInstr (IMOV assem d s) =
+showInstr (IMOV assem d s) ="IMOV " ++
     Arm.output_show assem ++ " dst : " ++ show d ++
     " src: " ++ show s
 
