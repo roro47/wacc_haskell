@@ -1,8 +1,5 @@
 begin
-  bool taketwo(int n, char c) is
-    print n;
-    char usechar = c;
-    return true
-  end
- bool i = call taketwo(1, 'a')
+  pair(char, char) p = newpair('a', 'c');
+  char x =  fst p;
+  println x
 end

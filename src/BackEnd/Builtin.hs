@@ -52,3 +52,4 @@ ld_cond_msg_toR0 = \msg -> (\c -> IOPER {assem = S_ (LDR W c) R0 (MSG msg),
                                          src = [], dst = [0], jump = []})
 cmp_r0 = IOPER {assem = MC_ (CMP AL) R0 (IMM 0), src = [0], dst = [], jump = []}
 mv_r1_r0 = IMOV {assem = MC_ (ARM.MOV AL) R0 (R R1), src = [1], dst = [0]}
+mv_r0_r1 = IMOV {assem = MC_ (ARM.MOV AL) R1 (R R0), src = [0], dst = [1]}

@@ -70,6 +70,8 @@ translate program = do
   stm <- translateProgramF program
   return $ cleanStm stm
 
+addEscape :: String -> String
+addEscape x = concat [if elem c "\\\"\'" then ('\\' : [c]) else [c] |c <- x]
 
 seq :: [Stm] -> Stm
 seq (stm:stms) = SEQ stm (seq stms)
@@ -204,7 +206,7 @@ getVarEntry symbol = do
             prevSize = sum ( map (\l -> Frame.frameSize (levelFrame l)) prevLevels) +
                        Frame.frameSize ((levelFrame ((levels state) !! (length prevLevels))));
             offset' = foldl f offset prevLevels }
-      return $ CALL (NAME "#memaccess") [(CONSTI $  (prevSize - abs offset'))]
+      return $ CALL (NAME "#memaccess") [(CONSTI $  (prevSize + offset'))]
 
   where find' :: [Level] -> State TranslateState EnvEntry
         find' levels =
@@ -237,7 +239,7 @@ translateFuncF (Ann (Func t id ps stm) _) = do
   let params = reverse $ map stripParam ps
   level <- newLevel
   pushLevel level
-  foldM addParam 0 params
+  foldM addParam 4 params
   addFunEntry symbol t
   stm' <- translateStatListF stm >>= \s -> unNx s
   adjustSP' <- adjustSP
@@ -250,8 +252,8 @@ translateFuncF (Ann (Func t id ps stm) _) = do
         addParam :: Int -> (Type, String) -> State TranslateState Int
         addParam offset (t, s) = do
           frame <- getCurrFrame
-          addVarEntry s t (Access frame (Frame.InFrame $ offset+4))
-          return (offset + 4 + Frame.typeSize t)
+          addVarEntry s t (Access frame (Frame.InFrame $ offset))
+          return (offset + 4)
 
 translateProgramF :: ProgramF () -> State TranslateState Stm
 translateProgramF (Ann (Program fs stms) _) = do
@@ -355,7 +357,7 @@ translateExprF (Ann (BoolLiter b) _) =
 translateExprF (Ann (CharLiter c) _) = return $ Ex (CONSTC c)
 translateExprF (Ann (StringLiter s) _) = do
   label <- newDataLabel
-  addFragment $ Frame.STRING label ("\"" ++ s ++ "\"") (length s)
+  addFragment $ Frame.STRING label ("\"" ++ (addEscape s) ++ "\"") (length s)
   return $ Ex (NAME label)
 
 translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do

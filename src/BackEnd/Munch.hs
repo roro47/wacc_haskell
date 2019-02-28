@@ -617,13 +617,13 @@ createPair s1 s2 exps = do
            ++ i2 ++ [ld4, malloc, savesnd, strsndaddr, strpaironstack], dummy)
 
 accessPair :: Bool -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
-accessPair isfst typestr [e] = do
-  (i, t) <- munchExp e
+accessPair isfst typestr [MEM e ty] = do
+  (i, t) <- munchExp (MEM e ty)
   let offset = if isfst then 0 else 4
       getpaddr = move_to_r t 0
       check = IOPER { assem = BRANCH_ (BL AL) (L_ "p_check_null_pointer")
                       , src = [0], dst = [], jump = ["p_check_null_pointer"]}
-      s1 = IOPER {assem = (S_ (LDR {-(if one then SB else W)-} W AL) (RTEMP t)
+      s1 = IOPER {assem = (S_ (LDR (if ty == 1 then SB else W) AL) (RTEMP t)
                            (Imm (RTEMP t) offset)), src = [t], dst = [t], jump = []}
   return (i ++ [getpaddr, check, s1], t)  -- cannot handle sb/w here as only return reg
 
@@ -756,7 +756,7 @@ p_print_int = do
  addFragment (Frame.STRING msg "\"%d\\0\"" 3)
  return $[add_label "p_print_int",
           pushlr,
-          mv_r1_r0,
+          mv_r0_r1,
           IOPER { assem = S_ (LDR W AL) R0 (MSG msg), src = [],
                   dst = [0], jump = []}]
           ++ end
@@ -793,14 +793,14 @@ p_print_reference = do
   addFragment (Frame.STRING msg "\"%p\\0\"" 3)
   return $[add_label "p_print_reference",
           pushlr,
-          mv_r1_r0,
+          mv_r0_r1,
           ld_msg_toR0 msg] ++ end
 
 p_check_null_pointer :: GenBuiltIn
 p_check_null_pointer = do
   msg <- newDataLabel
-  let m = "NullReferenceError: dereference a null reference"
-  addFragment (Frame.STRING msg ("\"" ++ m ++"\0" ++ "\"") (length m + 1))
+  let m = "NullReferenceError: dereference a null reference\\n"
+  addFragment (Frame.STRING msg ("\"" ++ m ++"\\0" ++ "\"") (length m))
   let s = "p_throw_runtime_error"
   return $[add_label "p_check_null_pointer",
           pushlr,
@@ -819,12 +819,12 @@ p_throw_runtime_error = do
 
 p_read_int :: GenBuiltIn
 p_read_int = do
-  r <- p_read "\"%d\\0\"" 2
+  r <- p_read "\"%d\\0\"" 3
   return $ (add_label "p_read_int"): r
 
 p_read_char :: GenBuiltIn
 p_read_char = do
-  r <- p_read "\"%c\\0\"" 2
+  r <- p_read "\"%c\\0\"" 3
   return $ (add_label "p_read_char"): r
 
 p_read :: String -> Int -> GenBuiltIn
@@ -832,7 +832,7 @@ p_read str l =  do
   msg <- newDataLabel
   addFragment (Frame.STRING msg str l)
   return [pushlr,
-          mv_r1_r0,
+          mv_r0_r1,
           ld_msg_toR0 msg,
           r0_add4,
           ljump_to_label "scanf",

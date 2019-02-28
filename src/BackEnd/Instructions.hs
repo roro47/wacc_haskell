@@ -77,6 +77,7 @@ instance Header SLType where
 instance Show OP where
   show (IMM int) = ", #" ++ show int
   show (R reg) = ", " ++ show reg
+  show (CHR '\0') = ", #'\\0'"
   show (CHR chr) = ", #" ++ show chr
   show (LSL_ reg int) = ", " ++ show reg ++ ", LSL #" ++ show int
   show (ASR_ reg int) = ", " ++ show reg ++ ", ASR #" ++ show int
