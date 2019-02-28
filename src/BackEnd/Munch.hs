@@ -364,9 +364,7 @@ condExp (MEM m) = do
 
 --only AL is of type IMOV
 wrapAssem :: Cond -> (Cond -> ARM.Instr) -> [Temp] -> [Temp] -> ASSEM.Instr
---wrapAssem AL instr [] _ = undefined
---wrapAssem AL instr _ [] = undefined
-wrapAssem AL instr s d = IMOV {assem = instr AL, src = s, dst = d}
+wrapAssem AL instr s@(s':_) d@(d':_) = IMOV {assem = instr AL, src = s, dst = d}
 wrapAssem c instr s d = IOPER {assem = instr c, src = s, dst = d, jump = []}
 
 addsubtoCalc :: BOp -> (Cond -> Calc)

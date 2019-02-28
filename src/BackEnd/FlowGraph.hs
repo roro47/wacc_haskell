@@ -10,7 +10,8 @@ data FlowGraph =
               def :: HashMap.Map Int [Temp.Temp],
               use :: HashMap.Map Int [Temp.Temp],
               nodes :: [Int],
-              assems :: HashMap.Map Int Assem.Instr }
+              assems :: HashMap.Map Int Assem.Instr,
+              fInitial :: [Temp.Temp] }
   deriving (Show)
 
 
@@ -19,7 +20,8 @@ newFlowGraph = FlowGraph { control = AdjGraph.empty,
                            def = HashMap.empty,
                            use = HashMap.empty,
                            nodes = [],
-                           assems = HashMap.empty }
+                           assems = HashMap.empty,
+                           fInitial = []}
                              
 data JUMP = JustJump [String]
           | JumpFall [String]

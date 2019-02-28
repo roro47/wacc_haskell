@@ -1,5 +1,5 @@
 module BackEnd.MakeGraph where
-
+import qualified Data.List as List
 import Data.HashMap as HashMap hiding (map)
 import Algebra.Graph.AdjacencyMap as AdjGraph
 import BackEnd.Munch as Munch
@@ -14,9 +14,11 @@ testInstrsToGraphFile file = do
 -- transform instructions to contro flow graph
 instrsToGraph :: [Assem.Instr] -> FlowGraph
 instrsToGraph instrs = fGraph { nodes = map fst indexed,
-                                assems = HashMap.fromList indexed }
+                                assems = HashMap.fromList indexed,
+                                fInitial = inits List.\\ [0..15]}
   where indexed = zip [0..] instrs -- index instructions
 
+        inits = List.nub $ concat $ map Assem.assemReg instrs
         -- create a mapping from label to node (int)
         labelTable =
           foldl (\acc (i, instr) ->
@@ -34,7 +36,7 @@ instrsToGraph instrs = fGraph { nodes = map fst indexed,
         instrsToGraph' ((index, (IOPER _ dst' src' js)):rest) fGraph =
           instrsToGraph' rest $ fGraph { control = adjGraph', def = def', use = use' }
           where
-            targets = map (\l -> labelTable ! l) js
+            targets = concat $ map (\l -> if HashMap.member l labelTable then [labelTable ! l] else []) js
             adjGraph' =
               case targets of
                 [] -> if length rest == 0

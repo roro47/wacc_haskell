@@ -21,6 +21,19 @@ assemReg (IOPER _ d s _) = nub $ d ++ s
 assemReg (IMOV _ d s) = nub $ d ++ s 
 assemReg _ = []
 
+
+showInstr (IOPER assem d s jump) = 
+    Arm.output_show assem ++ " dst : " ++ show d ++ 
+    " src: " ++ show s ++ " jump: " ++ show jump
+
+showInstr (IMOV assem d s) = 
+    Arm.output_show assem ++ " dst : " ++ show d ++ 
+    " src: " ++ show s
+
+showInstr (ILABEL assem l) =
+    Arm.output_show assem ++ " label: " ++ show l
+
+
 instance Prelude.Show Instr where
     show (IOPER assem dst src jump) = Arm.output_show assem
     show (ILABEL assem lab) = Arm.output_show assem

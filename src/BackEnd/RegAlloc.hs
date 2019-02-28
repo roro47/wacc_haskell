@@ -5,7 +5,7 @@ module BackEnd.RegAlloc where
 import Control.Lens hiding (index)
 import Control.Monad.State.Lazy
 import qualified Data.List as List
-import Data.HashMap as Hash hiding (map)
+import Data.HashMap as Hash hiding (map, (\\))
 import qualified Data.Set as Set
 import BackEnd.Frame as Frame
 import BackEnd.MakeGraph
@@ -92,22 +92,25 @@ newRegAllocState = RegAllocState {
   _adjSet = Set.empty,
   _adjList = Hash.empty,
   _degree = Hash.empty,
-  _color = Hash.empty
+  _color = Hash.fromList (zip precolouredReg precolouredReg)
 }
 
 isMoveInstruction :: Instr -> Bool
 isMoveInstruction (Instr _ (Assem.IMOV _ _ _)) = True
 isMoveInstruction _ = False
 
-regAllocFile :: String -> IO ([Hash.Map Temp.Temp Int])
+--regAllocFile :: String -> IO ([Hash.Map Temp.Temp Int])
 regAllocFile file = do
   (assems, dataFrags, builtInFrags) <- testMunch file
   colorMap <- mapM regAllocFile' assems
   let colorMap' =  map Hash.toList colorMap
       final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
       totalOut = showAssem builtInFrags dataFrags (concat final)
+      
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
+  --mapM_ (\a -> putStrLn (concat $ map (\a' -> Assem.showInstr a' ++ "\n") a)) assems
   return colorMap
+  
 
   where regAllocFile' assem = do
           let flow = instrsToGraph assem 
@@ -116,18 +119,20 @@ regAllocFile file = do
               precoloured' = precolouredReg
               regState = newRegAllocState { _liveOut = calcLiveOut,
                                             _program = map (\(id, inst) -> Instr id inst) (zip [0..] assem),
-                                            _initial = initial',
+                                            _initial = initial' List.\\ precolouredReg,
                                             _precoloured = precoloured',
                                             _fgraph = flow }
-              regState' = execState regAlloc regState
+              (a, regState') = runState (regAlloc >>= \_ -> getAlias 17) regState
           return $ _color regState'
+          --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
+          --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
         
 
 regAlloc :: State RegAllocState ()
 regAlloc = do
-  build
+  build 
   makeWorkList
-  regAlloc'
+  regAlloc' 
   assignColors
   where regAlloc' :: State RegAllocState ()
         regAlloc' = do
@@ -141,13 +146,12 @@ regAlloc = do
                  -> Set.Set Temp.Temp ->  Set.Set Temp.Temp
                  -> State RegAllocState () 
         regAlloc'' simplifyWorkList workListMoves freezeWorkList spillWorkList
-          | Set.null simplifyWorkList = do { simplify; regAlloc' } 
-          | Set.null workListMoves = do { coalesce; regAlloc' } 
-          | Set.null freezeWorkList = do { freeze; regAlloc'}
-          | Set.null spillWorkList = do { selectSpill; regAlloc' }
+          | not (Set.null simplifyWorkList) = do { simplify; regAlloc' } 
+          | not (Set.null workListMoves) = do { coalesce; regAlloc' } 
+          | not (Set.null freezeWorkList) = do { freeze; regAlloc'}
+          | not (Set.null spillWorkList) = do { selectSpill; regAlloc' }
           | otherwise = return ()
           
-
 
 
 build :: State RegAllocState ()
@@ -161,7 +165,7 @@ build = do
           if (isMoveInstruction i)
           then do
             mapM_  (addMoveNodes i) (Set.union (Set.fromList def') (Set.fromList use'))
-            let Assem.IMOV _ _ (c:_) = inst
+            let Assem.IMOV _ (c:_) _ = inst
                 live' = List.filter (/= c) (Set.toList live)
             mapM_ addEdge [(d, l) | d <- def', l <- live']
           else do
@@ -214,19 +218,23 @@ moveRelated :: Temp.Temp -> State RegAllocState Bool
 moveRelated n = do
   nodeMoves' <- nodeMoves n
   return $ not $ Set.null nodeMoves'
+  --return True
 
 nodeMoves :: Temp.Temp -> State RegAllocState (Set.Set Instr)
 nodeMoves n = do
   activeMoves' <- use activeMoves
   workListMoves' <- use workListMoves
   moveList' <- use moveList
-  return $ Set.intersection (moveList' ! n) (Set.union activeMoves' workListMoves')
+  if not $ Hash.member n moveList'
+  then return Set.empty
+  else return $ Set.intersection (moveList' ! n) (Set.union activeMoves' workListMoves')
 
 
 -- currently adjacent node in the graph
 adjacent :: Temp.Temp -> State RegAllocState [Temp.Temp]
 adjacent n = do
   adjNodes <- uses adjList (\adj -> adj ! n)
+  --adjNodes <- uses adjList (\adj -> if Hash.member n adj then adj ! n else Set.empty)
   selectStack' <- uses selectStack Set.fromList
   coalscedNodes' <- use coalescedNodes
   return $ Set.toList $ Set.difference adjNodes (Set.union selectStack' coalscedNodes')
@@ -248,7 +256,8 @@ enableMoves nodes = do
 
 decrementDegree :: Temp.Temp -> State RegAllocState ()
 decrementDegree m = do
-  d <- uses degree (\degree -> degree ! m)
+  d <- uses degree (\degree -> if Hash.member m degree then degree ! m else 0)
+  --d <- uses degree (\degree -> degree ! m)
   degree %= insert m (d - 1)
   when (d == k) $ do
     adj <- liftM Set.fromList (adjacent m)
@@ -393,6 +402,7 @@ assignColors :: State RegAllocState ()
 assignColors = do
   selectStack' <- use selectStack
   mapM assignColors' selectStack'
+  --assignColors' (head selectStack')
   selectStack .= []
   coalescedNodes' <- use coalescedNodes
   mapM_ handleCoalesced coalescedNodes'
@@ -405,7 +415,7 @@ assignColors = do
             spillNodes %= Set.insert n
           else do
             coloredNodes %= Set.insert n
-            let { c = head okColors }
+            let { c = head okColors' }
             color %= Hash.insert n c 
         
         filterColor :: [Temp.Temp] -> Temp.Temp -> State RegAllocState [Temp.Temp]
