@@ -262,7 +262,8 @@ translateProgramF (Ann (Program fs stms) _) = do
   adjustSP' <- adjustSP
   popLevel
   return $ SEQ (LABEL "main") (SEQ (SEQ (IR.PUSH (TEMP Frame.lr)) stm')
-               (SEQ adjustSP' (SEQ (MOV (TEMP 0) (CONSTI 0)) (IR.POP (TEMP Frame.pc)))))
+               (SEQ adjustSP' (SEQ (MOV (TEMP 0) (MEM (CONSTI 0) 4))
+               (IR.POP (TEMP Frame.pc)))))
 
 
 translateStatListF :: StatListF () -> State TranslateState IExp

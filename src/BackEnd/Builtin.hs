@@ -43,7 +43,7 @@ ljump_to_label = \s -> (ljump_cond s AL)
 jump_to_label = \s -> IOPER {assem = BRANCH_ (BL AL) (L_ s),
                                src = [], dst = [], jump = [s]}
 r0_add4 = IOPER { assem = CBS_ (ADD NoSuffix AL) R0 R0 (IMM 4), src = [0], dst = [0], jump = []}
-r0_clear = IMOV {assem = MC_ (ARM.MOV AL) R0 (IMM 0), src = [], dst = [0]}
+r0_clear = IMOV {assem = S_ (LDR W AL) R0 (NUM 0), src = [], dst = [0]}
 pushlr = IOPER { assem = STACK_ (PUSH AL) [LR], src = [Frame.lr], dst = [13], jump = []}
 poppc = IOPER { assem = STACK_ (POP AL) [PC], src = [Frame.pc, 13], dst = [13], jump = []}
 end = [r0_add4, ljump_to_label "printf", r0_clear, ljump_to_label "fflush", poppc]
@@ -51,3 +51,4 @@ ld_msg_toR0 = \msg -> IMOV {assem = S_ (LDR W AL) R0 (MSG msg), src = [], dst = 
 ld_cond_msg_toR0 = \msg -> (\c -> IOPER {assem = S_ (LDR W c) R0 (MSG msg),
                                          src = [], dst = [0], jump = []})
 cmp_r0 = IOPER {assem = MC_ (CMP AL) R0 (IMM 0), src = [0], dst = [], jump = []}
+mv_r1_r0 = IMOV {assem = MC_ (ARM.MOV AL) R0 (R R1), src = [1], dst = [0]}

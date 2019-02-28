@@ -581,7 +581,8 @@ munchBuiltInFuncFrag (PROC stm frame) = do
 
 munchDataFrag :: Fragment -> [ASSEM.Instr]
 munchDataFrag (STRING label str)
-  = [ILABEL {assem = (M label (length str) str), lab = label}]
+  = [ILABEL {assem = (M label (length str - 2) str), lab = label}]
+--subrtacting the space occupied by ""
 
 createPair :: String -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
 -- pre : exps contains only two param
@@ -744,13 +745,12 @@ p_print_int :: GenBuiltIn
 {-In ref compiler this temp is R1 -}
 p_print_int = do
  msg <- newDataLabel
- temp <- newTemp
  addFragment (Frame.STRING msg "\"%d\\0\"")
  return $[add_label "p_print_int",
           pushlr,
-          move_to_r 0 temp,
-          IOPER { assem = S_ (LDR W AL) (RTEMP temp) (MSG msg), src = [],
-                  dst = [temp], jump = []}]
+          mv_r1_r0,
+          IOPER { assem = S_ (LDR W AL) R0 (MSG msg), src = [],
+                  dst = [0], jump = []}]
           ++ end
 
 p_print_bool :: GenBuiltIn
@@ -785,7 +785,7 @@ p_print_reference = do
   addFragment (Frame.STRING msg "\"%p\\0\"")
   return $[add_label "p_print_reference",
           pushlr,
-          move_to_r 0 1,
+          mv_r1_r0,
           ld_msg_toR0 msg] ++ end
 
 p_check_null_pointer :: GenBuiltIn
@@ -823,7 +823,7 @@ p_read str =  do
   msg <- newDataLabel
   addFragment (Frame.STRING msg str)
   return [pushlr,
-          move_to_r 0 1,
+          mv_r1_r0,
           ld_msg_toR0 msg,
           r0_add4,
           ljump_to_label "scanf",
@@ -855,7 +855,6 @@ p_check_array_bounds :: GenBuiltIn
 p_check_array_bounds = do
   msgneg <- newDataLabel
   msgover <- newDataLabel
-  t <- newTemp -- r1
   addFragment (Frame.STRING msgneg "\"ArrayIndexOutOfBoundsError: negative index\n\\0\"")
   addFragment (Frame.STRING msgover "\"ArrayIndexOutOfBoundsError: index too large\n\\0\"")
   return [add_label "p_check_array_bounds",
@@ -863,8 +862,8 @@ p_check_array_bounds = do
           cmp_r0,
           ld_cond_msg_toR0 msgneg ARM.LT,
           ljump_cond "p_throw_runtime_error" ARM.LT,
-          IOPER {assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0), src = [t],
-                 dst = [t], jump = []},
+          IOPER {assem = S_ (LDR W AL) R1 (Imm R1 0), src = [1],
+                 dst = [1], jump = []},
           cmp_r0,
           ld_cond_msg_toR0 msgover ARM.CS,
           ljump_cond "p_throw_runtime_error" ARM.CS,
@@ -877,7 +876,7 @@ p_throw_overflow_error = do
   addFragment (Frame.STRING msg $ "\"OverflowError: the result is too small/large"
                                    ++ " to store in a 4-byte signed-integer.\n\"")
   return [add_label "p_throw_overflow_error",
-          ld_msg_toR0 msg, ljump_to_label "BL p_throw_runtime_error"]
+          ld_msg_toR0 msg, ljump_to_label "p_throw_runtime_error"]
 
 {- where to call ? -}
 p_check_divide_by_zero :: GenBuiltIn

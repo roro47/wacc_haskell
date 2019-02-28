@@ -36,8 +36,8 @@ showInstr (ILABEL assem l) =
 showAssem :: [[Instr]] -> [[Instr]]-> [Instr] -> [String]
 showAssem builtInFrags dataFrags out
   = intercalate ["\n"] (([[".data"]] ++ map (lines . show) (concat dataFrags)) ++
-                        ([[".text"], ["\n"], [".global main"]] ++ [map show out]) ++
-                        (map (map show) builtInFrags))
+                        ([[".text"], ["\n"], [".global main"]] ++ [map show out]
+                        ++ [[".ltorg"]]) ++ (map (map show) builtInFrags))
 
 instance Prelude.Show Instr where
     show (IOPER assem dst src jump) = "    " ++ Arm.output_show assem
