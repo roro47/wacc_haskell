@@ -381,9 +381,9 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
   let { arrayLen = length exprs;
         (TArray elemT) = t;
         elemSize = Frame.typeSize elemT;
-        call = Frame.externalCall "malloc" [CONSTI (arrayLen*elemSize + Frame.intSize)];
+        call = Frame.externalCall "malloc" [CONSTI (arrayLen*elemSize + Frame.intSize), TEMP temp];
         moveElem = f (TEMP temp) 0 elemSize (exps' ++ [CONSTI arrayLen]) }
-  return $ Ex (ESEQ (SEQ (MOV (TEMP temp) call) moveElem) (TEMP temp))
+  return $ Ex (ESEQ (SEQ (EXP call) moveElem) (TEMP temp))
   where f temp index elemSize [exp]
           = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index)))) exp
         f temp index elemSize (exp:exps)

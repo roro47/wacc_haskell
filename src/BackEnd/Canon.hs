@@ -9,6 +9,7 @@ import qualified BackEnd.Translate as Translate
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
 import Data.List hiding(insert)
+import BackEnd.Frame as Frame
 
 data CanonState =
   CanonState { tempAlloc :: Temp.TempAllocator,
@@ -20,11 +21,13 @@ testCanonFile :: String -> IO [Stm]
 testCanonFile file = do
   ast <- parseFile file
   ast' <- analyzeAST ast
-  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
-        canonState = CanonState { tempAlloc = Translate.tempAlloc s,
-                                  controlLabelAlloc = Translate.controlLabelAlloc s};
-        stms = evalState (transform stm) canonState }
-  return stms
+  let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+      userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
+      canonState = CanonState { tempAlloc = Translate.tempAlloc s,
+                                controlLabelAlloc = Translate.controlLabelAlloc s};
+      (stms, canonState') = runState (transform stm) canonState
+      (userFrags') = evalState (mapM transform userFrags) canonState'
+  return $ stms ++ concat userFrags'
 
 
 testBasicBlocksFile :: String -> IO [[Stm]]
@@ -225,7 +228,7 @@ doStm :: Stm -> State CanonState Stm
 
 doStm (MOV (TEMP t) (CALL (NAME f) es))
   = reorderStm es (\es -> MOV (TEMP t) (CALL (NAME f) es))
-  
+
 doStm (MOV (MEM e) (CALL (NAME f) es))
   = reorderStm (e:es) (\(e:es) -> MOV (MEM e) (CALL (NAME f) es))
 
@@ -236,7 +239,7 @@ doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)
 
 doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b)
-  | isOneLayer e1 && isOneLayer e2 && isOneLayer b = 
+  | isOneLayer e1 && isOneLayer e2 && isOneLayer b =
       return stm
  -- else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
 
