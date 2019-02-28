@@ -120,7 +120,7 @@ instance Show Instr where
   show (S_ s r1 op) = (show_ s) ++ (show r1) ++ ", " ++ (show op)
   show (C3_ c r1 r2 r3) = (show_ c) ++ (show r1) ++ ", " ++ (show r2)  ++ ", " ++ (show r3)
   show (LAB str) = (str ++ ":")
-  show (M msg int str) = msg ++ ":\n   .word " ++ (show int) ++ "\n   .ascii " ++ show str ++ "\n"
+  show (M msg int str) = msg ++ ":\n   .word " ++ (show int) ++ "\n   .ascii " ++ str ++ "\n"
 
 output_show :: Instr -> String
 output_show instr = (show instr)

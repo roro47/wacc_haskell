@@ -1,8 +1,11 @@
--- This file has been generated from package.yaml by hpack version 0.18.1.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.1.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: ce6871bb1241fac06a472542434a883ed6735248e0a764f7e28b42154fc68924
 
-cabal-version:  >= 1.10
 name:           wacc32
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/wacc32#readme>
@@ -14,10 +17,9 @@ copyright:      2019 Author name here
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
-
 extra-source-files:
-    ChangeLog.md
     README.md
+    ChangeLog.md
 
 source-repository head
   type: git
@@ -38,6 +40,7 @@ library
       BackEnd.MakeGraph
       BackEnd.Munch
       BackEnd.RegAlloc
+      BackEnd.State
       BackEnd.Temp
       BackEnd.Todo
       BackEnd.Translate
@@ -50,62 +53,55 @@ library
   hs-source-dirs:
       src
   build-depends:
-      base >= 4.7 && < 5
-    , HUnit
+      HUnit
     , MissingH
+    , algebraic-graphs
+    , base >=4.7 && <5
     , call-stack
+    , containers
+    , filepath
+    , generic-deriving
     , hashable
     , hashmap
     , hslogger
+    , hspec
+    , lens
+    , mtl
     , parsec
+    , pretty-tree
     , regex-base
     , regex-compat
     , regex-posix
-    , mtl
-    , hspec
-    , generic-deriving
-    , algebraic-graphs
-    , containers
-    , pretty-tree
-    , lens
-    , filepath
   default-language: Haskell2010
 
 executable compile
   main-is: Main.hs
+  other-modules:
+      Paths_wacc32
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >= 4.7 && < 5
-    , HUnit
+      HUnit
     , MissingH
+    , algebraic-graphs
+    , base >=4.7 && <5
     , call-stack
+    , containers
+    , filepath
+    , generic-deriving
     , hashable
     , hashmap
     , hslogger
+    , hspec
+    , lens
+    , mtl
     , parsec
+    , pretty-tree
     , regex-base
     , regex-compat
     , regex-posix
-    , mtl
-    , hspec
-    , generic-deriving
-    , algebraic-graphs
-    , containers
-    , pretty-tree
-    , lens
-    , filepath
     , wacc32
-    , parsec
-    , hashmap
-    , MissingH
-    , generic-deriving
-    , algebraic-graphs
-    , containers
-    , pretty-tree
-    , lens
-    , filepath
   default-language: Haskell2010
 
 test-suite wacc32-test
@@ -119,32 +115,30 @@ test-suite wacc32-test
       TestUtil
       TestUtil2
       TestValid
+      Paths_wacc32
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >= 4.7 && < 5
-    , HUnit
+      HUnit
     , MissingH
+    , algebraic-graphs
+    , base >=4.7 && <5
     , call-stack
+    , containers
+    , directory
+    , filepath
+    , generic-deriving
     , hashable
     , hashmap
     , hslogger
+    , hspec
+    , lens
+    , mtl
     , parsec
+    , pretty-tree
     , regex-base
     , regex-compat
     , regex-posix
-    , mtl
-    , hspec
-    , generic-deriving
-    , algebraic-graphs
-    , containers
-    , pretty-tree
-    , lens
-    , filepath
     , wacc32
-    , hspec
-    , hashmap
-    , parsec
-    , directory
   default-language: Haskell2010

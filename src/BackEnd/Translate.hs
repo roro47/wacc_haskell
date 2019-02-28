@@ -362,7 +362,7 @@ translateExprF (Ann (BoolLiter b) _) =
 translateExprF (Ann (CharLiter c) _) = return $ Ex (CONSTC c)
 translateExprF (Ann (StringLiter s) _) = do
   label <- newDataLabel
-  addFragment $ Frame.STRING label s
+  addFragment $ Frame.STRING label ("\"" ++ s ++ "\"")
   return $ Ex (NAME label)
 
 translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
