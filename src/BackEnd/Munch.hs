@@ -42,7 +42,7 @@ munchExp (CALL (NAME "malloc") [CONSTI i]) = do
   let ldr = IOPER { assem = S_ (LDR W AL) (R0) (NUM (i)),
                   src = [], dst = [0], jump = []}
       move = move_to_r 0 t
-  return ([ldr, ljump_to_label "malloc", move], dummy) --malloc notice dummy here
+  return ([ldr, ljump_to_label "malloc", move], t) --malloc notice dummy here
 
 munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
   (ii, it) <- munchExp ident
@@ -649,7 +649,7 @@ munch file = do
                  (map show (out' ++ out))
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
   return ()
-     
+
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
           let gens = map (\n -> genBuiltIns !! n) ids
@@ -660,7 +660,7 @@ munch file = do
 showAssem builtInFrags dataFrags out
   = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
-                 (map show (out)) 
+                 (map show (out))
 
 testMunch file = do
   ast <- parseFile file
@@ -681,7 +681,7 @@ testMunch file = do
       substitute' = map (\f -> optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] f)) userFrags'
       out' = map (filter (\x -> not $ containsDummy x)) substitute'
   return $ (out' ++ [out], dataFrags, builtInFrags)
-                      
+
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
           let gens = map (\n -> genBuiltIns !! n) ids
