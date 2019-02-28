@@ -67,8 +67,10 @@ def singleTest(path):
     else:
         print("\N{cross mark} exit code incorrect")
         print("exit code should be: " + str(correctExitCode))
-        print("out exit code: " + str(exitCode))
+        print("our exit code: " + str(exitCode))
     print("\n")
+    subprocess.call(["rm", "-rf", assemFileName])
+    subprocess.call(["rm", "-rf", testName])
 
 def testAll():
     subprocess.call(["make"])
