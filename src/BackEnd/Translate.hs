@@ -373,13 +373,13 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
         (TArray elemT) = t;
         elemSize = Frame.typeSize elemT;
         call = Frame.externalCall "malloc" [CONSTI (arrayLen*elemSize + Frame.intSize), TEMP temp];
-        moveElem = f (TEMP temp) 0 elemSize (exps' ++ [CONSTI arrayLen]) }
+        moveElem = f (TEMP temp) 0 elemSize ([CONSTI arrayLen] ++ exps') }
   return $ Ex (ESEQ (SEQ (EXP call) moveElem) (TEMP temp))
   where TArray t' = t
         f temp index elemSize [exp]
-          = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * (arrayLen - index)))) (typeLen t')) exp
+          = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index))) (typeLen t')) exp
         f temp index elemSize (exp:exps)
-          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize*(arrayLen - index)))) (typeLen t')) exp)
+          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index))) (typeLen t')) exp)
                 (f temp (index+1) elemSize exps)
         arrayLen = length exprs
 

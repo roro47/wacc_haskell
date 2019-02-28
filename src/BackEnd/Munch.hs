@@ -864,7 +864,7 @@ p_check_array_bounds = do
           ljump_cond "p_throw_runtime_error" ARM.LT,
           IOPER {assem = S_ (LDR W AL) R1 (Imm R1 0), src = [1],
                  dst = [1], jump = []},
-          cmp_r0,
+          IOPER {assem = MC_ (CMP AL) R0 (R R1), src = [0, 1], dst = [], jump = []},
           ld_cond_msg_toR0 msgover ARM.CS,
           ljump_cond "p_throw_runtime_error" ARM.CS,
           poppc]
