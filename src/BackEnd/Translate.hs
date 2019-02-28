@@ -478,7 +478,9 @@ callp = \s -> (\exprs -> return $ Ex $ CALL (NAME s) exprs)
 
 
 translateFree :: Type -> [Exp] -> State TranslateState IExp
-translateFree (TPair _ _) exprs = callp "p_free_pair" exprs
+translateFree (TPair _ _) exprs = do
+  addBuiltIn id_p_free_pair
+  callp "#p_free_pair" exprs
 translateFree (TArray _) exprs = callp "#p_free_array" exprs
 translateFree TStr exprs = callp "#p_free_array" exprs
 

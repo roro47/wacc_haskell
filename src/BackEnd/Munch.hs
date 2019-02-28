@@ -117,6 +117,14 @@ munchExp (CALL (NAME "#p_putchar") [e]) = do
       putchar = ljump_to_label "putchar"
   return (i ++ [mv, putchar], dummy)
 
+munchExp (CALL (NAME "#p_free_pair") [MEM e _]) = do
+  (i, t) <- munchExp e
+  let ldr = IOPER { assem = S_ (LDR W AL) (RTEMP t) (Imm (RTEMP t) 0),
+                    src = [], dst = [t], jump = []}
+      mv = move_to_r t 0
+      freePair = ljump_to_label "p_free_pair"
+  return (i ++ [ldr, mv, freePair], dummy)
+
 munchExp (CALL (NAME "exit") [e]) = do
   let exit = ljump_to_label "exit"
   case e of
@@ -843,7 +851,7 @@ p_free_pair = do
           IOPER { assem = STACK_ (ARM.PUSH AL) [R0], src = [0], dst = [13], jump = []},
           IOPER {assem = S_ (LDR W AL) R0 (Imm R0 0), src = [0], dst = [0], jump = []},
           ljump_to_label "free",
-          IOPER {assem = S_ (LDR W AL) R0 (Imm (RTEMP 13) 0), src = [13], dst = [0], jump = []},
+          IOPER {assem = S_ (LDR W AL) R0 (Imm SP 0), src = [13], dst = [0], jump = []},
           IOPER {assem = S_ (LDR W AL) R0 (Imm R0 4), src = [0], dst = [0], jump = []},
           ljump_to_label "free",
           IOPER { assem = STACK_ (ARM.POP AL) [R0], src = [13], dst = [13, 0], jump = []},
