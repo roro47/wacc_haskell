@@ -588,8 +588,8 @@ munchBuiltInFuncFrag (PROC stm frame) = do
   return (pushlr : munch ++ [poppc])
 
 munchDataFrag :: Fragment -> [ASSEM.Instr]
-munchDataFrag (STRING label str)
-  = [ILABEL {assem = (M label (length str - 2) str), lab = label}]
+munchDataFrag (STRING label str l)
+  = [ILABEL {assem = (M label l str), lab = label}]
 --subrtacting the space occupied by ""
 
 createPair :: String -> String -> [Exp] -> State TranslateState ([ASSEM.Instr], Temp)
@@ -739,7 +739,7 @@ genBuiltIns = [p_print_ln,
 p_print_ln :: GenBuiltIn
 p_print_ln = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg ("\"\\0\""))
+  addFragment (Frame.STRING msg ("\"\\0\"") 1)
   return $[add_label "p_print_ln",
            pushlr,
            ld_msg_toR0 msg,
@@ -753,7 +753,7 @@ p_print_int :: GenBuiltIn
 {-In ref compiler this temp is R1 -}
 p_print_int = do
  msg <- newDataLabel
- addFragment (Frame.STRING msg "\"%d\\0\"")
+ addFragment (Frame.STRING msg "\"%d\\0\"" 3)
  return $[add_label "p_print_int",
           pushlr,
           mv_r1_r0,
@@ -765,8 +765,8 @@ p_print_bool :: GenBuiltIn
 p_print_bool = do
   truemsg <- newDataLabel
   falsemsg <- newDataLabel
-  addFragment (Frame.STRING truemsg "\"true\\0\"")
-  addFragment (Frame.STRING falsemsg "\"false\\0\"")
+  addFragment (Frame.STRING truemsg "\"true\\0\"" 5)
+  addFragment (Frame.STRING falsemsg "\"false\\0\"" 6)
   return $[add_label "p_print_bool",
           pushlr,
           cmp_r0,
@@ -778,7 +778,7 @@ p_print_bool = do
 p_print_string :: GenBuiltIn
 p_print_string = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg "\"%.*s\\0\"")
+  addFragment (Frame.STRING msg "\"%.*s\\0\"" 5)
   return $[add_label "p_print_string",
           pushlr,
           IOPER {assem = S_ (LDR W AL) R1 (Imm R0 0), src = [0], dst = [1],
@@ -790,7 +790,7 @@ p_print_string = do
 p_print_reference :: GenBuiltIn
 p_print_reference = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg "\"%p\\0\"")
+  addFragment (Frame.STRING msg "\"%p\\0\"" 3)
   return $[add_label "p_print_reference",
           pushlr,
           mv_r1_r0,
@@ -799,7 +799,8 @@ p_print_reference = do
 p_check_null_pointer :: GenBuiltIn
 p_check_null_pointer = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg "\"NullReferenceError: dereference a null reference\\0\"")
+  let m = "NullReferenceError: dereference a null reference"
+  addFragment (Frame.STRING msg ("\"" ++ m ++"\0" ++ "\"") (length m + 1))
   let s = "p_throw_runtime_error"
   return $[add_label "p_check_null_pointer",
           pushlr,
@@ -818,18 +819,18 @@ p_throw_runtime_error = do
 
 p_read_int :: GenBuiltIn
 p_read_int = do
-  r <- p_read "\"%d\\0\""
+  r <- p_read "\"%d\\0\"" 2
   return $ (add_label "p_read_int"): r
 
 p_read_char :: GenBuiltIn
 p_read_char = do
-  r <- p_read "\"%c\\0\""
+  r <- p_read "\"%c\\0\"" 2
   return $ (add_label "p_read_char"): r
 
-p_read :: String -> GenBuiltIn
-p_read str =  do
+p_read :: String -> Int -> GenBuiltIn
+p_read str l =  do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg str)
+  addFragment (Frame.STRING msg str l)
   return [pushlr,
           mv_r1_r0,
           ld_msg_toR0 msg,
@@ -840,9 +841,10 @@ p_read str =  do
 p_free_pair :: GenBuiltIn
 p_free_pair = do
   msg <- newDataLabel
-  let str = "\"NullReferenceError: dereference a null reference\\0\""
+  let m = "NullReferenceError: dereference a null reference"
+  let str = "\"" ++ m ++ "\\0\""
       runTimeError = "p_throw_runtime_error"
-  addFragment (Frame.STRING msg str)
+  addFragment (Frame.STRING msg str (length m + 1))
   return [add_label "p_free_pair",
           pushlr,
           cmp_r0,
@@ -861,10 +863,12 @@ p_free_pair = do
 {-How to handle array access in translate && munch? -}
 p_check_array_bounds :: GenBuiltIn
 p_check_array_bounds = do
+  let m1 = "ArrayIndexOutOfBoundsError: negative index"
+      m2 = "ArrayIndexOutOfBoundsError: index too large"
   msgneg <- newDataLabel
   msgover <- newDataLabel
-  addFragment (Frame.STRING msgneg "\"ArrayIndexOutOfBoundsError: negative index\\0\"")
-  addFragment (Frame.STRING msgover "\"ArrayIndexOutOfBoundsError: index too large\\0\"")
+  addFragment (Frame.STRING msgneg ("\"" ++ m1 ++ "\\0\"") (length m1 + 1))
+  addFragment (Frame.STRING msgover ("\"" ++ m2 ++ "\\0\"") (length m2 + 1))
   return [add_label "p_check_array_bounds",
           pushlr,
           cmp_r0,
@@ -881,8 +885,8 @@ p_check_array_bounds = do
 p_throw_overflow_error :: GenBuiltIn
 p_throw_overflow_error = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg $ "\"OverflowError: the result is too small/large"
-                                   ++ " to store in a 4-byte signed-integer.\"")
+  let m = "OverflowError: the result is too small/large to store in a 4-byte signed-integer."
+  addFragment (Frame.STRING msg  ("\"" ++ m ++ "\"") (length m))
   return [add_label "p_throw_overflow_error",
           ld_msg_toR0 msg, ljump_to_label "p_throw_runtime_error"]
 
@@ -890,7 +894,8 @@ p_throw_overflow_error = do
 p_check_divide_by_zero :: GenBuiltIn
 p_check_divide_by_zero = do
   msg <- newDataLabel
-  addFragment (Frame.STRING msg "\"DivideByZeroError: divide or modulo by zero\\0\"")
+  let m = "DivideByZeroError: divide or modulo by zero"
+  addFragment (Frame.STRING msg ("\"" ++ m ++ "\\0\"") (length m + 1))
   return [add_label "p_check_divide_by_zero",
           pushlr,
           IOPER {assem = MC_ (CMP AL) R1 (IMM 0), src = [1], dst = [], jump = []},

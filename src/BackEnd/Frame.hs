@@ -13,7 +13,7 @@ data Access = InFrame Int
             deriving (Eq, Show)
 
 data Fragment = PROC Stm Frame
-              | STRING Temp.Label String
+              | STRING Temp.Label String Int
               deriving (Eq, Show)
 
 charSize :: Int

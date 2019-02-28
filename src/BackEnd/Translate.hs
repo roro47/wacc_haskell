@@ -187,7 +187,7 @@ addFragment :: Frame.Fragment -> State TranslateState ()
 addFragment frag = do
   state <- get
   case frag of
-    Frame.STRING _ _ -> put $ state { dataFrags = frag:(dataFrags state) }
+    Frame.STRING _ _ _ -> put $ state { dataFrags = frag:(dataFrags state) }
     Frame.PROC _ _ -> put $ state { procFrags = frag:(procFrags state) }
 
 -- obtain how to access a variable
@@ -355,7 +355,7 @@ translateExprF (Ann (BoolLiter b) _) =
 translateExprF (Ann (CharLiter c) _) = return $ Ex (CONSTC c)
 translateExprF (Ann (StringLiter s) _) = do
   label <- newDataLabel
-  addFragment $ Frame.STRING label ("\"" ++ s ++ "\"")
+  addFragment $ Frame.STRING label ("\"" ++ s ++ "\"") (length s)
   return $ Ex (NAME label)
 
 translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
