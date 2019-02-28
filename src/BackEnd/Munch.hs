@@ -353,14 +353,14 @@ condExp (NAME l) = do
 
 condExp (MEM (CONSTI i)) = do
   newt <- newTemp
-  return $ \c -> ([IOPER{assem = S_ (ARM.LDR W c) (RTEMP newt) (NUM i) , dst = [],
-                         src = [newt], jump = []}], newt)
+  return $ \c -> ([IOPER{assem = S_ (ARM.LDR W c) (RTEMP newt) (NUM i) , dst = [newt],
+                         src = [], jump = []}], newt)
 
 condExp (MEM m) = do
   (i, t) <- munchExp m
   newt <- newTemp
   return $ \c -> (i ++ [IOPER {assem = S_ (ARM.LDR W c) (RTEMP newt) (Imm (RTEMP t) 0)
-                        , dst = [t], src = [newt], jump = []}], newt)
+                        , dst = [newt], src = [t], jump = []}], newt)
 
 --only AL is of type IMOV
 wrapAssem :: Cond -> (Cond -> ARM.Instr) -> [Temp] -> [Temp] -> ASSEM.Instr
@@ -492,18 +492,18 @@ suffixStm (IR.MOV (MEM me) e) = do -- STR
   (l, ts, op) <- munchMem me
   if null l then
     return (\c -> (\suff -> i ++ [IOPER { assem = S_ (ARM.STR suff c) (RTEMP t) op,
-                                          src = ts, dst = [t], jump = []}]))
+                                          src = [t]++ts, dst = [], jump = []}]))
   else
     let s = head ts in
     return (\c -> (\suff -> i ++ l ++ [IOPER { assem = S_ (ARM.STR suff c) (RTEMP t) (Imm (RTEMP s) 0),
-                                              src = [s], dst = [t], jump = []}]))
+                                              src = [s, t], dst = [], jump = []}]))
 
 suffixStm (IR.MOV e (MEM me)) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
   if null l then
     return (\c -> ( \suff -> i ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) op,
-                                          src = [t], dst = ts, jump = []}]))
+                                          src = ts, dst = [t], jump = []}]))
   else
     let s = head ts in
     return (\c -> (\suff -> i ++ l ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0),
