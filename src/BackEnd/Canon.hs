@@ -5,17 +5,11 @@ import Control.Monad.State
 import Data.HashMap as HashMap hiding (map, filter)
 import FrontEnd.Parser
 import FrontEnd.SemanticAnalyzer
-import qualified BackEnd.Translate as Translate
+import BackEnd.Translate as Translate
 import qualified BackEnd.Temp as Temp
 import BackEnd.IR
 import Data.List hiding(insert)
 import BackEnd.Frame as Frame
-
-data CanonState =
-  CanonState { tempAlloc :: Temp.TempAllocator,
-               controlLabelAlloc :: Temp.LabelAllocator}
-    deriving (Eq, Show)
-
 
 testCanonFile :: String -> IO [Stm]
 testCanonFile file = do
@@ -23,10 +17,8 @@ testCanonFile file = do
   ast' <- analyzeAST ast
   let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
       userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
-      canonState = CanonState { tempAlloc = Translate.tempAlloc s,
-                                controlLabelAlloc = Translate.controlLabelAlloc s};
-      (stms, canonState') = runState (transform stm) canonState
-      (userFrags') = evalState (mapM transform userFrags) canonState'
+      (stms, s') = runState (transform stm) s
+      (userFrags') = evalState (mapM transform userFrags) s'
   return $ stms ++ concat userFrags'
 
 
@@ -35,9 +27,7 @@ testBasicBlocksFile file = do
   ast <- parseFile file
   ast' <- analyzeAST ast
   let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
-        canonState = CanonState { tempAlloc = Translate.tempAlloc s,
-                                  controlLabelAlloc = Translate.controlLabelAlloc s};
-        stms = evalState (transform' stm) canonState }
+        stms = evalState (transform' stm) s }
   return stms
 
 
@@ -46,71 +36,51 @@ testLinearizeFile file = do
   ast <- parseFile file
   ast' <- analyzeAST ast
   let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
-        canonState = CanonState { tempAlloc = Translate.tempAlloc s,
-                                  controlLabelAlloc = Translate.controlLabelAlloc s};
-        stms = evalState (linearize stm) canonState }
+        stms = evalState (linearize stm) s }
   return stms
 
 
-newCanonState :: CanonState
-newCanonState = CanonState { tempAlloc = Temp.newTempAllocator,
-                             controlLabelAlloc = Temp.newLabelAllocator }
-
 testCanon :: Stm -> IO [Stm]
 testCanon stm = do
-  let { (trace, s) = runState (transform stm) newCanonState }
+  let { (trace, s) = runState (transform stm) newTranslateState }
   return trace
 
 
 testDoStm :: Stm -> IO Stm
 testDoStm stm = do
-  let { (stm', s) = runState (doStm stm) newCanonState }
+  let { (stm', s) = runState (doStm stm) newTranslateState }
   return stm'
 
 testLinearize :: Stm -> IO [Stm]
 testLinearize stm = do
-  let { (stm', s) = runState (linearize stm) newCanonState }
+  let { (stm', s) = runState (linearize stm) newTranslateState }
   return $ filter (/= NOP) stm'
 
 testBasicBlocks :: [Stm] -> IO [[Stm]]
 testBasicBlocks stms = do
   let { (blocks, s) =
-        runState (basicBlocks stms >>= \(bs,_) -> return bs) newCanonState }
+        runState (basicBlocks stms >>= \(bs,_) -> return bs) newTranslateState }
   return blocks
 
 testDoExp :: Exp -> IO Exp
 testDoExp exp = do
-  let { ((stm,exp'), s) = runState (doExp exp) newCanonState }
+  let { ((stm,exp'), s) = runState (doExp exp) newTranslateState }
   return $ ESEQ stm exp'
 
-transform :: Stm -> State CanonState [Stm]
+transform :: Stm -> State TranslateState [Stm]
 transform stm = do
   stms <- linearize stm
   blocks <- basicBlocks stms
   return $ traceSchedule $ fst blocks
 
-transform' :: Stm -> State CanonState [[Stm]]
+transform' :: Stm -> State TranslateState [[Stm]]
 transform' stm = do
   stms <- linearize stm
   (stms', _) <- basicBlocks stms
   return stms'
 
-newTemp :: State CanonState Temp.Temp
-newTemp = do
-  state <- get
-  let { (tempAlloc', temp) = Temp.newTemp (tempAlloc state) }
-  put $ state { tempAlloc = tempAlloc' }
-  return temp
 
-newControlLabel :: State CanonState Temp.Label
-newControlLabel = do
-  state <- get
-  let { (alloc, label) = Temp.newControlLabel (controlLabelAlloc state) }
-  put $ state { controlLabelAlloc = alloc }
-  return label
-
-
-linearize :: Stm -> State CanonState [Stm]
+linearize :: Stm -> State TranslateState [Stm]
 linearize stm = do
   stm' <- doStm stm
   return $ filter (/= NOP) $ linear stm' []
@@ -119,7 +89,7 @@ linearize stm = do
          linear s list = s:list
 
 -- todo : need to take care of epilogue for done
-basicBlocks :: [Stm] -> State CanonState ([[Stm]], Temp.Label)
+basicBlocks :: [Stm] -> State TranslateState ([[Stm]], Temp.Label)
 basicBlocks [] = do
   label <- newControlLabel
   return $ ([[LABEL "done"]], "done")
@@ -196,7 +166,7 @@ isESEQ :: Exp -> Bool
 isESEQ (ESEQ _ _) = True
 isESEQ _ = False
 
-reorder :: [Exp] -> State CanonState (Stm, [Exp])
+reorder :: [Exp] -> State TranslateState (Stm, [Exp])
 reorder (exp@(CALL (NAME n) _):rest)
  | "#" `isPrefixOf` n = do
    (stm, exps) <- reorder rest
@@ -214,17 +184,17 @@ reorder (exp:rest) = do
                (TEMP temp):exps2')
 reorder [] = return (NOP, [])
 
-reorderStm :: [Exp] -> ([Exp] -> Stm) -> State CanonState Stm
+reorderStm :: [Exp] -> ([Exp] -> Stm) -> State TranslateState Stm
 reorderStm exps build = do
   (stm, exps') <- reorder  exps
   return $ connect stm (build  exps')
 
-reorderExp :: [Exp] -> ([Exp] -> Exp) -> State CanonState (Stm, Exp)
+reorderExp :: [Exp] -> ([Exp] -> Exp) -> State TranslateState (Stm, Exp)
 reorderExp exps build = do
   (stm', exps') <- reorder exps
   return (stm', build exps')
 
-doStm :: Stm -> State CanonState Stm
+doStm :: Stm -> State TranslateState Stm
 
 doStm (MOV (TEMP t) (CALL (NAME f) es))
   = reorderStm es (\es -> MOV (TEMP t) (CALL (NAME f) es))
@@ -288,7 +258,7 @@ isOneLayer (NAME _) = True
 isOneLayer e = False
 
 
-doExp :: Exp -> State CanonState (Stm, Exp)
+doExp :: Exp -> State TranslateState (Stm, Exp)
 doExp exp@(MEM e@(BINEXP bop e1 e2)) = do
   if isOneLayer e1 && isOneLayer e2
   then return (NOP, exp)

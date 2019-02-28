@@ -38,6 +38,7 @@ dependencies:
 - containers
 - pretty-tree
 - lens
+- filepath
 
 library:
   source-dirs: src
@@ -60,6 +61,7 @@ executables:
     - containers
     - pretty-tree
     - lens
+    - filepath
 
 tests:
   wacc32-test:

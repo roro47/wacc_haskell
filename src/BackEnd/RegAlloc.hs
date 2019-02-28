@@ -46,13 +46,13 @@ data RegAllocState =
     _initial :: [Temp.Temp], -- all temp reg, not precolored and not processed
     _simplifyWorkList :: Set.Set Temp.Temp, -- list of low-degree non-move-related nodes
     _freezeWorkList :: Set.Set Temp.Temp, -- low-degree move-related nodes
-    _spillWorkList :: Set.Set Temp.Temp, --  high degree nodes 
+    _spillWorkList :: Set.Set Temp.Temp, --  high degree nodes
     _spillNodes :: Set.Set Temp.Temp, -- node marked for spilling during this round; intially empty
     _coalescedNodes :: Set.Set Temp.Temp, -- registers that has been coalesced
     _coloredNodes :: Set.Set Temp.Temp, -- nodes successfully colored
     _selectStack :: [Temp.Temp], -- stack containing temporaries removed from the graph
      -- move sets
-    _coalescedMoves :: Set.Set Instr, 
+    _coalescedMoves :: Set.Set Instr,
     _constrainedMoves :: Set.Set Instr,
     _frozenMoves :: Set.Set Instr,
     _workListMoves :: Set.Set Instr,
@@ -101,19 +101,23 @@ isMoveInstruction _ = False
 
 --regAllocFile :: String -> IO ([Hash.Map Temp.Temp Int])
 regAllocFile file = do
-  (assems, dataFrags, builtInFrags) <- testMunch file
-  colorMap <- mapM regAllocFile' assems
-  let colorMap' =  map Hash.toList colorMap
+  out <- testMunch file
+  regAllocAssem' out
+
+-- for testing
+regAllocAssem' (assems, dataFrags, builtInFrags) = do
+  states <- mapM regAllocAssem'' assems
+  let colorMap = map fst states
+      meta = map snd states
+      colorMap' =  map Hash.toList colorMap
       final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
       totalOut = showAssem builtInFrags dataFrags (concat final)
-      
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
-  --mapM_ (\a -> putStrLn (concat $ map (\a' -> Assem.showInstr a' ++ "\n") a)) assems
-  return colorMap
-  
+  mapM_ (\a -> putStrLn (concat $ map (\(id,a') -> show id ++ " " ++ Assem.showInstr a' ++ "\n") (zip [0..] a ))) assems
+  return meta
 
-  where regAllocFile' assem = do
-          let flow = instrsToGraph assem 
+  where regAllocAssem'' assem = do
+          let flow = instrsToGraph assem
               (calcLiveOut, _) = Live.calcLiveness flow assem
               initial' = List.nub $ concat $ map Assem.assemReg assem
               precoloured' = precolouredReg
@@ -123,7 +127,35 @@ regAllocFile file = do
                                             _precoloured = precoloured',
                                             _fgraph = flow }
               (a, regState') = runState (regAlloc >>= \_ -> getAlias 17) regState
-          return $ _color regState'
+          return $ (_color regState', (_liveOut regState'))
+          --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
+          --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
+        
+
+
+regAllocAssem :: ([[Assem.Instr]], [[Assem.Instr]], [[Assem.Instr]]) -> IO String
+regAllocAssem (assems, dataFrags, builtInFrags) = do
+  states <- mapM regAllocAssem' assems
+  let colorMap = map fst states
+      meta = map snd states
+      colorMap' =  map Hash.toList colorMap
+      final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
+      totalOut = showAssem builtInFrags dataFrags (concat final)
+  let assemOut = map (\(id, s) -> show id ++ " " ++ s ++ "\n") (zip [1..] totalOut)
+  return (concat assemOut)
+
+  where regAllocAssem' assem = do
+          let flow = instrsToGraph assem
+              (calcLiveOut, _) = Live.calcLiveness flow assem
+              initial' = List.nub $ concat $ map Assem.assemReg assem
+              precoloured' = precolouredReg
+              regState = newRegAllocState { _liveOut = calcLiveOut,
+                                            _program = map (\(id, inst) -> Instr id inst) (zip [0..] assem),
+                                            _initial = initial' List.\\ precolouredReg,
+                                            _precoloured = precoloured',
+                                            _fgraph = flow }
+              (a, regState') = runState (regAlloc >>= \_ -> getAlias 17) regState
+          return $ (_color regState', (_liveOut regState'))
           --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
           --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
         
@@ -209,11 +241,10 @@ makeWorkList = do
   initial .= []
   where f :: Temp.Temp -> Int -> Bool -> State RegAllocState ()
         f n d isMoveRelated
-          | d >= k        = spillWorkList %= Set.insert n 
+          | d >= k        = spillWorkList %= Set.insert n
           | isMoveRelated = freezeWorkList %= Set.insert n
           | otherwise     = simplifyWorkList %= Set.insert n
 
-      
 moveRelated :: Temp.Temp -> State RegAllocState Bool
 moveRelated n = do
   nodeMoves' <- nodeMoves n
@@ -266,7 +297,7 @@ decrementDegree m = do
     isMoveRelated <- moveRelated m
     if isMoveRelated
     then freezeWorkList %= Set.insert m
-    else simplifyWorkList %= Set.insert m 
+    else simplifyWorkList %= Set.insert m
 
 simplify :: State RegAllocState ()
 simplify = do
@@ -279,7 +310,7 @@ simplify = do
 addWorkList :: Temp.Temp -> State RegAllocState ()
 addWorkList u = do
   isPrecoloured <- uses precoloured (elem u)
-  isMoveRelated <- moveRelated u 
+  isMoveRelated <- moveRelated u
   d <- uses degree (\degree' -> degree' ! u)
   when (isPrecoloured && not isMoveRelated && d < k) (do
     freezeWorkList %= Set.delete u

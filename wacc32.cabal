@@ -41,6 +41,7 @@ library
       BackEnd.Temp
       BackEnd.Translate
       BackEnd.RegAlloc
+      BackEnd.CodeGen
       FrontEnd.AST
       FrontEnd.Lexer
       FrontEnd.Parser
@@ -68,6 +69,7 @@ library
     , regex-compat
     , regex-posix
     , lens
+    , filepath
   default-language: Haskell2010
 
 executable compile
