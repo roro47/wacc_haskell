@@ -191,10 +191,10 @@ reorder (exp@(CALL (NAME n) _):rest)
    return (stm, (exp:exps))
 reorder (exp@(CALL _ _):rest) = do
   temp <- newTemp
-  reorder $! ((ESEQ (MOV (TEMP temp) exp) (TEMP temp)):rest)
+  reorder ((ESEQ (MOV (TEMP temp) exp) (TEMP temp)):rest)
 reorder (exp:rest) = do
-  (stm', exps') <- doExp $! exp
-  (stm2', exps2') <- reorder $! rest
+  (stm', exps') <- doExp exp
+  (stm2', exps2') <- reorder rest
   if commute exps' stm2'
   then return (SEQ stm' stm2', (exps':exps2'))
   else newTemp >>= \temp ->
@@ -204,13 +204,13 @@ reorder [] = return (NOP, [])
 
 reorderStm :: [Exp] -> ([Exp] -> Stm) -> State CanonState Stm
 reorderStm exps build = do
-  (stm, exps') <- reorder $! exps
-  return $ SEQ stm (build $! exps')
+  (stm, exps') <- reorder  exps
+  return $ SEQ stm (build  exps')
 
 reorderExp :: [Exp] -> ([Exp] -> Exp) -> State CanonState (Stm, Exp)
 reorderExp exps build = do
   (stm', exps') <- reorder exps
-  return (stm', build $! exps')
+  return (stm', build exps')
 
 doStm :: Stm -> State CanonState Stm
 
@@ -220,22 +220,28 @@ doStm (MOV (TEMP t) (CALL (NAME f) es))
 doStm (MOV (MEM e) (CALL (NAME f) es))
   = reorderStm (e:es) (\(e:es) -> MOV (MEM e) (CALL (NAME f) es))
 
-doStm (MOV (TEMP t) (CALL e es))
-  = reorderStm (e:es) (\(e:es) -> MOV (TEMP t) (CALL e es))
+doStm (MOV (TEMP t) (CALL e es)) = undefined
+  -- = reorderStm (e:es) (\(e:es) -> MOV (TEMP t) (CALL e es))
 
 doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)
 
+{-
 doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b) = do
   if isOneLayer e1 && isOneLayer e2 && isOneLayer b
   then return stm
   else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
-
+  -}
+{-
 doStm stm@(MOV (MEM e) b) = do
   if isOneLayer e && isOneLayer b
   then return stm
   else reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
-
+-}
+{-
+doStm stm@(MOV (MEM e) b) = do
+  reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
+-}
 doStm (MOV (ESEQ s e) b)
   = doStm (SEQ s (MOV e b))
 

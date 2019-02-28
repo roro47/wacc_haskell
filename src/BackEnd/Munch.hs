@@ -643,7 +643,7 @@ munch file = do
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
                  (map show (out' ++ out))
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
-  return out
+  return ()
      
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
