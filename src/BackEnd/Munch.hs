@@ -214,7 +214,7 @@ munchExp (CALL (NAME f) es) = do
   return (concat (reverse pushParams) ++ [bToFunc] ++ adjustSP, 0)
   where pushParam exp = do
           (i, t) <- munchExp exp
-          return $ i ++ [IOPER {assem = S_ (STR W AL) (RTEMP t) (PRE  SP 4),
+          return $ i ++ [IOPER {assem = S_ (STR W AL) (RTEMP t) (PRE SP (-4)),
                                 src = [t, 13], dst = [13], jump = []}]
         adjustSP = if totalParamSize == 0 then [] else
           [IOPER { assem = CBS_ (ADD NoSuffix AL) SP SP (IMM totalParamSize),
@@ -397,10 +397,10 @@ munchMem e = do
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
 ---IMMEDIATE ---
-optimise ((IOPER { assem = (CBS_ c reg0 reg1 (IMM int))}) :
+optimise ((IOPER { assem = (CBS_ c reg0 reg1 (IMM 0))}) :
           (IOPER { assem = (S_ sl reg3 (Imm reg2 0))}) :remain)
   | (stackEqualCond c sl) && reg0 == reg2
-    = optimise (IOPER { assem = (S_ sl reg3 (Imm reg1 (opVal c * int))),
+    = optimise (IOPER { assem = (S_ sl reg3 (Imm reg1 0)),
                         src = [13], dst = [toNum reg3], jump = [] }:remain)
 optimise (IOPER {assem = CBS_ a@(ADD NoSuffix AL) reg0 reg1 (IMM 0)} : remain)
   |reg0 == reg1 = optimise remain

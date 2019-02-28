@@ -46,7 +46,6 @@ toNum (LR) = 14
 toNum (SP) = 13
 toNum x = read (drop 1 (show x)) :: Int
 
-
 instance GShow Cond
 
 instance GShow REG
