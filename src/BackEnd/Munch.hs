@@ -121,9 +121,10 @@ munchExp (CALL (NAME "exit") [e]) = do
   let exit = ljump_to_label "exit"
   case e of
     CONSTI n ->
-      return ([ IMOV { assem = MC_ (ARM.MOV AL) R0 (IMM n),
+      return ([ IOPER { assem = MC_ (ARM.MOV AL) R0 (IMM n),
                       src = [],
-                      dst = [0] },
+                      dst = [0],
+                      jump = [] },
                 exit ], dummy)
     TEMP t ->
       return ([ IMOV { assem = MC_ (ARM.MOV AL) R0 (R (RTEMP t)),
@@ -363,6 +364,8 @@ condExp (MEM m) = do
 
 --only AL is of type IMOV
 wrapAssem :: Cond -> (Cond -> ARM.Instr) -> [Temp] -> [Temp] -> ASSEM.Instr
+--wrapAssem AL instr [] _ = undefined
+--wrapAssem AL instr _ [] = undefined
 wrapAssem AL instr s d = IMOV {assem = instr AL, src = s, dst = d}
 wrapAssem c instr s d = IOPER {assem = instr c, src = s, dst = d, jump = []}
 
@@ -524,7 +527,7 @@ condStm ir@(IR.MOV (MEM me) e) = do
 
 condStm (IR.MOV e (CONSTI int)) = do
   (i, t) <- munchExp e
-  return (\c -> i ++ [IMOV { assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int), src = [], dst = [t]}])
+  return (\c -> i ++ [IOPER { assem = MC_ (ARM.MOV c) (RTEMP t) (IMM int), src = [], dst = [t], jump = []}])
 
 condStm (IR.MOV e1 e2) = do  --In which sequence ?
   (i1, t1) <- munchExp e1

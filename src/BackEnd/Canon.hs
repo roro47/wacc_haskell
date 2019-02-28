@@ -177,8 +177,17 @@ traceSchedule'' block@((LABEL label):rest) blockTable markTable
 commute :: Exp -> Stm -> Bool
 commute (CONSTI _) _ = True
 commute (CONSTC _) _ = True
+commute (NAME _) _ = True
+commute _ (EXP (CONSTI _)) = True
+commute _ (EXP (CONSTC _)) = True
 commute _ NOP = True
 commute _ _ = False
+
+connect (EXP (CONSTI _)) x = x
+connect (EXP (CONSTC _)) x = x
+connect x (EXP (CONSTI _)) = x
+connect x (EXP (CONSTC _)) = x
+connect x y = SEQ x y
 
 isESEQ :: Exp -> Bool
 isESEQ (ESEQ _ _) = True
@@ -187,7 +196,7 @@ isESEQ _ = False
 reorder :: [Exp] -> State CanonState (Stm, [Exp])
 reorder (exp@(CALL (NAME n) _):rest)
  | "#" `isPrefixOf` n = do
-   (stm, exps) <- reorder $! rest
+   (stm, exps) <- reorder rest
    return (stm, (exp:exps))
 reorder (exp@(CALL _ _):rest) = do
   temp <- newTemp
@@ -198,14 +207,14 @@ reorder (exp:rest) = do
   if commute exps' stm2'
   then return (SEQ stm' stm2', (exps':exps2'))
   else newTemp >>= \temp ->
-       return (SEQ stm' (SEQ (MOV (TEMP temp) exps') stm2'),
+       return (connect stm' (connect (MOV (TEMP temp) exps') stm2'),
                (TEMP temp):exps2')
 reorder [] = return (NOP, [])
 
 reorderStm :: [Exp] -> ([Exp] -> Stm) -> State CanonState Stm
 reorderStm exps build = do
   (stm, exps') <- reorder  exps
-  return $ SEQ stm (build  exps')
+  return $ connect stm (build  exps')
 
 reorderExp :: [Exp] -> ([Exp] -> Exp) -> State CanonState (Stm, Exp)
 reorderExp exps build = do
@@ -226,22 +235,25 @@ doStm (MOV (TEMP t) (CALL e es)) = undefined
 doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)
 
-{-
-doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b) = do
-  if isOneLayer e1 && isOneLayer e2 && isOneLayer b
-  then return stm
-  else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
-  -}
+doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b)
+  | isOneLayer e1 && isOneLayer e2 && isOneLayer b = 
+      return stm
+ -- else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
+
 {-
 doStm stm@(MOV (MEM e) b) = do
   if isOneLayer e && isOneLayer b
   then return stm
   else reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
 -}
-{-
+
+doStm stm@(MOV (MEM (TEMP t)) (ESEQ s e)) = do
+  s' <- doStm s
+  reorderStm [e] (\(e:_) -> SEQ s' (MOV (MEM (TEMP t)) e))
+
 doStm stm@(MOV (MEM e) b) = do
   reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
--}
+
 doStm (MOV (ESEQ s e) b)
   = doStm (SEQ s (MOV e b))
 
