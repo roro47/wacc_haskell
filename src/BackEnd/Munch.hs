@@ -37,12 +37,11 @@ munchExp (CALL (NAME "#memaccess") [CONSTI i]) = do
   return ([IOPER {assem = CBS_ (ADD NoSuffix AL) (RTEMP t) SP (IMM i),
                  src = [13], dst = [t], jump = []}], t)
 
-munchExp (CALL (NAME "malloc") [CONSTI i]) = do
-  t <-newTemp
+munchExp (CALL (NAME "malloc") [CONSTI i, TEMP t]) = do
   let ldr = IOPER { assem = S_ (LDR W AL) (R0) (NUM (i)),
                   src = [], dst = [0], jump = []}
       move = move_to_r 0 t
-  return ([ldr, ljump_to_label "malloc", move], dummy) --malloc notice dummy here
+  return ([ldr, ljump_to_label "malloc", move], t) --malloc notice dummy here
 
 munchExp (CALL (NAME "#arrayelem") ((CONSTI size) : ident : pos)) = do
   (ii, it) <- munchExp ident
@@ -214,8 +213,8 @@ munchExp (CALL (NAME f) es) = do
   pushParams <- mapM munchStm (concat (map pushParam es))
   return (concat (reverse pushParams) ++ [bToFunc] ++ adjustSP, 0)
   where pushParam exp =
-          [IR.MOV (MEM (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4))) exp,
-           IR.MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4))]
+          [IR.MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI 4)),
+           IR.MOV (MEM (TEMP Frame.sp)) exp] -- fix here !!
         adjustSP = if totalParamSize == 0 then [] else
           [IOPER { assem = CBS_ (ADD NoSuffix AL) SP SP (IMM totalParamSize),
                   src = [Frame.sp],
@@ -647,7 +646,7 @@ munch file = do
                  (map show (out' ++ out))
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
   return ()
-     
+
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
           let gens = map (\n -> genBuiltIns !! n) ids
@@ -658,7 +657,7 @@ munch file = do
 showAssem builtInFrags dataFrags out
   = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++
-                 (map show (out)) 
+                 (map show (out))
 
 testMunch file = do
   ast <- parseFile file
@@ -670,16 +669,17 @@ testMunch file = do
       canonState = CanonState { C.tempAlloc = Translate.tempAlloc s',
                                 C.controlLabelAlloc = Translate.controlLabelAlloc s'}
       (stm', s'') = runState (transform stm) canonState
+      (userFrags_ , s_) = runState (mapM transform userFrags) s''
       transState = s' { Translate.tempAlloc = C.tempAlloc s'',
-                        Translate.controlLabelAlloc = C.controlLabelAlloc s'' }
-      (userFrags', s''') = runState (mapM munchStm userFrags) transState -- munch functions
+                        Translate.controlLabelAlloc = C.controlLabelAlloc s_ }
+      (userFrags', s''') = runState (mapM munchStm $ concat userFrags_) transState -- munch functions
       arms = evalState (munchmany stm') s'''
       substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] arms)
       out = filter (\x -> not $ containsDummy x) substitute
       substitute' = map (\f -> optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] f)) userFrags'
       out' = map (filter (\x -> not $ containsDummy x)) substitute'
   return $ (out' ++ [out], dataFrags, builtInFrags)
-                      
+
   where genProcFrags :: [Int] -> State TranslateState [[ASSEM.Instr]]
         genProcFrags ids = do
           let gens = map (\n -> genBuiltIns !! n) ids
