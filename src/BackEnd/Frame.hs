@@ -37,7 +37,7 @@ typeSize t =
    TStr -> addrSize
    TArray _ -> addrSize
    TPair _ _ -> addrSize
-   _ -> undefined
+   _ -> 4
 
 pc :: Temp.Temp
 pc = 15
