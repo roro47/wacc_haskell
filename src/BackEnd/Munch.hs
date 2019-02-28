@@ -99,13 +99,13 @@ munchExp (CALL (NAME "#p_print_ln") es) = do
                   src = [], dst = [], jump = ["p_print_ln"]}
   return ((concat ls)++[ln], dummy)
 
-munchExp (CALL (NAME "#p_read_int") [MEM e]) = do
+munchExp (CALL (NAME "#p_read_int") [MEM e _]) = do
   (i, t) <- munchExp e
   let mv = move_to_r t 0
       putchar = ljump_to_label "p_read_int"
   return (i ++ [mv, putchar], dummy)
 
-munchExp (CALL (NAME "#p_read_char") [MEM e]) = do
+munchExp (CALL (NAME "#p_read_char") [MEM e _]) = do
   (i, t) <- munchExp e
   let mv = move_to_r t 0
       putchar = ljump_to_label "p_read_char"
@@ -352,15 +352,16 @@ condExp (NAME l) = do
   t <- newTemp
   return $ \c -> ([(wrapAssem c (\c -> (S_ (LDR W c) (RTEMP t) (MSG l))) [] [t])], t)
 
-condExp (MEM (CONSTI i)) = do
+condExp (MEM (CONSTI i) _) = do
   newt <- newTemp
   return $ \c -> ([IOPER{assem = S_ (ARM.LDR W c) (RTEMP newt) (NUM i) , dst = [newt],
                          src = [], jump = []}], newt)
 
-condExp (MEM m) = do
+condExp (MEM m size) = do
   (i, t) <- munchExp m
   newt <- newTemp
-  return $ \c -> (i ++ [IOPER {assem = S_ (ARM.LDR W c) (RTEMP newt) (Imm (RTEMP t) 0)
+  let suff = if size == 4 then W else SB
+  return $ \c -> (i ++ [IOPER {assem = S_ (ARM.LDR suff c) (RTEMP newt) (Imm (RTEMP t) 0)
                         , dst = [newt], src = [t], jump = []}], newt)
 
 --only AL is of type IMOV
@@ -496,42 +497,40 @@ munchStm x = do
   return $ m AL
 
 -- ALLOW the suffix + cond of a load / store to change
-suffixStm :: Stm -> State TranslateState (Cond -> SLType -> [ASSEM.Instr])
-suffixStm (IR.MOV (MEM me) e) = do -- STR
+suffixStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])
+suffixStm (IR.MOV (MEM me t') e) = do -- STR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
+  let suff = if t' == 4 then W else B_
   if null l then
-    return (\c -> (\suff -> i ++ [IOPER { assem = S_ (ARM.STR suff c) (RTEMP t) op,
+    return (\c -> (i ++ [IOPER { assem = S_ (ARM.STR suff c) (RTEMP t) op,
                                           src = [t]++ts, dst = [], jump = []}]))
   else
     let s = head ts in
-    return (\c -> (\suff -> i ++ l ++ [IOPER { assem = S_ (ARM.STR suff c) (RTEMP t) (Imm (RTEMP s) 0),
+    return (\c -> ( i ++ l ++ [IOPER { assem = S_ (ARM.STR suff c) (RTEMP t) (Imm (RTEMP s) 0),
                                               src = [s, t], dst = [], jump = []}]))
 
-suffixStm (IR.MOV e (MEM me)) = do -- LDR
+suffixStm (IR.MOV e (MEM me t')) = do -- LDR
   (i, t) <- munchExp e
   (l, ts, op) <- munchMem me
+  let suff = if t' == 4 then W else SB
   if null l then
-    return (\c -> ( \suff -> i ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) op,
+    return (\c -> ( i ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) op,
                                           src = ts, dst = [t], jump = []}]))
   else
     let s = head ts in
-    return (\c -> (\suff -> i ++ l ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0),
+    return (\c -> ( i ++ l ++ [IOPER { assem = S_ (ARM.LDR suff c) (RTEMP t) (Imm (RTEMP s) 0),
                                        src = [s], dst = [t], jump = []}]))
 
 condStm :: Stm -> State TranslateState (Cond -> [ASSEM.Instr])  --allow for conditions to change
 
-condStm ir@(IR.MOV e (MEM me)) = do
+condStm ir@(IR.MOV e (MEM me _)) = do
   ret <- suffixStm ir
-  return (\c -> ret c W)
+  return (\c -> ret c)
 
-condStm ir@(IR.MOV (MEM me) (CONSTC chr)) = do  -- remove this case if align
+condStm ir@(IR.MOV (MEM me _) e) = do
   ret <- suffixStm ir
-  return (\c -> ret c B_)
-
-condStm ir@(IR.MOV (MEM me) e) = do
-  ret <- suffixStm ir
-  return (\c -> ret c W)
+  return (\c -> ret c)
 
 condStm (IR.MOV e (CONSTI int)) = do
   (i, t) <- munchExp e
@@ -735,7 +734,7 @@ p_print_ln = do
   return $[add_label "p_print_ln",
            pushlr,
            ld_msg_toR0 msg,
-           r0_add4,
+           r0_add4,\0
            ljump_to_label "puts",
            r0_clear,
            ljump_to_label "fflush",

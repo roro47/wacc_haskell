@@ -10,7 +10,7 @@ data Exp = CONSTI Int              -- constant int
          | NAME Temp.Label        -- symbolic constant
          | TEMP Temp.Temp         -- symbolic register
          | BINEXP BOp Exp Exp
-         | MEM Exp          -- memory address at exp
+         | MEM Exp Int         -- memory address at exp
          | CALL Exp [Exp]   -- Call function address [values]
          | ESEQ Stm Exp     -- evaluated for side effect
            deriving (Eq)
@@ -27,7 +27,7 @@ data Stm = MOV Exp Exp -- move values to address or register
           deriving (Eq)
 cleanStmExp (BINEXP bop e1 e2) =
   BINEXP bop (cleanStmExp e1) (cleanStmExp e2)
-cleanStmExp (MEM exp) = MEM (cleanStmExp exp)
+cleanStmExp (MEM exp s) = MEM (cleanStmExp exp) s
 cleanStmExp (CALL e1 es) = CALL (cleanStmExp e1) (map cleanStmExp es)
 cleanStmExp (ESEQ stm e) = ESEQ (cleanStm stm) (cleanStmExp e)
 cleanStmExp e = e
@@ -56,7 +56,7 @@ instance Treeable Exp where
     | t == 13 = Node ("SP (r13)") []
     | otherwise = Node ("TEMP " ++ show t) []
   toTree (BINEXP bop e1 e2) = Node "BINEXP" [Node (show bop) [], toTree e1, toTree e2]
-  toTree (MEM e) = Node ("MEM" ) [toTree e]
+  toTree (MEM e s) = Node ("MEM" ++show s ) [toTree e]
   toTree (CALL e es) = Node ("CALL ") ([toTree e] ++ map toTree es)
   toTree (ESEQ s e) = Node ("ESEQ") [toTree s, toTree e]
 
