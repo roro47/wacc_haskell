@@ -199,8 +199,8 @@ doStm :: Stm -> State TranslateState Stm
 doStm (MOV (TEMP t) (CALL (NAME f) es))
   = reorderStm es (\es -> MOV (TEMP t) (CALL (NAME f) es))
 
-doStm (MOV (MEM e) (CALL (NAME f) es))
-  = reorderStm (e:es) (\(e:es) -> MOV (MEM e) (CALL (NAME f) es))
+doStm (MOV (MEM e s) (CALL (NAME f) es))
+  = reorderStm (e:es) (\(e:es) -> MOV (MEM e s) (CALL (NAME f) es))
 
 doStm (MOV (TEMP t) (CALL e es)) = undefined
   -- = reorderStm (e:es) (\(e:es) -> MOV (TEMP t) (CALL e es))
@@ -208,7 +208,7 @@ doStm (MOV (TEMP t) (CALL e es)) = undefined
 doStm (MOV (TEMP t) b)
   = reorderStm [b] (\(b:_) -> MOV (TEMP t) b)
 
-doStm stm@(MOV (MEM e@(BINEXP bop e1 e2)) b)
+doStm stm@(MOV (MEM e@(BINEXP bop e1 e2) s) b)
   | isOneLayer e1 && isOneLayer e2 && isOneLayer b =
       return stm
  -- else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
@@ -220,12 +220,12 @@ doStm stm@(MOV (MEM e) b) = do
   else reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
 -}
 
-doStm stm@(MOV (MEM (TEMP t)) (ESEQ s e)) = do
+doStm stm@(MOV (MEM (TEMP t) size) (ESEQ s e)) = do
   s' <- doStm s
-  reorderStm [e] (\(e:_) -> SEQ s' (MOV (MEM (TEMP t)) e))
+  reorderStm [e] (\(e:_) -> SEQ s' (MOV (MEM (TEMP t) size) e))
 
-doStm stm@(MOV (MEM e) b) = do
-  reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
+doStm stm@(MOV (MEM e s) b) = do
+  reorderStm [e, b] (\(e:b_) -> MOV (MEM e s) b)
 
 doStm (MOV (ESEQ s e) b)
   = doStm (SEQ s (MOV e b))
@@ -261,24 +261,24 @@ isOneLayer :: Exp -> Bool
 isOneLayer (CONSTI _) = True
 isOneLayer (CONSTC _) = True
 isOneLayer (TEMP _) = True
-isOneLayer (MEM _) = True
+isOneLayer (MEM _ _) = True
 isOneLayer (NAME _) = True
 isOneLayer e = False
 
 
 doExp :: Exp -> State TranslateState (Stm, Exp)
-doExp exp@(MEM e@(BINEXP bop e1 e2)) = do
+doExp exp@(MEM e@(BINEXP bop e1 e2) s) = do
   if isOneLayer e1 && isOneLayer e2
   then return (NOP, exp)
-  else reorderExp [e] (\(e:_) -> MEM e)
+  else reorderExp [e] (\(e:_) -> MEM e s)
 
 doExp exp@(BINEXP bop e1 e2) = do
   if isOneLayer e1 && isOneLayer e2
   then return (NOP, exp)
   else reorderExp [e1, e2] (\(e1:e2:_) -> BINEXP bop e1 e2)
 
-doExp (MEM e)
-  = reorderExp [e] (\(e:_) -> MEM e)
+doExp (MEM e s)
+  = reorderExp [e] (\(e:_) -> MEM e s)
 
 doExp (CALL (NAME f) es)
   = reorderExp es (\es -> CALL (NAME f) es)
@@ -312,7 +312,7 @@ testESEQ1 = ESEQ NOP (ESEQ NOP e1)
 testESEQ2 = ESEQ NOP (ESEQ s1 e1)
 testESEQ3 = BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)
 testESEQ4 = BINEXP PLUS (CONSTI 1) (ESEQ (MOV (TEMP 23) (TEMP 90)) (CONSTI 79))
-testESEQ5 = BINEXP PLUS (MEM (CONSTI 23)) (ESEQ (MOV (TEMP 0) (TEMP 1)) (CONSTI 29))
+testESEQ5 = BINEXP PLUS (MEM (CONSTI 23) 1) (ESEQ (MOV (TEMP 0) (TEMP 1)) (CONSTI 29))
 
 
 testLinear1 = SEQ (MOV t0 t1) (MOV t0 t2)
@@ -323,7 +323,7 @@ testLinear5 = SEQ (MOV t0 t1) (MOV t0 testESEQ4)
 testLinear6 = SEQ (MOV t0 t1) (MOV t0 testESEQ5)
 testLinear7 = MOV t0 (CALL (NAME "function") [])
 testLinear8 = MOV t1 (CALL (NAME "function") [CONSTI 1, CONSTI 45])
-testLinear9 = MOV t0 (CALL (NAME "function") [MEM (TEMP 13)])
+testLinear9 = MOV t0 (CALL (NAME "function") [MEM (TEMP 13) 4])
 
 testBasicBlocks1 = []
 testBasicBlocks2 = [LABEL label1,
