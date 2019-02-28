@@ -40,7 +40,6 @@ library
       BackEnd.MakeGraph
       BackEnd.Munch
       BackEnd.RegAlloc
-      BackEnd.State
       BackEnd.Temp
       BackEnd.Todo
       BackEnd.Translate

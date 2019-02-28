@@ -734,7 +734,7 @@ p_print_ln = do
   return $[add_label "p_print_ln",
            pushlr,
            ld_msg_toR0 msg,
-           r0_add4,\0
+           r0_add4,
            ljump_to_label "puts",
            r0_clear,
            ljump_to_label "fflush",
