@@ -76,12 +76,10 @@ def testAll():
     subprocess.call(["make"])
     getTestFiles()
     for path in testFilePaths:
-        singleTest(path)
+        #ending = path.split('.')[-1]
+        if ("advanced/" in path) :
+            pass
+        elif "wacc" in path :
+            singleTest(path)
 
 testAll()
-
-
-
-
-#
-# out = subprocess.check_output(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/", "print_machinecode"])
