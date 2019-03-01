@@ -415,15 +415,16 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
   temp <- newTemp
   let { arrayLen = length exprs;
         (TArray elemT) = t;
-        elemSize = Frame.typeSize elemT;
+        elemSize = typeLen elemT;
         call = Frame.externalCall "malloc" [CONSTI (arrayLen*elemSize + Frame.intSize), TEMP temp];
-        moveElem = f (TEMP temp) 0 elemSize ([CONSTI arrayLen] ++ exps') }
-  return $ Ex (ESEQ (SEQ (EXP call) moveElem) (TEMP temp))
+        moveLen = MOV (MEM (TEMP temp) 4) (CONSTI arrayLen);
+        moveElem = f (TEMP temp) 0 elemSize exps' }
+  return $ Ex (ESEQ (SEQ (EXP call) (SEQ moveElem moveLen)) (TEMP temp))
   where TArray t' = t
         f temp index elemSize [exp]
-          = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index))) (typeLen t')) exp
+          = MOV (MEM (BINEXP PLUS temp (CONSTI ((elemSize * index) + 4))) (typeLen t')) exp
         f temp index elemSize (exp:exps)
-          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index))) (typeLen t')) exp)
+          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI ((elemSize * index) + 4))) (typeLen t')) exp)
                 (f temp (index+1) elemSize exps)
         arrayLen = length exprs
 
@@ -527,7 +528,9 @@ translatePrint TBool exps = do
 translatePrint TStr exps = do
   addBuiltIn id_p_print_string
   callp "#p_print_string" exps
-translatePrint (TArray TChar) exps = callp "#p_print_string" exps
+translatePrint (TArray TChar) exps = do
+  addBuiltIn id_p_print_string
+  callp "#p_print_string" exps
 translatePrint (TArray TInt) exps = do
   addBuiltIn id_p_print_reference
   callp "#p_print_reference" exps
