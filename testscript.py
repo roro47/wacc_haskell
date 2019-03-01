@@ -69,7 +69,7 @@ def singleTest(path):
         print("exit code should be: " + str(correctExitCode))
         print("our exit code: " + str(exitCode))
     print("\n")
-    #subprocess.call(["rm", "-rf", assemFileName])
+    subprocess.call(["rm", "-rf", assemFileName])
     subprocess.call(["rm", "-rf", testName])
 
 def testAll():

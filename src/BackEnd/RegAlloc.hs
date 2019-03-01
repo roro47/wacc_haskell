@@ -114,7 +114,7 @@ regAllocAssem' (assems, dataFrags, builtInFrags) = do
       totalOut = Assem.showAssem builtInFrags dataFrags (concat final)
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
   mapM_ (\a -> putStrLn (concat $ map (\(id,a') -> show id ++ " " ++ Assem.showInstr a' ++ "\n") (zip [0..] a ))) assems
-  return meta
+  return colorMap
 
   where regAllocAssem'' assem = do
           let flow = instrsToGraph assem
@@ -203,6 +203,9 @@ build = do
           else do
             let live' = Set.toList live
             mapM_ addEdge [(d, l) | d <- def', l <- live']
+            if length def' == 2
+            then addEdge (def' !! 0, def' !! 1)
+            else return () 
 
 
 

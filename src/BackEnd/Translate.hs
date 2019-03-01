@@ -202,11 +202,10 @@ getVarEntry symbol = do
   case access of
     Frame.InReg temp -> return $ TEMP temp
     Frame.InFrame offset -> do
-      let { prevLevels = takeWhile notFound (levels state);
-            prevSize = sum ( map (\l -> Frame.frameSize (levelFrame l)) prevLevels) +
-                       Frame.frameSize ((levelFrame ((levels state) !! (length prevLevels))));
-            offset' = foldl f offset prevLevels }
-      return $ CALL (NAME "#memaccess") [(CONSTI $  (prevSize + offset'))]
+      let   prevLevels = takeWhile notFound (levels state)
+            prevSize = sum (map levelSize prevLevels)
+            targetOffset = levelSize ((levels state) !! (length prevLevels)) + offset 
+      return $ CALL (NAME "#memaccess") [(CONSTI $  (prevSize + targetOffset))]
 
   where find' :: [Level] -> State TranslateState EnvEntry
         find' levels =
@@ -220,6 +219,7 @@ getVarEntry symbol = do
             otherwise -> True
         f :: Int -> Level -> Int
         f offset level = offset + Frame.frameSize (levelFrame level)
+        levelSize l = Frame.frameSize $ levelFrame l
 
 -- adjust stack pointer on return of a function
 -- removing all the local variables on the stack
@@ -436,6 +436,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
   exps <- mapM translateExprF exprs
   exps' <- mapM unEx exps
   let { Ann (Ident symbol) _ = id }
+  
   case symbol of
     "*" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp MUL exps'}
     "/" -> do {addBuiltIn id_p_check_divide_by_zero ;return $ binexp DIV exps'}
@@ -465,6 +466,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
     "!" -> callp "#!" exps'
     "#pos" -> return $ Ex (head exps')
     "#neg" -> do
+      addBuiltIn id_p_throw_overflow_error
       case head exps' of
         CONSTI n -> return $ Ex (CONSTI $ -n)
         otherwise -> callp "#neg" exps'
@@ -480,6 +482,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
        condition rop exps =
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
           Cx (\label1 label2 -> CJUMP rop exp1 exp2 label1 label2)
+
 
 callp = \s -> (\exprs -> return $ Ex $ CALL (NAME s) exprs)
 

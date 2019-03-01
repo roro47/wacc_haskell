@@ -139,6 +139,7 @@ normInstr _ _ x = x
 normOp :: Int -> REG -> OP -> OP
 normOp from to (R r) = R (normReg from to r)
 normOp from to (LSL_ r int') = LSL_ (normReg from to r) int'
+normOp from to (ASR_ r int') = ASR_ (normReg from to r) int'
 normOp _ _ x = x
 
 normSLOp :: Int -> REG -> SLOP2 -> SLOP2
