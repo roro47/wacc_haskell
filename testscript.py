@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import subprocess
+from subprocess import Popen, PIPE, STDOUT
 import os
 import sys
 
@@ -28,7 +29,29 @@ def singleTest(path):
     exitCode = 0
     subprocess.call(["arm-linux-gnueabi-gcc", "-o", testName, "-mcpu=arm1176jzf-s", "-mtune=arm1176jzf-s",  assemFileName])
     try:
-        out = subprocess.check_output(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/", testName]).decode()
+        if "echo" in testName:
+            p = Popen(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/",testName], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+            if "int" in testName or "Int" in testName:
+                grep_stdout = p.communicate(input=b'10')[0]
+                out = grep_stdout.decode()
+            elif "Char" in testName:
+                grep_stdout = p.communicate(input=b'c')[0]
+                out = grep_stdout.decode()
+        elif "IO" in path:
+            p = Popen(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/",testName], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+            grep_stdout = p.communicate(input=b'10\nN')[0]
+            out = grep_stdout.decode()
+        elif testName in ["fibonacciFullRec", "printInputTriangle", "fibonacciFullIt"]:
+            p = Popen(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/",testName], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+            grep_stdout = p.communicate(input=b'10')[0]
+            out = grep_stdout.decode()
+        elif testName == "readPair":
+            p = Popen(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/",testName], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+            grep_stdout = p.communicate(input=b'a\n10')[0]
+            out = grep_stdout.decode()
+        else:
+            subprocess.call(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/",testName])
+            out = subprocess.check_output(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/", testName]).decode()
     except subprocess.CalledProcessError as e:
         exitCode = e.returncode
         out = e.output.decode()
@@ -38,14 +61,19 @@ def singleTest(path):
         lines = file.readlines()
     correctOutput = str()
     correctExitCode = 0
+    runTimeErr = False
     for i in range(0, len(lines)):
         if "# Output:" in lines[i]:
             j = i + 1
             while lines[j] != "\n" :
                 line = lines[j]
                 line = line[2:]
-                if line != "#empty#\n":
+                if "runtime" in line:
+                    runTimeErr = True
+                    break
+                elif line != "#empty#\n":
                     correctOutput += line
+
                 j += 1
             i = j
         if "# Exit:" in lines[i]:
@@ -56,6 +84,8 @@ def singleTest(path):
 
     print("----------Testing : " + testName + ".wacc----------")
     if correctOutput == out:
+        print("\N{white heavy check mark} results correct")
+    elif (("Error" in out) and runTimeErr):
         print("\N{white heavy check mark} results correct")
     else:
         print("\N{cross mark} results incorrect")
@@ -76,10 +106,9 @@ def testAll():
     subprocess.call(["make"])
     getTestFiles()
     for path in testFilePaths:
-        #ending = path.split('.')[-1]
-        if ("advanced/" in path) :
+        if ("advanced/" in path):
             pass
-        elif "wacc" in path :
+        elif "wacc" in path:
             singleTest(path)
 
 testAll()

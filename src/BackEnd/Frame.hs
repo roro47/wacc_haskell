@@ -51,12 +51,8 @@ addrSize = 4
 typeSize :: Type -> Int
 typeSize t =
  case t of
-   TInt -> intSize
-   TChar -> charSize
-   TBool -> boolSize
-   TStr -> addrSize
-   TArray _ -> addrSize
-   TPair _ _ -> addrSize
+   TChar -> 1
+   TBool -> 1
    _ -> 4
 
 

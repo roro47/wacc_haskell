@@ -22,13 +22,13 @@ begin
   begin
     char x = 'x';    
     begin
-      bool x = true;    
+      bool x = true;
       begin
-        string x = "this is a string";    
+        string x = "this is a string";
         begin
-          int[] x = [1,2,3];    
+          int[] x = [1,2,3];
           begin
-            char[] x = ['x', 'y', 'z'];    
+            char[] x = ['x', 'y', 'z'];
             begin
               bool[] x = [true, false, true];
               begin
@@ -84,7 +84,7 @@ begin
                   end;
                   int y = fst x;
                   int z = snd x;
-                  print y; 
+                  print y;
                   print comma;
                   println z # fst x, snd x
                 end;

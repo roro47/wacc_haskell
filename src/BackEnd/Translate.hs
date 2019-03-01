@@ -406,7 +406,7 @@ translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
   e' <- mapM unEx e
   addBuiltIn id_p_check_array_bounds
  -- typeLen
-  return $ Ex $ MEM (CALL (NAME "#arrayelem") ((CONSTI 4):i:e')) (typeLen t)
+  return $ Ex $ MEM (CALL (NAME "#arrayelem") ((CONSTI ((typeLen t))):i:e')) (typeLen t)
 
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
@@ -415,16 +415,18 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
   temp <- newTemp
   let { arrayLen = length exprs;
         (TArray elemT) = t;
-        elemSize = Frame.typeSize elemT;
+        elemSize = typeLen elemT;
         call = Frame.externalCall "malloc" [CONSTI (arrayLen*elemSize + Frame.intSize), TEMP temp];
-        moveElem = f (TEMP temp) 0 elemSize ([CONSTI arrayLen] ++ exps') }
-  return $ Ex (ESEQ (SEQ (EXP call) moveElem) (TEMP temp))
+        moveLen = MOV (MEM (TEMP temp) 4) (CONSTI arrayLen);
+        moveElem = f (TEMP temp) 0 elemSize exps' }
+  return $ Ex (ESEQ (SEQ (EXP call) (SEQ moveElem moveLen)) (TEMP temp))
   where TArray t' = t
         f temp index elemSize [exp]
-          = MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index))) (typeLen t')) exp
+          = MOV (MEM (BINEXP PLUS temp (CONSTI ((elemSize * index) + 4))) (typeLen t')) exp
         f temp index elemSize (exp:exps)
-          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI (elemSize * index))) (typeLen t')) exp)
+          = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI ((elemSize * index) + 4))) (typeLen t')) exp)
                 (f temp (index+1) elemSize exps)
+        f _ _ _ [] = NOP
         arrayLen = length exprs
 
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
@@ -544,10 +546,9 @@ translatePrintln t exps = do
   addBuiltIn id_p_print_ln
   return $ Nx (SEQ (EXP print') (EXP (CALL (NAME "#p_print_ln") [])))
 
-show' = (Prelude.filter (/= ' ')).show
 translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 translateNewPair (TPair t1 t2) exps
-  = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
+  = return $ Ex $ CALL (NAME $ "#newpair") ((CONSTI $ typeLen t1):(CONSTI $ typeLen t2):exps)
 
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
 translatePairAccess t exps str = do
