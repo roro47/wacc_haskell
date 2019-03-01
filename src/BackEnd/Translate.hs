@@ -13,7 +13,7 @@ import qualified BackEnd.Temp as Temp
 import BackEnd.Assem as Assem
 import BackEnd.IR as IR
 import BackEnd.Builtin
--- where to put array index bound??
+
 
 data Access = Access Frame.Frame Frame.Access deriving (Eq, Show)
 
@@ -197,28 +197,23 @@ addFragment frag = do
 getVarEntry :: String -> State TranslateState Exp
 getVarEntry symbol = do
   state <- get
-  (VarEntry (Access frame access) t) <- find' (levels state)
-  let frametotal = Frame.frameSize (levelFrame (head (levels state)))
+  ((VarEntry (Access frame access) t), prevLevels) <- (find' (levels state) [])
   case access of
     Frame.InReg temp -> return $ TEMP temp
     Frame.InFrame offset -> do
-      let   prevLevels = takeWhile notFound (levels state)
-            prevSize = sum (map levelSize prevLevels)
+      let   prevSize = sum (map levelSize prevLevels)
             targetOffset = levelSize ((levels state) !! (length prevLevels)) + offset 
       return $ CALL (NAME "#memaccess") [(CONSTI $  (prevSize + targetOffset))]
 
-  where find' :: [Level] -> State TranslateState EnvEntry
-        find' levels =
-          case find (\l -> not $ notFound l) levels of
-            Just level -> return $ (varTable level) ! symbol
-            otherwise -> fail "not found expected var entry"
-
-        notFound level =
+  where find' :: [Level] -> [Level] -> State TranslateState (EnvEntry, [Level])
+        find' (l:levels) prev
+          | found l = return ((varTable l) ! symbol, prev)
+          | otherwise = find' levels (prev ++ [l])
+        find' [] _ = fail "var not found"
+        found level =
           case HashMap.lookup symbol (varTable level) of
-            Just (VarEntry _ _) -> False
-            otherwise -> True
-        f :: Int -> Level -> Int
-        f offset level = offset + Frame.frameSize (levelFrame level)
+            Just (VarEntry _ _) -> True
+            otherwise -> False
         levelSize l = Frame.frameSize $ levelFrame l
 
 -- adjust stack pointer on return of a function
@@ -399,7 +394,6 @@ translateExprF (Ann (IdentExpr id) (_, t)) = do
 translateExprF (Ann (FuncExpr f) _) = translateFuncAppF f
 translateExprF (Ann Null _) = return $ Ex $ (CONSTI 0)
 
-
 translateFuncAppF :: FuncAppF () -> State TranslateState IExp
 translateFuncAppF f@(Ann (FuncApp t id exprs) _) = do
   let { Ann (Ident symbol) _ = id }
@@ -410,33 +404,12 @@ translateFuncAppF f@(Ann (FuncApp t id exprs) _) = do
     exps' <- mapM unEx exps
     return $ Ex (CALL (NAME symbol) exps')
 
--- all parameters of user defined function is pushed on stack
-{-
-translateUserFuncAppF :: FuncAppF () -> State TranslateState IExp
-translateUserFuncAppF f@(Ann (FuncApp funcT id exprs) _) = do
-  exps <- mapM translateExprF exprs
-  exps' <- mapM unEx exps >>= \es -> return $ reverse exps'
-  let pushParams = seq $ map pushParam (zip paramTs exps')
-      adjustSP' = MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI totalParamSize))
-  return SEQ pushParams (SEQ (CALL symbol exps') adjustSP')
-
-
-  where Ann (Ident symbol) _ = id
-        TFunc _ ps returnT = funcT
-        paramTs = map fst $ map stripParam ps -- parameter types
-        pushParam prevPush (t, exp) =
-          SEQ (MOV (TEMP Frame.sp) (BINEXP MINUS (TEMP Frame.sp) (CONSTI (typeSize t))))
-              (MOV (MEM (TEMP Frame.sp) exp))
-        totalParamSize = sum $ map typeSize paramTs
-
- -}
 
 translateBuiltInFuncAppF :: FuncAppF () -> State TranslateState IExp
 translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
   exps <- mapM translateExprF exprs
   exps' <- mapM unEx exps
   let { Ann (Ident symbol) _ = id }
-  
   case symbol of
     "*" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp MUL exps'}
     "/" -> do {addBuiltIn id_p_check_divide_by_zero ;return $ binexp DIV exps'}
@@ -483,9 +456,7 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
          let { exp1 = exps !! 0 ; exp2 = exps !! 1 } in
           Cx (\label1 label2 -> CJUMP rop exp1 exp2 label1 label2)
 
-
 callp = \s -> (\exprs -> return $ Ex $ CALL (NAME s) exprs)
-
 
 translateFree :: Type -> [Exp] -> State TranslateState IExp
 translateFree (TPair _ _) exprs = do
@@ -529,15 +500,6 @@ translatePrintln t exps = do
   print' <- unEx print
   addBuiltIn id_p_print_ln
   return $ Nx (SEQ (EXP print') (EXP (CALL (NAME "#p_print_ln") [])))
-
-{-
- BL MALLOC required here:
- take R0 as a parameter of malloc size
- return the address of malloc in R0
--}
---nil frag?? -- no, handled by qemu
--- treat null as MEM 0
--- null is of type void
 
 show' = (Prelude.filter (/= ' ')).show
 translateNewPair :: Type -> [Exp] -> State TranslateState IExp

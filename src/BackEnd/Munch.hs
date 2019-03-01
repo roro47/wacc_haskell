@@ -16,11 +16,8 @@ import BackEnd.Translate as Translate
 import BackEnd.Frame as Frame
 import BackEnd.Builtin
 import BackEnd.Canon as C hiding (newTemp)
---how to know scope ?? when frame is changed ???
---TODO : difference between b and bl ??
--- REGISTER SAVE??
--- STRING ASSIGNMENT?
--- how to know if something is to store on the stack? -- after ir is fixed, add sp cases of minus
+
+
 bopToCBS :: BOp ->  Maybe (Suffix -> Cond -> Calc)
 bopToCBS bop
   = lookup bop [(IR.PLUS, ARM.ADD), (IR.AND, ARM.AND), (IR.OR, ARM.ORR),
@@ -245,11 +242,10 @@ munchExp (CALL f es) = do
   let returnVal = move_to_r ft 0
   return ((concat ls) ++ fi ++ [returnVal], 0) -- returned in reg 0
 
--- NO CALLER / CALLEE SAVE CONVENTION YET !!
 
 munchExp (TEMP t) = return ([],t)
 
-munchExp (BINEXP MUL e1 e2) = do -- only the lower one is used
+munchExp (BINEXP MUL e1 e2) = do -- only the lower register is returned
   (i1, t1) <- munchExp e1
   (i2, t2) <- munchExp e2
   tLo <- newTemp
@@ -406,8 +402,9 @@ munchMem e = do
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
+-- catch overflow
 optimise ((IOPER { assem = (CBS_ c reg0 reg1 (IMM i))}):remain)
-  | i > 1024 && reg0 == reg1
+  | (i > 1024 || i < -1024) && reg0 == reg1
     =  ((IOPER { assem = (CBS_ c reg0 reg1 (IMM 1024)),
                 src = [toNum reg0], dst = [toNum reg1], jump = []}) :
         (IOPER { assem = (CBS_ c reg0 reg1 (IMM (i - 1024))),
@@ -877,7 +874,7 @@ p_free_pair = do
           ljump_to_label "free",
           poppc]
 
-{-How to handle array access in translate && munch? -}
+
 p_check_array_bounds :: GenBuiltIn
 p_check_array_bounds = do
   let m1 = "ArrayIndexOutOfBoundsError: negative index"
@@ -898,7 +895,6 @@ p_check_array_bounds = do
           ljump_cond "p_throw_runtime_error" ARM.CS,
           poppc]
 
-{- where to call ? -}
 p_throw_overflow_error :: GenBuiltIn
 p_throw_overflow_error = do
   msg <- newDataLabel
@@ -907,7 +903,6 @@ p_throw_overflow_error = do
   return [add_label "p_throw_overflow_error",
           ld_msg_toR0 msg, ljump_to_label "p_throw_runtime_error"]
 
-{- where to call ? -}
 p_check_divide_by_zero :: GenBuiltIn
 p_check_divide_by_zero = do
   msg <- newDataLabel
