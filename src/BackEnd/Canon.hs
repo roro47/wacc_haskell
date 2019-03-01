@@ -92,7 +92,7 @@ linearize stm = do
 basicBlocks :: [Stm] -> State TranslateState ([[Stm]], Temp.Label)
 basicBlocks [] = do
   label <- newControlLabel
-  return $ ([[LABEL "done"]], "done")
+  return $ ([[LABEL label]], label)
 basicBlocks (l@(LABEL label):rest) = do
   let { (block, rest') = break (\e -> isEND e) rest }
   if rest' == [] || isLABEL (head rest')
@@ -195,6 +195,10 @@ reorderExp exps build = do
   return (stm', build exps')
 
 doStm :: Stm -> State TranslateState Stm
+
+doStm p@(PUSHREGS _) = return p
+
+doStm p@(POPREGS _) = return p
 
 doStm (MOV (TEMP t) (CALL (NAME f) es))
   = reorderStm es (\es -> MOV (TEMP t) (CALL (NAME f) es))

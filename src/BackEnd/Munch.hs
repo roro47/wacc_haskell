@@ -549,6 +549,22 @@ condStm (IR.MOV e1 e2) = do  --In which sequence ?
   (i2, t2) <- munchExp e2
   return (\c -> i1 ++ i2 ++ [move_to_r t2 t1])
 
+condStm (IR.PUSHREGS regs) = do
+  let regs' = map RTEMP regs
+  return (\c -> [IOPER { assem = STACK_ (ARM.PUSH c) regs',
+                         dst = [sp],
+                         src = [sp] ++ regs,
+                         jump = [] }])
+
+condStm (IR.POPREGS regs) = do
+  let regs' = map RTEMP regs
+  return (\c -> [IOPER { assem = STACK_ (ARM.POP c) regs',
+                         dst = [sp] ++ regs,
+                         src = [sp],
+                         jump = [] }])
+
+ 
+
 condStm (IR.PUSH e) = do
   (i, t) <- munchExp e
   return (\c -> i ++ [IOPER {assem = STACK_ (ARM.PUSH c) [RTEMP t], dst = [sp],
@@ -649,7 +665,8 @@ munchInterface ast =   (out' ++ [out], dataFrags, builtInFrags)
         userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
         dataFrags = map munchDataFrag ( Translate.dataFrags s' )
         (stm', s'') = runState (transform stm) s'
-        (userFrags', s''') = runState (mapM munchStm userFrags) s'' -- munch functions
+        (userFrags', s''') = runState (mapM (\f -> transform f >>= \f' ->
+                                                   munchmany f') userFrags) s'' -- munch functions
         arms = evalState (munchmany stm') s'''
         substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] arms)
         out = filter (\x -> not $ containsDummy x) substitute
@@ -672,11 +689,11 @@ munch file = do
       userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
       dataFrags = map munchDataFrag ( Translate.dataFrags s' )
       (stm', s'') = runState (transform stm) s'
-      (userFrags', s''') = runState (munchmany userFrags) s'' -- munch functions
+      (userFrags', s''') = runState (mapM (\f -> transform f >>= \f' -> munchmany f') userFrags) s'' -- munch functions
       arms = evalState (munchmany stm') s'''
       substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] arms)
       out = filter (\x -> not $ containsDummy x) substitute
-      substitute' = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] userFrags')
+      substitute' = concat $ map (\u -> optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] u)) userFrags'
       out' = filter (\x -> not $ containsDummy x) substitute'
       totalOut = intercalate ["\n"] (map (map show) builtInFrags) ++ ["\n"] ++
                  concat (map (lines . show) (concat dataFrags)) ++ ["\n"] ++

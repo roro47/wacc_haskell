@@ -239,14 +239,14 @@ translateFuncF (Ann (Func t id ps stm) _) = do
   let params = map stripParam ps
   level <- newLevel
   pushLevel level
-  foldM addParam 4 params
+  foldM addParam (4*(length callerSave+1)) params
   addFunEntry symbol t
   stm' <- translateStatListF stm >>= \s -> unNx s
   adjustSP' <- adjustSP
-  let stm'' = SEQ (IR.PUSH (TEMP Frame.lr)) (SEQ stm' (SEQ adjustSP' (POP (TEMP Frame.pc))))
+  let stm'' = SEQ stm' adjustSP'
   popLevel
   frame <- getCurrFrame
-  addFragment (Frame.PROC (SEQ (LABEL ("f_" ++ symbol)) stm'') frame)
+  addFragment (Frame.PROC (seq [LABEL ("f_" ++ symbol), prologue, stm'', epilogue]) frame)
   where Ann (Ident symbol) _ = id
 
         addParam :: Int -> (Type, String) -> State TranslateState Int
@@ -254,6 +254,9 @@ translateFuncF (Ann (Func t id ps stm) _) = do
           frame <- getCurrFrame
           addVarEntry s t (Access frame (Frame.InFrame $ offset))
           return (offset + 4)
+        prologue = PUSHREGS (callerSave ++ [Frame.lr])
+        epilogue = POPREGS (callerSave ++ [Frame.pc])
+        callerSave = [4..12]
 
 translateProgramF :: ProgramF () -> State TranslateState Stm
 translateProgramF (Ann (Program fs stms) _) = do

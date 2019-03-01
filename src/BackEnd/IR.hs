@@ -23,6 +23,8 @@ data Stm = MOV Exp Exp -- move values to address or register
          | LABEL Temp.Label -- target of jump
          | PUSH Exp
          | POP Exp
+         | PUSHREGS [Temp.Temp]
+         | POPREGS [Temp.Temp]
          | NOP
           deriving (Eq)
 cleanStmExp (BINEXP bop e1 e2) =
@@ -71,6 +73,8 @@ instance Treeable Stm where
   toTree (PUSH exp) = Node "PUSH" [toTree exp]
   toTree (POP exp) = Node "POP" [toTree exp]
   toTree (SEQ s1 s2) = Node "SEQ" [toTree s1, toTree s2]
+  toTree (PUSHREGS regs) = Node ("PUSHREGS :" ++ show regs) []
+  toTree (POPREGS regs) = Node ("POPREGS :" ++ show regs) []
   toTree NOP = Node "NOP" []
 
 instance Show Exp where
