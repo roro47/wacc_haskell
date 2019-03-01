@@ -406,7 +406,7 @@ translateExprF (Ann (ArrayElem (Ann (Ident id) _) exps) (_ , t)) = do
   e' <- mapM unEx e
   addBuiltIn id_p_check_array_bounds
  -- typeLen
-  return $ Ex $ MEM (CALL (NAME "#arrayelem") ((CONSTI 4):i:e')) (typeLen t)
+  return $ Ex $ MEM (CALL (NAME "#arrayelem") ((CONSTI ((typeLen t))):i:e')) (typeLen t)
 
 -- need to call system function to allocate memory
 translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
@@ -426,6 +426,7 @@ translateExprF (Ann (ArrayLiter exprs) (_, t)) = do
         f temp index elemSize (exp:exps)
           = SEQ (MOV (MEM (BINEXP PLUS temp (CONSTI ((elemSize * index) + 4))) (typeLen t')) exp)
                 (f temp (index+1) elemSize exps)
+        f _ _ _ [] = NOP
         arrayLen = length exprs
 
 translateExprF (Ann (BracketExpr expr) _) = translateExprF expr
@@ -546,11 +547,10 @@ translatePrintln t exps = do
   addBuiltIn id_p_print_ln
   return $ Nx (SEQ (EXP print') (EXP (CALL (NAME "#p_print_ln") [])))
 
-show' = (Prelude.filter (/= ' ')).show
 translateNewPair :: Type -> [Exp] -> State TranslateState IExp
 -- ASSUME 2 parameters
 translateNewPair (TPair t1 t2) exps
-  = return $ Ex $ CALL (NAME $ "#newpair " ++ (show' t1) ++" "++(show' t2)) exps
+  = return $ Ex $ CALL (NAME $ "#newpair") ((CONSTI $ typeLen t1):(CONSTI $ typeLen t2):exps)
 
 translatePairAccess :: Type -> [Exp] -> String -> State TranslateState IExp
 translatePairAccess t exps str = do
