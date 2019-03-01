@@ -1,8 +1,18 @@
 module BackEnd.Assem where
+
 import Data.List as List
 import BackEnd.Temp as Temp
 import qualified BackEnd.Instructions as Arm
 import BackEnd.IR
+
+{-
+  Assem is an interface that can abtract away details of
+  specific architecture to perform liveness analysis.
+  Munch (instruction selection) will wrap the ARM instruction
+  in this interface.
+
+  The design is inspired by Modern Compiler Implementation in ML.
+-}
 
 data Instr = IOPER  { assem :: Arm.Instr,
                       dst :: [Temp.Temp],
@@ -20,7 +30,6 @@ data Instr = IOPER  { assem :: Arm.Instr,
 assemReg (IOPER _ d s _) = nub $ d ++ s
 assemReg (IMOV _ d s) = nub $ d ++ s
 assemReg _ = []
-
 
 showInstr (IOPER assem d s jump) =
     Arm.output_show assem ++ " dst : " ++ show d ++
@@ -63,6 +72,7 @@ intToReg 14 = Arm.LR
 intToReg 15 = Arm.PC
 
 
+-- utilities to change temporaries in instruction to machine register
 normInstr :: (Arm.Instr -> Arm.Instr) -> Instr -> Instr
 normInstr func (IOPER assem dst src jump) = IOPER (func assem) dst src jump
 normInstr func (ILABEL assem lab) = ILABEL (func assem) lab

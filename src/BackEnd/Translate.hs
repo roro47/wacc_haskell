@@ -72,6 +72,7 @@ translate program = do
   stm <- translateProgramF program
   return $ cleanStm stm
 
+-- escape characters in string literal in given program
 addEscape :: String -> String
 addEscape x = concat [if elem c "\\\"\'" then ('\\' : [c]) else [c] |c <- x]
 
@@ -528,8 +529,8 @@ translatePrint TStr exps = do
   callp "#p_print_string" exps
 translatePrint (TArray TChar) exps = callp "#p_print_string" exps
 translatePrint (TArray TInt) exps = do
-  addBuiltIn id_p_print_int
-  callp "#p_print_int" exps
+  addBuiltIn id_p_print_reference
+  callp "#p_print_reference" exps
 translatePrint t exps = do
   addBuiltIn id_p_print_reference
   callp "#p_print_reference" exps
