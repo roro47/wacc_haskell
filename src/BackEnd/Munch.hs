@@ -308,15 +308,9 @@ condExp (BINEXP bop e1@(CONSTI int1) e2@(CONSTI int2))
       Nothing -> fail ""
       otherwise -> return $ \c -> (i1 ++ [calc c], t1)
 
-condExp (BINEXP PLUS e1 (CONSTI i))
-  = plusMinus e1 (IMM i) ADD [] []
-
 condExp (BINEXP PLUS e1 e2) = do
   (i2, t2) <- munchExp e2
   plusMinus e1 (R (RTEMP t2)) ADD [t2] i2
-
-condExp (BINEXP MINUS e1 (CONSTI i))
-  = plusMinus e1 (IMM i) SUB [] []
 
 condExp (BINEXP MINUS e1 e2) = do
   (i2, t2) <- munchExp e2
@@ -402,12 +396,12 @@ munchMem e = do
 
 --- CAUTION : NEED TO TEST THE IMM OFFSET RANGE OF THE TARGET MACHINE ---
 optimise :: [ASSEM.Instr] -> [ASSEM.Instr]
--- catch overflow
-optimise ((IOPER { assem = (CBS_ c reg0 reg1 (IMM i))}):remain)
+-- catch overflow of sp
+optimise ((IOPER { assem = (CBS_ (ADD s c) reg0 reg1 (IMM i))}):remain)
   | (i > 1024 || i < -1024) && reg0 == reg1
-    =  ((IOPER { assem = (CBS_ c reg0 reg1 (IMM 1024)),
+    =  ((IOPER { assem = (CBS_ (ADD s c) reg0 reg1 (IMM 1024)),
                 src = [toNum reg0], dst = [toNum reg1], jump = []}) :
-        (IOPER { assem = (CBS_ c reg0 reg1 (IMM (i - 1024))),
+        (IOPER { assem = (CBS_ (ADD s c) reg0 reg1 (IMM (i - 1024))),
                     src = [toNum reg0], dst = [toNum reg1], jump = []}):(optimise remain))
 -- load large number?
 ---IMMEDIATE ---
@@ -560,7 +554,7 @@ condStm (IR.POPREGS regs) = do
                          src = [],
                          jump = [] }])
 
- 
+
 
 condStm (IR.PUSH e) = do
   (i, t) <- munchExp e
