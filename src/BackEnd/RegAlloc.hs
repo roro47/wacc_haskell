@@ -109,47 +109,12 @@ isMoveInstruction :: Instr -> Bool
 isMoveInstruction (Instr _ (Assem.IMOV _ _ _)) = True
 isMoveInstruction _ = False
 
---regAllocFile :: String -> IO ([Hash.Map Temp.Temp Int])
-regAllocFile file = do
-  out <- testMunch file
-  regAllocAssem' out
-
--- for testing
-regAllocAssem' (assems, dataFrags, builtInFrags) = do
-  states <- mapM regAllocAssem'' assems
-  let colorMap = map fst states
-      meta = map snd states
-      colorMap' =  map Hash.toList colorMap
-      final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
-      totalOut = Assem.showAssem builtInFrags dataFrags (concat final)
-  mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
-  mapM_ (\a -> putStrLn (concat $ map (\(id,a') -> show id ++ " " ++ Assem.showInstr a' ++ "\n") (zip [0..] a ))) assems
-  return (head meta)
-  --putStrLn (show $ assems !! 0)
-
-  where regAllocAssem'' assem = do
-          let flow = instrsToGraph assem
-              (calcLiveOut, calcLiveIn) = Live.calcLiveness flow assem
-              initial' = List.nub $ concat $ map Assem.assemReg assem
-              precoloured' = precolouredReg
-              regState = newRegAllocState { _liveOut = calcLiveOut,
-                                            _program = map (\(id, inst) -> Instr id inst) (zip [0..] assem),
-                                            _initial = initial' List.\\ precolouredReg,
-                                            _precoloured = precoloured',
-                                            _fgraph = flow }
-              (a, regState') = runState (regAlloc >>= \_ -> getAlias 17) regState
-          return $ (_color regState', (_adjSet regState', FGraph.control flow))
-          --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
-          --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
-
-
 
 regAllocAssem :: ([[Assem.Instr]], [[Assem.Instr]], [[Assem.Instr]]) -> IO String
 regAllocAssem (assems, dataFrags, builtInFrags) = do
   states <- mapM regAllocAssem' assems
-  let colorMap = map fst states
-      meta = map snd states
-      colorMap' =  map Hash.toList colorMap
+  let colorMap = states
+      colorMap' = map Hash.toList colorMap
       final = map (\(c, a) -> Assem.normAssem' c a) (zip colorMap' assems)
       totalOut = Assem.showAssem builtInFrags dataFrags (concat final)
   let assemOut = map (\s -> s ++ "\n") totalOut
@@ -160,15 +125,14 @@ regAllocAssem (assems, dataFrags, builtInFrags) = do
               (calcLiveOut, _) = Live.calcLiveness flow assem
               initial' = List.nub $ concat $ map Assem.assemReg assem
               precoloured' = precolouredReg
-              regState = newRegAllocState { _liveOut = calcLiveOut,
-                                            _program = map (\(id, inst) -> Instr id inst) (zip [0..] assem),
-                                            _initial = initial' List.\\ precolouredReg,
-                                            _precoloured = precoloured',
-                                            _fgraph = flow }
+              regState = newRegAllocState {
+                _liveOut = calcLiveOut,
+                _program = map (\(id, inst) -> Instr id inst) (zip [0..] assem),
+                _initial = initial' List.\\ precolouredReg,
+                _precoloured = precoloured',
+                _fgraph = flow }
               (a, regState') = runState (regAlloc >>= \_ -> getAlias 17) regState
-          return $ (_color regState', (_initial regState'))
-          --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
-          --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
+          return $ _color regState'
 
 
 regAlloc :: State RegAllocState ()

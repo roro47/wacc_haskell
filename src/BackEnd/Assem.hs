@@ -5,14 +5,13 @@ import BackEnd.Temp as Temp
 import qualified BackEnd.Instructions as Arm
 import BackEnd.IR
 
-{-
-  Assem is an interface that can abtract away details of
-  specific architecture to perform liveness analysis and
-  register allocation.
-  Munch (instruction selection) will wrap the selected ARM
-  instruction in this interface.
+{- Note
+  ------------------------------------------------------------------------------
+  Assem is an interface that can abtract away details of specific architecture
+  to perform liveness analysis and register allocation. Munch (instruction
+  selection) will wrap the selected ARM instruction in this interface.
 
-  The design is inspired by Modern Compiler Implementation in ML.
+  The design is inspired by the book Modern Compiler Implementation in ML.
 -}
 
 data Instr = IOPER  { assem :: Arm.Instr,
@@ -25,9 +24,8 @@ data Instr = IOPER  { assem :: Arm.Instr,
                       dst  :: [Temp.Temp],
                       src :: [Temp.Temp] }
             deriving (Eq)
-           -- deriving Show
-             -- for IMOV, length dst == 1, length src == 1
 
+-- extract all regs used in an instruction
 assemReg (IOPER _ d s _) = nub $ d ++ s
 assemReg (IMOV _ d s) = nub $ d ++ s
 assemReg _ = []
@@ -35,18 +33,17 @@ assemReg _ = []
 showInstr (IOPER assem d s jump) =
     Arm.output_show assem ++ " dst : " ++ show d ++
     " src: " ++ show s ++ " jump: " ++ show jump
-
 showInstr (IMOV assem d s) =
     Arm.output_show assem ++ " dst : " ++ show d ++
     " src: " ++ show s
-
 showInstr (ILABEL assem l) =
     Arm.output_show assem ++ " label: " ++ show l
 
+-- output the final assembly
 showAssem :: [[Instr]] -> [[Instr]]-> [Instr] -> [String]
-showAssem builtInFrags dataFrags out
+showAssem builtInFrags dataFrags code
   = intercalate ["\n"] (([[".data"]] ++ map (lines . show) (concat dataFrags)) ++
-                        ([[".text"], ["\n"], [".global main"]] ++ [map show out]
+                        ([[".text"], ["\n"], [".global main"]] ++ [map show coded]
                         ++ [[".ltorg"]]) ++ (map (map show) builtInFrags))
 
 instance Prelude.Show Instr where
