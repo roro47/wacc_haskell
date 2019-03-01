@@ -832,7 +832,7 @@ p_read_int = do
 
 p_read_char :: GenBuiltIn
 p_read_char = do
-  r <- p_read "\"%c\\0\"" 3
+  r <- p_read "\" %c\\0\"" 4
   return $ (add_label "p_read_char"): r
 
 p_read :: String -> Int -> GenBuiltIn

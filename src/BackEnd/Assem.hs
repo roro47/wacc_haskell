@@ -7,9 +7,10 @@ import BackEnd.IR
 
 {-
   Assem is an interface that can abtract away details of
-  specific architecture to perform liveness analysis.
-  Munch (instruction selection) will wrap the ARM instruction
-  in this interface.
+  specific architecture to perform liveness analysis and
+  register allocation.
+  Munch (instruction selection) will wrap the selected ARM
+  instruction in this interface.
 
   The design is inspired by Modern Compiler Implementation in ML.
 -}
