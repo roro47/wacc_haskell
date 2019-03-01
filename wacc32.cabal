@@ -33,7 +33,6 @@ library
       BackEnd.CodeGen
       BackEnd.FlowGraph
       BackEnd.Frame
-      BackEnd.Graph
       BackEnd.Instructions
       BackEnd.IR
       BackEnd.Liveness

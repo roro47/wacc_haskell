@@ -5,14 +5,26 @@ import Data.Tree.Pretty
 import Prelude hiding(NE, EQ, GT, GE, LT, LE)
 import BackEnd.Temp as Temp
 
-data Exp = CONSTI Int              -- constant int
-         | CONSTC Char
+{- Note
+  ------------------------------------------------------------------------------
+  Intermediate representation (IR).
+
+  The abstrace syntax tree (ast) returned from semantic analysis is translated to
+  IR.
+  The IR is later transformed and used for munching (instruction selection).
+-}
+
+
+
+
+data Exp = CONSTI Int             -- constant int
+         | CONSTC Char            -- constant char
          | NAME Temp.Label        -- symbolic constant
          | TEMP Temp.Temp         -- symbolic register
-         | BINEXP BOp Exp Exp
-         | MEM Exp Int         -- memory address at exp
-         | CALL Exp [Exp]   -- Call function address [values]
-         | ESEQ Stm Exp     -- evaluated for side effect
+         | BINEXP BOp Exp Exp     -- binary expression
+         | MEM Exp Int            -- memory address at exp
+         | CALL Exp [Exp]         -- Call function address [values]
+         | ESEQ Stm Exp           -- stm is evaluated first, and the exp is evaluated
            deriving (Eq)
 
 data Stm = MOV Exp Exp -- move values to address or register
@@ -27,6 +39,8 @@ data Stm = MOV Exp Exp -- move values to address or register
          | POPREGS [Temp.Temp]
          | NOP
           deriving (Eq)
+
+-- remove all NOP in the tree
 cleanStmExp (BINEXP bop e1 e2) =
   BINEXP bop (cleanStmExp e1) (cleanStmExp e2)
 cleanStmExp (MEM exp s) = MEM (cleanStmExp exp) s
@@ -45,7 +59,8 @@ cleanStm s@(SEQ s1 s2)
         s2' = cleanStm s2
 cleanStm s = s
 
-
+-- Derving Treeable for a recursive type enables it to be print in a tree like
+-- automatically. Useful for debugging.
 class Treeable a where
   toTree :: a -> Tree String
 

@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell, RankNTypes #-}
 module BackEnd.RegAlloc where
 
-
 import Control.Lens hiding (index)
 import Control.Monad.State.Lazy
 import qualified Data.List as List
@@ -14,6 +13,15 @@ import BackEnd.Munch as Munch
 import BackEnd.Temp as Temp
 import qualified BackEnd.FlowGraph as FGraph
 import qualified BackEnd.Liveness as Live
+
+{- Note
+   -----------------------------------------------------------------------------
+   Register allocation using graph coloring.
+
+   The design is inspired by the book Modern Compiler Implementation in ML.
+   Please refer to the book for more specific detail of the algorithm.
+-}
+
 
 -- number of registers available
 okColors :: [Temp.Temp]
@@ -43,30 +51,32 @@ data RegAllocState =
     _program :: [Instr],
     _fgraph :: FGraph.FlowGraph,
     _precoloured :: [Temp.Temp],
-    _initial :: [Temp.Temp], -- all temp reg, not precolored and not processed
+    _initial :: [Temp.Temp],                -- all temp reg, not precolored and not processed
     _simplifyWorkList :: Set.Set Temp.Temp, -- list of low-degree non-move-related nodes
-    _freezeWorkList :: Set.Set Temp.Temp, -- low-degree move-related nodes
-    _spillWorkList :: Set.Set Temp.Temp, --  high degree nodes
-    _spillNodes :: Set.Set Temp.Temp, -- node marked for spilling during this round; intially empty
-    _coalescedNodes :: Set.Set Temp.Temp, -- registers that has been coalesced
-    _coloredNodes :: Set.Set Temp.Temp, -- nodes successfully colored
-    _selectStack :: [Temp.Temp], -- stack containing temporaries removed from the graph
+    _freezeWorkList :: Set.Set Temp.Temp,   -- low-degree move-related nodes
+    _spillWorkList :: Set.Set Temp.Temp,    --  high degree nodes
+    _spillNodes :: Set.Set Temp.Temp,       -- node marked for spilling during this round;
+                                            -- intially empty
+    _coalescedNodes :: Set.Set Temp.Temp,   -- registers that has been coalesced
+    _coloredNodes :: Set.Set Temp.Temp,     -- nodes successfully colored
+    _selectStack :: [Temp.Temp],            -- stack containing temporaries removed from the graph
      -- move sets
-    _coalescedMoves :: Set.Set Instr,
-    _constrainedMoves :: Set.Set Instr,
-    _frozenMoves :: Set.Set Instr,
-    _workListMoves :: Set.Set Instr,
-    _activeMoves :: Set.Set Instr,
-    _moveList :: Hash.Map Int (Set.Set Instr), -- a mapping from a node(tmep) to the list of moves it is associated with
+    _coalescedMoves :: Set.Set Instr,       -- moves that has been coalesced
+    _constrainedMoves :: Set.Set Instr,     -- moves whose source and target interface
+    _frozenMoves :: Set.Set Instr,          -- moves that will no longer be considered for
+                                            -- coalesced
+    _workListMoves :: Set.Set Instr,        -- moves enabled for possible coalescing
+    _activeMoves :: Set.Set Instr,          -- moves not yet ready for coalescing
+    _moveList :: Hash.Map Int (Set.Set Instr), -- a mapping from a node(tmep) to the list of
+                                              --moves it is associated with
     -- other data structure
     _alias :: Hash.Map Temp.Temp Temp.Temp, -- a mapping of alias
-    _adjSet :: Set.Set (Temp, Temp), -- set of interferences edges in the graph
-    _adjList :: Hash.Map Temp.Temp (Set.Set Temp.Temp),
-    _degree :: Hash.Map Int Int, -- degree of each node in interference graph
-    _color :: Hash.Map Temp.Temp Int
+    _adjSet :: Set.Set (Temp, Temp),        -- set of interferences edges in the graph
+    _adjList :: Hash.Map Temp.Temp (Set.Set Temp.Temp), -- adjacency list representation of graph
+    _degree :: Hash.Map Int Int,             -- degree of each node in interference graph
+    _color :: Hash.Map Temp.Temp Int         -- map from temp to machine register
   }
 makeLenses ''RegAllocState
-
 
 newRegAllocState :: RegAllocState
 newRegAllocState = RegAllocState {
@@ -185,7 +195,6 @@ regAlloc = do
           | not (Set.null spillWorkList) = do { selectSpill; regAlloc' }
           | otherwise = return ()
 
-
 build :: State RegAllocState ()
 build = do
   program' <- use program
@@ -207,16 +216,9 @@ build = do
             then addEdge (def' !! 0, def' !! 1)
             else return () 
 
-
-
         addMoveNodes :: Instr -> Temp.Temp -> State RegAllocState ()
         addMoveNodes inst n = do
           moveList %= Hash.insertWith (Set.union) n (Set.singleton inst)
-
-
-
-
-
 
 addEdge :: (Temp.Temp, Temp.Temp) -> State RegAllocState ()
 addEdge (u, v) = do
@@ -233,7 +235,6 @@ addEdge (u, v) = do
       adjList %= (\list -> Hash.insertWith (Set.union) v (Set.singleton u) list)
       degree %= (\degree' -> Hash.insertWith (+) v 1 degree')
   else return ()
-
 
 makeWorkList :: State RegAllocState ()
 makeWorkList = do

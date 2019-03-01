@@ -11,69 +11,27 @@ import BackEnd.IR
 import Data.List hiding(insert)
 import BackEnd.Frame as Frame
 
-testCanonFile :: String -> IO [Stm]
-testCanonFile file = do
-  ast <- parseFile file
-  ast' <- analyzeAST ast
-  let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
-      userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
-      (stms, s') = runState (transform stm) s
-      (userFrags') = evalState (mapM transform userFrags) s'
-  return $ stms ++ concat userFrags'
+{- Note
+   -----------------------------------------------------------------------------
+   Canon is used for transforming the IR tree to enable munching (instruction
+   selection).
+   The transform includes mainly of:
+   1. linearize
+   2. basicBlocks
+   3. traceSchedule
+
+  The design is inspired by Modern Compiler Implementation in ML.
+-}
 
 
-testBasicBlocksFile :: String -> IO [[Stm]]
-testBasicBlocksFile file = do
-  ast <- parseFile file
-  ast' <- analyzeAST ast
-  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
-        stms = evalState (transform' stm) s }
-  return stms
-
-
-testLinearizeFile :: String -> IO [Stm]
-testLinearizeFile file = do
-  ast <- parseFile file
-  ast' <- analyzeAST ast
-  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
-        stms = evalState (linearize stm) s }
-  return stms
-
-
-testCanon :: Stm -> IO [Stm]
-testCanon stm = do
-  let { (trace, s) = runState (transform stm) newTranslateState }
-  return trace
-
-
-testDoStm :: Stm -> IO Stm
-testDoStm stm = do
-  let { (stm', s) = runState (doStm stm) newTranslateState }
-  return stm'
-
-testLinearize :: Stm -> IO [Stm]
-testLinearize stm = do
-  let { (stm', s) = runState (linearize stm) newTranslateState }
-  return $ filter (/= NOP) stm'
-
-testBasicBlocks :: [Stm] -> IO [[Stm]]
-testBasicBlocks stms = do
-  let { (blocks, s) =
-        runState (basicBlocks stms >>= \(bs,_) -> return bs) newTranslateState }
-  return blocks
-
-testDoExp :: Exp -> IO Exp
-testDoExp exp = do
-  let { ((stm,exp'), s) = runState (doExp exp) newTranslateState }
-  return $ ESEQ stm exp'
-
+-- Main function for transforming IR tree 
 transform :: Stm -> State TranslateState [Stm]
 transform stm = do
   stms <- linearize stm
   blocks <- basicBlocks stms
   let stms = traceSchedule $ fst blocks
   fla <- mapM flat stms
-  return $ filter (/=NOP)(concat fla)
+  return $ filter (/= NOP)(concat fla)
 
 transform' :: Stm -> State TranslateState [[Stm]]
 transform' stm = do
@@ -105,7 +63,12 @@ flat' exp@(BINEXP bop e1 e2@(BINEXP bop2 e21 e22)) = do
     return ( ret, (TEMP ttotal))
 flat' x = return ([NOP], x)
 
-
+{- Note
+   ----------------------------------------------------------------------------
+   linearize: statements in ESEQ (side effects of expression) are lifted up and
+              function call values are reserved in new temporaries, then the
+              IR tree is linearized into list of stm
+-}
 linearize :: Stm -> State TranslateState [Stm]
 linearize stm = do
   stm' <- doStm stm
@@ -114,7 +77,14 @@ linearize stm = do
          linear (SEQ a b) list = linear a (linear b list)
          linear s list = s:list
 
--- todo : need to take care of epilogue for done
+{- Note
+  ------------------------------------------------------------------------------
+  basicBlocks : organize list of statements into basic blocks.
+                A basic block is a list of statements such that
+                1. It starts with a label
+                2. It ends with a jump or a conditional jump
+                3. There's no labels or jumps in between
+-}
 basicBlocks :: [Stm] -> State TranslateState ([[Stm]], Temp.Label)
 basicBlocks [] = do
   label <- newControlLabel
@@ -135,12 +105,20 @@ basicBlocks (l@(LABEL label):rest) = do
        isLABEL (LABEL _) = True
        isLABEL _ = False
        isEND e = (isJUMP e) || (isCJUMP e) || (isLABEL e)
-
 basicBlocks stms@(stm:rest) = do
   label <- newControlLabel
   basicBlocks ((LABEL label):stms)
 
 bLabel ((LABEL label):_) = label
+
+{- Note
+   -----------------------------------------------------------------------------
+   traceSchedule : Take a list of basic blocks and reorder them.
+                   Reorder them so that a block that ends with a conditional
+                   jump is followed immediately by a block that starts with the
+                   false label of the jump, thereby simpifying instruction
+                   selection for conditional jump.
+-}
 
 traceSchedule :: [[Stm]] -> [Stm]
 traceSchedule blocks = traceSchedule' blocks blockTable markTable
@@ -210,6 +188,7 @@ reorder (exp:rest) = do
                (TEMP temp):exps2')
 reorder [] = return (NOP, [])
 
+
 reorderStm :: [Exp] -> ([Exp] -> Stm) -> State TranslateState Stm
 reorderStm exps build = do
   (stm, exps') <- reorder  exps
@@ -219,6 +198,7 @@ reorderExp :: [Exp] -> ([Exp] -> Exp) -> State TranslateState (Stm, Exp)
 reorderExp exps build = do
   (stm', exps') <- reorder exps
   return (stm', build exps')
+
 
 doStm :: Stm -> State TranslateState Stm
 
@@ -287,7 +267,6 @@ isOneLayer (MEM _ _) = True
 isOneLayer (NAME _) = True
 isOneLayer e = False
 
-
 doExp :: Exp -> State TranslateState (Stm, Exp)
 doExp exp@(MEM e@(BINEXP bop e1 e2) s) = do
   if isOneLayer e1 && isOneLayer e2
@@ -315,3 +294,58 @@ doExp (ESEQ stm e) = do
 
 doExp e = reorderExp [] (\_ -> e)
 
+
+-- Utility for Testing
+testCanonFile :: String -> IO [Stm]
+testCanonFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+      userFrags = map (\(Frame.PROC stm _) -> stm) (Translate.procFrags s)
+      (stms, s') = runState (transform stm) s
+      (userFrags') = evalState (mapM transform userFrags) s'
+  return $ stms ++ concat userFrags'
+
+testBasicBlocksFile :: String -> IO [[Stm]]
+testBasicBlocksFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+        stms = evalState (transform' stm) s }
+  return stms
+
+testLinearizeFile :: String -> IO [Stm]
+testLinearizeFile file = do
+  ast <- parseFile file
+  ast' <- analyzeAST ast
+  let { (stm, s) = runState (Translate.translate ast') Translate.newTranslateState;
+        stms = evalState (linearize stm) s }
+  return stms
+
+
+testCanon :: Stm -> IO [Stm]
+testCanon stm = do
+  let { (trace, s) = runState (transform stm) newTranslateState }
+  return trace
+
+
+testDoStm :: Stm -> IO Stm
+testDoStm stm = do
+  let { (stm', s) = runState (doStm stm) newTranslateState }
+  return stm'
+
+testLinearize :: Stm -> IO [Stm]
+testLinearize stm = do
+  let { (stm', s) = runState (linearize stm) newTranslateState }
+  return $ filter (/= NOP) stm'
+
+testBasicBlocks :: [Stm] -> IO [[Stm]]
+testBasicBlocks stms = do
+  let { (blocks, s) =
+        runState (basicBlocks stms >>= \(bs,_) -> return bs) newTranslateState }
+  return blocks
+
+testDoExp :: Exp -> IO Exp
+testDoExp exp = do
+  let { ((stm,exp'), s) = runState (doExp exp) newTranslateState }
+  return $ ESEQ stm exp'

@@ -5,15 +5,31 @@ import Algebra.Graph.AdjacencyMap as AdjGraph
 import BackEnd.Assem as Assem
 import BackEnd.Temp as Temp
 
-data FlowGraph =
-  FlowGraph { control :: AdjGraph.AdjacencyMap Int,
-              def :: HashMap.Map Int [Temp.Temp],
-              use :: HashMap.Map Int [Temp.Temp],
-              nodes :: [Int],
-              assems :: HashMap.Map Int Assem.Instr,
-              fInitial :: [Temp.Temp] }
-  deriving (Show)
+{- Note
+  ------------------------------------------------------------------------------
+  Control Flow Graph constructed from assembly instructions generated from munch
+  (instruction selection).
 
+  The design is inspired by the book Modern Compiler Implementation in ML.
+-}
+
+
+
+{- Note
+  ------------------------------------------------------------------------------
+
+  FlowGraph contains a control flow graph, where each node is the index of an
+  assembly instruction.
+-}
+
+data FlowGraph =
+  FlowGraph { control :: AdjGraph.AdjacencyMap Int,  -- control flow graph
+              def :: HashMap.Map Int [Temp.Temp],    -- node -> temps defined at that node
+              use :: HashMap.Map Int [Temp.Temp],    -- node -> temps used at that node
+              nodes :: [Int],                        -- list of nodes
+              assems :: HashMap.Map Int Assem.Instr, -- map from index to assembly instruction
+              fInitial :: [Temp.Temp] }              -- all temps used
+  deriving (Show)
 
 newFlowGraph :: FlowGraph
 newFlowGraph = FlowGraph { control = AdjGraph.empty,
@@ -22,6 +38,3 @@ newFlowGraph = FlowGraph { control = AdjGraph.empty,
                            nodes = [],
                            assems = HashMap.empty,
                            fInitial = []}
-data JUMP = JustJump [String]
-          | JumpFall [String]
-          deriving (Show)

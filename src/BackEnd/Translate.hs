@@ -455,11 +455,11 @@ translateBuiltInFuncAppF (Ann (FuncApp t id exprs) (pos, expT)) = do
   exps' <- mapM unEx exps
   let { Ann (Ident symbol) _ = id }
   case symbol of
-    "*" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp MUL exps'}
-    "/" -> do {addBuiltIn id_p_check_divide_by_zero ;return $ binexp DIV exps'}
-    "%" -> do {addBuiltIn id_p_check_divide_by_zero ;return $ binexp MOD exps'}
-    "+" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp PLUS exps'}
-    "-" -> do {addBuiltIn id_p_throw_overflow_error ;return $ binexp MINUS exps'}
+    "*" -> do { addBuiltIn id_p_throw_overflow_error ;return $ binexp MUL exps' }
+    "/" -> do { addBuiltIn id_p_check_divide_by_zero ;return $ binexp DIV exps' }
+    "%" -> do { addBuiltIn id_p_check_divide_by_zero ;return $ binexp MOD exps' }
+    "+" -> do { addBuiltIn id_p_throw_overflow_error ;return $ binexp PLUS exps' }
+    "-" -> do { addBuiltIn id_p_throw_overflow_error ;return $ binexp MINUS exps' }
     "&&" -> return $ binexp AND exps'
     "||" -> return $ binexp OR exps'
     ">" -> return $ condition GT exps'
@@ -509,7 +509,6 @@ translateFree (TPair _ _) exprs = do
 translateFree (TArray _) exprs = callp "#p_free_array" exprs
 translateFree TStr exprs = callp "#p_free_array" exprs
 
-
 translateRead :: Type -> [Exp] -> State TranslateState IExp
 translateRead TInt exps = do
   addBuiltIn id_p_read_int
@@ -548,7 +547,6 @@ translatePrintln t exps = do
   return $ Nx (SEQ (EXP print') (EXP (CALL (NAME "#p_print_ln") [])))
 
 translateNewPair :: Type -> [Exp] -> State TranslateState IExp
--- ASSUME 2 parameters
 translateNewPair (TPair t1 t2) exps
   = return $ Ex $ CALL (NAME $ "#newpair") ((CONSTI $ typeLen t1):(CONSTI $ typeLen t2):exps)
 
