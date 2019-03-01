@@ -71,13 +71,39 @@ transform :: Stm -> State TranslateState [Stm]
 transform stm = do
   stms <- linearize stm
   blocks <- basicBlocks stms
-  return $ traceSchedule $ fst blocks
+  let stms = traceSchedule $ fst blocks
+  fla <- mapM flat stms
+  return $ filter (/=NOP)(concat fla)
 
 transform' :: Stm -> State TranslateState [[Stm]]
 transform' stm = do
   stms <- linearize stm
   (stms', _) <- basicBlocks stms
   return stms'
+
+flat :: Stm -> State TranslateState [Stm]
+flat (MOV e1 e2) = do
+  (i1, t1) <- flat' e1
+  (i2, t2) <- flat' e2
+  return $ i1 ++ i2 ++ [MOV t1 t2]
+
+flat (SEQ s1 s2) = do
+  i1 <- flat s1
+  i2 <- flat s2
+  return $ i1 ++ i2
+
+flat other = return [other]
+
+flat' :: Exp -> State TranslateState ([Stm], Exp)
+flat' exp@(BINEXP bop e1 e2@(BINEXP bop2 e21 e22)) = do
+  if isOneLayer e1 && isOneLayer e2
+  then return ([NOP], exp)
+  else do
+    ttotal <- newTemp
+    (stm2 , te2) <- flat' e2 
+    let ret = stm2 ++ [MOV (TEMP ttotal) (BINEXP bop e1 te2)]
+    return ( ret, (TEMP ttotal))
+flat' x = return ([NOP], x)
 
 
 linearize :: Stm -> State TranslateState [Stm]
@@ -215,14 +241,6 @@ doStm (MOV (TEMP t) b)
 doStm stm@(MOV (MEM e@(BINEXP bop e1 e2) s) b)
   | isOneLayer e1 && isOneLayer e2 && isOneLayer b =
       return stm
- -- else reorderStm [e, b] (\(e:b:_) -> MOV (MEM e) b)
-
-{-
-doStm stm@(MOV (MEM e) b) = do
-  if isOneLayer e && isOneLayer b
-  then return stm
-  else reorderStm [e, b] (\(e:b_) -> MOV (MEM e) b)
--}
 
 doStm stm@(MOV (MEM (TEMP t) size) (ESEQ s e)) = do
   s' <- doStm s
@@ -297,54 +315,3 @@ doExp (ESEQ stm e) = do
 
 doExp e = reorderExp [] (\_ -> e)
 
-
-t0 = TEMP 0
-t1 = TEMP 1
-t2 = TEMP 2
-
-e1 = CONSTI 1
-
-s1 = MOV t1 t2
-s2 = MOV t2 t0
-
-
-label1 = "label1"
-label2 = "label2"
-label3 = "label3"
-
-testESEQ1 = ESEQ NOP (ESEQ NOP e1)
-testESEQ2 = ESEQ NOP (ESEQ s1 e1)
-testESEQ3 = BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)
-testESEQ4 = BINEXP PLUS (CONSTI 1) (ESEQ (MOV (TEMP 23) (TEMP 90)) (CONSTI 79))
-testESEQ5 = BINEXP PLUS (MEM (CONSTI 23) 1) (ESEQ (MOV (TEMP 0) (TEMP 1)) (CONSTI 29))
-
-
-testLinear1 = SEQ (MOV t0 t1) (MOV t0 t2)
-testLinear2 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t0 t1) (CONSTI 1)))
-testLinear3 = SEQ (MOV t0 t1) (MOV t0 (ESEQ (MOV t2 (CONSTI 1)) t2))
-testLinear4 = SEQ (MOV t0 t1) (MOV t0 (BINEXP PLUS (ESEQ s1 (CONSTI 3)) (CONSTI 5)))
-testLinear5 = SEQ (MOV t0 t1) (MOV t0 testESEQ4)
-testLinear6 = SEQ (MOV t0 t1) (MOV t0 testESEQ5)
-testLinear7 = MOV t0 (CALL (NAME "function") [])
-testLinear8 = MOV t1 (CALL (NAME "function") [CONSTI 1, CONSTI 45])
-testLinear9 = MOV t0 (CALL (NAME "function") [MEM (TEMP 13) 4])
-
-testBasicBlocks1 = []
-testBasicBlocks2 = [LABEL label1,
-                    MOV t0 t1,
-                    JUMP (CONSTI 1) [label1]]
-testBasicBlocks3 = [LABEL label1,
-                    MOV t0 t1,
-                    LABEL label2,
-                    MOV t2 t0,
-                    JUMP (CONSTI 1) [label2]]
-testBasicBlocks4 = [LABEL label1,
-                    MOV t0 t1,
-                    CJUMP EQ (CONSTI 1) (CONSTI 2) label1 label2,
-                    MOV t2 t0]
-
-testTraceSchedule1 = [[LABEL label1,
-                       NOP,
-                       JUMP (CONSTI 1) [label2]],
-                       [LABEL label2,
-                        JUMP (CONSTI 1) [label2]]]
