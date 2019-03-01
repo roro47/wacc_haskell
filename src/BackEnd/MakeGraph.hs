@@ -12,10 +12,6 @@ import BackEnd.Instructions as ARM
   Transform a list of Assem.Instr to a control flow graph.
 -}
 
-testInstrsToGraphFile file = do
-  (out, _, _) <- testMunch file
-  return $ instrsToGraph (concat out)
-
 -- transform instructions to control flow graph
 instrsToGraph :: [Assem.Instr] -> FlowGraph
 instrsToGraph instrs = fGraph { nodes = map fst indexed,

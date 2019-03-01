@@ -20,16 +20,16 @@ codeGen ast = do
 instrGen :: ProgramF () -> State Translate.TranslateState ([[Assem.Instr]], [[Assem.Instr]], [[Assem.Instr]])
 instrGen ast = do
   stm <- Translate.translate ast
-  stms <- Canon.transform stm
+  builtInFrags' <- builtInFrags
   dataFrags' <- dataFrags
+  stms <- Canon.transform stm
   userFrags' <- liftM (map Munch.optimizeInstrs) userFrags
   code <- liftM Munch.optimizeInstrs (Munch.munchmany stms)
-  builtInFrags' <- builtInFrags
   return (userFrags' ++ [code], dataFrags', builtInFrags')
 
 dataFrags :: State Translate.TranslateState [[Assem.Instr]]
 dataFrags = do
-  state <-get
+  state <- get
   return $ map Munch.munchDataFrag (Translate.dataFrags state)
 
 userFrags :: State Translate.TranslateState [[Assem.Instr]]

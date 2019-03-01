@@ -74,7 +74,7 @@ translate program = do
 
 -- escape characters in string literal in given program
 addEscape :: String -> String
-addEscape x = concat [if elem c "\\\"\'\n" then ('\\' : [c]) else [c] |c <- x]
+addEscape x = concat [if elem c "\\\"\'" then ('\\' : [c]) else [c] |c <- x]
 
 seq :: [Stm] -> Stm
 seq (stm:stms) = SEQ stm (seq stms)

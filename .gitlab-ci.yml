@@ -14,3 +14,4 @@ job2:
   stage: test
   script: 
     - stack test
+    - python3 testscript.py "test/valid/"

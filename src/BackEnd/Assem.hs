@@ -43,7 +43,7 @@ showInstr (ILABEL assem l) =
 showAssem :: [[Instr]] -> [[Instr]]-> [Instr] -> [String]
 showAssem builtInFrags dataFrags code
   = intercalate ["\n"] (([[".data"]] ++ map (lines . show) (concat dataFrags)) ++
-                        ([[".text"], ["\n"], [".global main"]] ++ [map show coded]
+                        ([[".text"], ["\n"], [".global main"]] ++ [map show code]
                         ++ [[".ltorg"]]) ++ (map (map show) builtInFrags))
 
 instance Prelude.Show Instr where
