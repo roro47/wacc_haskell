@@ -33,7 +33,8 @@ data TranslateState =
                    controlLabelAlloc :: Temp.LabelAllocator,
                    dataLabelAlloc :: Temp.LabelAllocator,
                    frameLabelAlloc :: Temp.LabelAllocator,
-                   builtInSet :: Set.Set Int }
+                   builtInSet :: Set.Set Int,
+                   callFrameStack :: [Temp.Label]}
                 deriving (Eq, Show)
 
 data IExp = Ex Exp
@@ -55,7 +56,8 @@ newTranslateState =
                    controlLabelAlloc = Temp.newLabelAllocator,
                    dataLabelAlloc = Temp.newLabelAllocator,
                    frameLabelAlloc = Temp.newLabelAllocator,
-                   builtInSet = Set.empty }
+                   builtInSet = Set.empty,
+                   callFrameStack = []}
 
 
 translateFile :: String -> IO Stm
@@ -113,6 +115,17 @@ newLevel :: State TranslateState Level
 newLevel = do
   label <- newFrameLabel
   return $ Level (Frame.newFrame label) HashMap.empty HashMap.empty
+
+pushCurrCallFrame :: State TranslateState ()
+pushCurrCallFrame = do
+  state <- get
+  let currFrameName = Frame.frameName $ levelFrame $ head $ levels state
+  put $ state { callFrameStack = (currFrameName:(callFrameStack state)) }
+
+popCallFrame :: State TranslateState ()
+popCallFrame = do
+  state <- get
+  put $ state { callFrameStack = tail (callFrameStack state) }
 
 pushLevel :: Level -> State TranslateState ()
 pushLevel level = do
@@ -231,6 +244,20 @@ adjustSP = do
   then return NOP
   else return $ MOV (TEMP Frame.sp) (BINEXP PLUS (TEMP Frame.sp) (CONSTI offset))
 
+adjustSPCall :: State TranslateState Stm
+adjustSPCall = do
+  state <- get
+  let callFrameName = head (callFrameStack state)
+      sameName = \l -> Frame.frameName (levelFrame l) == callFrameName
+      callFrame = case find sameName (levels state) of
+        Just l -> levelFrame l
+        Nothing -> undefined
+      offset = Frame.frameSize callFrame
+  if offset == 0
+  then return NOP
+  else return $ MOV (TEMP Frame.sp) (BINEXP PLUS (TEMP Frame.sp) (CONSTI offset))
+
+
 stripParam :: ParamF () -> (Type, String)
 stripParam (Ann (Param t (Ann (Ident s) _)) _) = (t,s)
 
@@ -239,14 +266,14 @@ translateFuncF (Ann (Func t id ps stm) _) = do
   let params = map stripParam ps
   level <- newLevel
   pushLevel level
+  pushCurrCallFrame
   foldM addParam (4*(length callerSave+1)) params
   addFunEntry symbol t
   stm' <- translateStatListF stm >>= \s -> unNx s
-  adjustSP' <- adjustSP
-  let stm'' = SEQ stm' adjustSP'
+  popCallFrame
   popLevel
   frame <- getCurrFrame
-  addFragment (Frame.PROC (seq [LABEL ("f_" ++ symbol), prologue, stm'', epilogue]) frame)
+  addFragment (Frame.PROC (seq [LABEL ("f_" ++ symbol), prologue, stm']) frame)
   where Ann (Ident symbol) _ = id
 
         addParam :: Int -> (Type, String) -> State TranslateState Int
@@ -254,9 +281,10 @@ translateFuncF (Ann (Func t id ps stm) _) = do
           frame <- getCurrFrame
           addVarEntry s t (Access frame (Frame.InFrame $ offset))
           return (offset + 4)
-        prologue = PUSHREGS (callerSave ++ [Frame.lr])
-        epilogue = POPREGS (callerSave ++ [Frame.pc])
-        callerSave = [4..12]
+  
+prologue = PUSHREGS (callerSave ++ [Frame.lr])
+epilogue = POPREGS (callerSave ++ [Frame.pc])
+callerSave = [4..12]
 
 translateProgramF :: ProgramF () -> State TranslateState Stm
 translateProgramF (Ann (Program fs stms) _) = do
@@ -300,8 +328,9 @@ translateStatF (Ann (Assign expr1 expr2) _) = do
 
 translateStatF (Ann (Return expr) _) = do
   exp <- translateExprF expr
+  adjustSP' <- adjustSPCall
   exp' <- unEx exp
-  return $ Nx (MOV (TEMP Frame.rv) exp')
+  return $ Nx (seq [MOV (TEMP Frame.rv) exp', adjustSP', epilogue])
 
 translateStatF (Ann (Exit expr) _) = do
   exp <- translateExprF expr
@@ -311,8 +340,16 @@ translateStatF (Ann (Exit expr) _) = do
 
 translateStatF (Ann (If expr stms1 stms2) _) = do
   exp <- translateExprF expr
+  level1 <- newLevel
+  pushLevel level1
   stms1' <- translateStatListF stms1
+  adjustSP1 <- adjustSP
+  popLevel
+  level2 <- newLevel
+  pushLevel level2
   stms2' <- translateStatListF stms2
+  adjustSP2 <- adjustSP
+  popLevel
   c <- unCx exp
   stm1 <- unNx stms1'
   stm2 <- unNx stms2'
@@ -320,21 +357,25 @@ translateStatF (Ann (If expr stms1 stms2) _) = do
   label2 <- newControlLabel
   label3 <- newControlLabel
   return $ Nx (seq [c label1 label2,
-                    LABEL label1, stm1,
+                    LABEL label1, SEQ stm1 adjustSP1,
                     JUMP (CONSTI 1) [label3],
-                    LABEL label2, stm2,
+                    LABEL label2, SEQ stm2 adjustSP2,
                     LABEL label3])
 
 translateStatF (Ann (While expr stms) _) = do
   exp <- translateExprF expr
+  level <- newLevel
+  pushLevel level
   stms' <- translateStatListF stms
+  adjustSP' <- adjustSP
+  popLevel
   c <- unCx exp
   stm <- unNx stms'
   test <- newControlLabel
   body <- newControlLabel
   done <- newControlLabel
   return $ Nx (seq [LABEL test, c body done,
-                    LABEL body, stm,
+                    LABEL body, stm, adjustSP',
                     JUMP (CONSTI 1) [test],
                     LABEL done])
 

@@ -5,6 +5,7 @@ import Algebra.Graph.AdjacencyMap as AdjGraph
 import BackEnd.Munch as Munch
 import BackEnd.FlowGraph
 import BackEnd.Assem as Assem
+import BackEnd.Instructions as ARM
 
 
 testInstrsToGraphFile file = do
@@ -33,7 +34,9 @@ instrsToGraph instrs = fGraph { nodes = map fst indexed,
         instrsToGraph' :: [(Int, Assem.Instr)] -> FlowGraph -> FlowGraph
         instrsToGraph' [] fGraph = fGraph
 
-        instrsToGraph' ((index, (IOPER _ dst' src' js)):rest) fGraph =
+        
+
+        instrsToGraph' ((index, (IOPER oper dst' src' js)):rest) fGraph =
           instrsToGraph' rest $ fGraph { control = adjGraph', def = def', use = use' }
           where
             targets = concat $ map (\l -> if HashMap.member l labelTable then [labelTable ! l] else []) js
@@ -42,9 +45,13 @@ instrsToGraph instrs = fGraph { nodes = map fst indexed,
                 [] -> if length rest == 0
                       then control fGraph
                       else overlay (edge index (index+1)) (control fGraph)
-                otherwise -> foldl (\acc t -> overlay (edge index t) acc) (control fGraph) targets 
+                otherwise ->
+                  case  oper of
+                    ARM.BRANCH_ (ARM.BL _) _ -> overlay (edge index (index+1)) edgeToTargets
+                    otherwise -> edgeToTargets
             def' = insertWith (++) index dst' (def fGraph)
             use' = insertWith (++) index src' (use fGraph)
+            edgeToTargets = foldl (\acc t -> overlay (edge index t) acc) (control fGraph) targets 
 
         instrsToGraph' ((index, (ILABEL _ _)):rest) fGraph =
           instrsToGraph' rest $ fGraph { control = adjGraph'}

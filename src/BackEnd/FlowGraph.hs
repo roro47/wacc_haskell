@@ -22,7 +22,6 @@ newFlowGraph = FlowGraph { control = AdjGraph.empty,
                            nodes = [],
                            assems = HashMap.empty,
                            fInitial = []}
-                             
 data JUMP = JustJump [String]
           | JumpFall [String]
           deriving (Show)

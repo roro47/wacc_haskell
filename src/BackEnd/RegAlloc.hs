@@ -114,11 +114,12 @@ regAllocAssem' (assems, dataFrags, builtInFrags) = do
       totalOut = Assem.showAssem builtInFrags dataFrags (concat final)
   mapM_ (\(id, s) -> putStrLn (show id ++ " " ++ s)) (zip [1..] totalOut)
   mapM_ (\a -> putStrLn (concat $ map (\(id,a') -> show id ++ " " ++ Assem.showInstr a' ++ "\n") (zip [0..] a ))) assems
-  return colorMap
+  return (head meta)
+  --putStrLn (show $ assems !! 0)
 
   where regAllocAssem'' assem = do
           let flow = instrsToGraph assem
-              (calcLiveOut, _) = Live.calcLiveness flow assem
+              (calcLiveOut, calcLiveIn) = Live.calcLiveness flow assem
               initial' = List.nub $ concat $ map Assem.assemReg assem
               precoloured' = precolouredReg
               regState = newRegAllocState { _liveOut = calcLiveOut,
@@ -127,7 +128,7 @@ regAllocAssem' (assems, dataFrags, builtInFrags) = do
                                             _precoloured = precoloured',
                                             _fgraph = flow }
               (a, regState') = runState (regAlloc >>= \_ -> getAlias 17) regState
-          return $ (_color regState', (_liveOut regState'))
+          return $ (_color regState', (_adjSet regState', FGraph.control flow))
           --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
           --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
 
@@ -155,7 +156,7 @@ regAllocAssem (assems, dataFrags, builtInFrags) = do
                                             _precoloured = precoloured',
                                             _fgraph = flow }
               (a, regState') = runState (regAlloc >>= \_ -> getAlias 17) regState
-          return $ (_color regState', (_liveOut regState'))
+          return $ (_color regState', (_initial regState'))
           --return $ (_color regState', _adjSet regState', _adjList regState', _coloredNodes regState')
           --return $ (_degree regState', _simplifyWorkList regState', _adjList regState' ! 17)
 
@@ -183,7 +184,6 @@ regAlloc = do
           | not (Set.null freezeWorkList) = do { freeze; regAlloc'}
           | not (Set.null spillWorkList) = do { selectSpill; regAlloc' }
           | otherwise = return ()
-
 
 
 build :: State RegAllocState ()

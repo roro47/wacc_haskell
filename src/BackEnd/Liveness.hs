@@ -45,9 +45,9 @@ calcLiveness fgraph instrs = calcLiveness' nodes fgraph liveIn liveOut
 -- update liveIn and liveOut iteratively, stop until liveIn and liveOut stop changing
 calcLiveness' :: [Int] -> FGraph.FlowGraph -> LiveMap -> LiveMap -> (LiveMap, LiveMap)
 calcLiveness' nodes fgraph liveIn liveOut
-  | (liveIn == liveIn' && liveOut == liveOut') = (liveIn, liveOut)
+  | (liveIn == liveIn' && liveOut == liveOut') = (liveIn', liveOut')
   | otherwise = calcLiveness' nodes fgraph liveIn' liveOut'
-  where (liveIn', liveOut') = calcLiveness'' nodes fgraph liveIn liveOut 
+  where (liveIn', liveOut') = calcLiveness'' nodes fgraph liveIn liveOut
 
 -- Given a list of node, update liveIn and liveOut by examine use and def of each node
 calcLiveness'' :: [Int] -> FGraph.FlowGraph -> LiveMap -> LiveMap -> (LiveMap, LiveMap)
@@ -58,7 +58,7 @@ calcLiveness'' (n:ns) fGraph liveIn liveOut
         def' = def n fGraph
         succ' = succ n fGraph
         liveIn' = HashMap.insert n (Set.union use' (Set.difference (liveOut ! n) def')) liveIn
-        liveOut' = HashMap.insert n (Set.unions $ map (liveIn !) succ') liveOut
+        liveOut' = HashMap.insert n (Set.unions $ map (liveIn' !) succ') liveOut
 
 arm1 = MC_ (ARM.MOV AL) (R0) (R R0) 
 instr = IOPER { assem = arm1, src = [], dst = [0], jump = [] }

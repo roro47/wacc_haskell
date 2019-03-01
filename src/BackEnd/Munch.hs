@@ -552,15 +552,15 @@ condStm (IR.MOV e1 e2) = do  --In which sequence ?
 condStm (IR.PUSHREGS regs) = do
   let regs' = map RTEMP regs
   return (\c -> [IOPER { assem = STACK_ (ARM.PUSH c) regs',
-                         dst = [sp],
-                         src = [sp] ++ regs,
+                         dst = [],
+                         src = [],
                          jump = [] }])
 
 condStm (IR.POPREGS regs) = do
   let regs' = map RTEMP regs
   return (\c -> [IOPER { assem = STACK_ (ARM.POP c) regs',
-                         dst = [sp] ++ regs,
-                         src = [sp],
+                         dst = [],
+                         src = [],
                          jump = [] }])
 
  
@@ -716,7 +716,7 @@ testMunch file = do
       dataFrags = map munchDataFrag ( Translate.dataFrags s' )
       (stm', s'') = runState (transform stm) s'
       (userFrags_ , s''') = runState (mapM transform userFrags) s''
-      (userFrags', s'''') = runState (mapM munchStm $ concat userFrags_) s''' -- munch functions
+      (userFrags', s'''') = runState (mapM munchmany userFrags_) s''' -- munch functions
       arms = evalState (munchmany stm') s''''
       substitute = optimise (normAssem [(13, SP), (14, LR), (15, PC), (1, R1), (0, R0)] arms)
       out = filter (\x -> not $ containsDummy x) substitute
