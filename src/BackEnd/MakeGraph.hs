@@ -8,11 +8,15 @@ import BackEnd.Assem as Assem
 import BackEnd.Instructions as ARM
 
 
+{-
+  Transform a list of Assem.Instr to a control flow graph.
+-}
+
 testInstrsToGraphFile file = do
   (out, _, _) <- testMunch file
   return $ instrsToGraph (concat out)
 
--- transform instructions to contro flow graph
+-- transform instructions to control flow graph
 instrsToGraph :: [Assem.Instr] -> FlowGraph
 instrsToGraph instrs = fGraph { nodes = map fst indexed,
                                 assems = HashMap.fromList indexed,
@@ -33,13 +37,11 @@ instrsToGraph instrs = fGraph { nodes = map fst indexed,
 
         instrsToGraph' :: [(Int, Assem.Instr)] -> FlowGraph -> FlowGraph
         instrsToGraph' [] fGraph = fGraph
-
-        
-
         instrsToGraph' ((index, (IOPER oper dst' src' js)):rest) fGraph =
           instrsToGraph' rest $ fGraph { control = adjGraph', def = def', use = use' }
           where
-            targets = concat $ map (\l -> if HashMap.member l labelTable then [labelTable ! l] else []) js
+            targets = concat $ map (\l -> if HashMap.member l labelTable
+                                          then [labelTable ! l] else []) js
             adjGraph' =
               case targets of
                 [] -> if length rest == 0
@@ -69,7 +71,6 @@ instrsToGraph instrs = fGraph { nodes = map fst indexed,
                   then control fGraph
                   else overlay (edge index (index+1)) (control fGraph)
 
+        -- capture impossible situtaion
         instrsToGraph' ((index, (IMOV _ _ _)):rest) fGraph = undefined
-
-      --  instrsToGraph' ((index, _):rest) fGraph = fGraph
 

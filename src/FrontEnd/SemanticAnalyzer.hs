@@ -312,11 +312,11 @@ analyzeExprF (Ann e@(ArrayElem symbol exprs) (pos, _)) = do
       case t of
         TStr -> return $ Ann (ArrayElem symbol exprs') (pos, TChar)
         TArray elemT ->
-          return $ Ann (ArrayElem symbol exprs') (pos, arrayElemT t)
+          return $ Ann (ArrayElem symbol exprs') (pos, arrayElemT (length exprs) t)
         otherwise -> throwError "unexpected error at analyzeArrayElem"
-  where arrayElemT :: Type -> Type
-        arrayElemT (TArray t) = arrayElemT t
-        arrayElemT t = t
+  where arrayElemT :: Int -> Type -> Type
+        arrayElemT 0 t = t
+        arrayElemT n (TArray t) = arrayElemT (n-1) t
 
 analyzeExprF (Ann (BracketExpr expr) (pos, _)) = do
   expr'@(Ann _ (pos, t)) <- analyzeExprF expr

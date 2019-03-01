@@ -10,27 +10,17 @@ import BackEnd.Assem as Assem
 import BackEnd.Temp as Temp
 import qualified BackEnd.FlowGraph as FGraph
 
--- interference graph
-data IGraph = IGraph { graph :: AdjMap.AdjacencyMap Int }
-              deriving (Show)
 
+{- Note
+   -----------------------------------------------------------------------------
+   Liveness Analysis.
 
--- Utility
-use :: Int -> FGraph.FlowGraph -> Set.Set Int
-use n fGraph = Set.fromList (FGraph.use fGraph ! n) 
+   Given a control flow graph, generate a liveOut map.
 
-def :: Int -> FGraph.FlowGraph -> Set.Set Int
-def n fGraph = Set.fromList (FGraph.def fGraph ! n)
-
-succ :: Int -> FGraph.FlowGraph -> [Int] 
-succ n fGraph = Set.toList (postSet n (FGraph.control fGraph))
+  The design is inspired by the book Modern Compiler Implementation in ML.
+-}
 
 type LiveMap = HashMap.Map Int (Set.Set Temp.Temp)
-
-
-testLiveness :: [Assem.Instr] -> (LiveMap, LiveMap)
-testLiveness instrs = calcLiveness fgraph instrs
-  where fgraph = instrsToGraph instrs
 
 -- given flow graph, calculate live map
 -- live map: given a node, return the set of node that are live at that point
@@ -60,9 +50,27 @@ calcLiveness'' (n:ns) fGraph liveIn liveOut
         liveIn' = HashMap.insert n (Set.union use' (Set.difference (liveOut ! n) def')) liveIn
         liveOut' = HashMap.insert n (Set.unions $ map (liveIn' !) succ') liveOut
 
-arm1 = MC_ (ARM.MOV AL) (R0) (R R0) 
+-- Utility
+use :: Int -> FGraph.FlowGraph -> Set.Set Int
+use n fGraph = Set.fromList (FGraph.use fGraph ! n)
+
+def :: Int -> FGraph.FlowGraph -> Set.Set Int
+def n fGraph = Set.fromList (FGraph.def fGraph ! n)
+
+succ :: Int -> FGraph.FlowGraph -> [Int]
+succ n fGraph = Set.toList (postSet n (FGraph.control fGraph))
+
+
+-- Test and Example
+
+testLiveness :: [Assem.Instr] -> (LiveMap, LiveMap)
+testLiveness instrs = calcLiveness fgraph instrs
+  where fgraph = instrsToGraph instrs
+
+
+arm1 = MC_ (ARM.MOV AL) (R0) (R R0)
 instr = IOPER { assem = arm1, src = [], dst = [0], jump = [] }
-testLivenessInstrs1 = [instr, instr, instr, instr, instr, instr] 
+testLivenessInstrs1 = [instr, instr, instr, instr, instr, instr]
 testUse1 = HashMap.fromList [(1, []),
             (2, [0]),
             (3, [1,2]),
