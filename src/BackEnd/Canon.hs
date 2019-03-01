@@ -73,7 +73,7 @@ transform stm = do
   blocks <- basicBlocks stms
   let stms = traceSchedule $ fst blocks
   fla <- mapM flat stms
-  return $ concat fla
+  return $ filter (/=NOP)(concat fla)
 
 transform' :: Stm -> State TranslateState [[Stm]]
 transform' stm = do
@@ -89,10 +89,11 @@ flat (MOV e1 e2) = do
 
 flat (SEQ s1 s2) = do
   i1 <- flat s1
-  12 <- flat s2
-return $ i1 ++ i2
+  i2 <- flat s2
+  return $ i1 ++ i2
 
 flat other = return [other]
+
 flat' :: Exp -> State TranslateState ([Stm], Exp)
 flat' exp@(BINEXP bop e1 e2@(BINEXP bop2 e21 e22)) = do
   if isOneLayer e1 && isOneLayer e2
