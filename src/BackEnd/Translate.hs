@@ -216,7 +216,7 @@ getVarEntry symbol = do
     Frame.InReg temp -> return $ TEMP temp
     Frame.InFrame offset -> do
       let   prevSize = sum (map levelSize prevLevels)
-            targetOffset = levelSize ((levels state) !! (length prevLevels)) + offset 
+            targetOffset = levelSize ((levels state) !! (length prevLevels)) + offset
       return $ CALL (NAME "#memaccess") [(CONSTI $  (prevSize + targetOffset))]
 
   where find' :: [Level] -> [Level] -> State TranslateState (EnvEntry, [Level])
@@ -277,7 +277,7 @@ translateFuncF (Ann (Func t id ps stm) _) = do
           frame <- getCurrFrame
           addVarEntry s t (Access frame (Frame.InFrame $ offset))
           return (offset + 4)
-  
+
 prologue = PUSHREGS (callerSave ++ [Frame.lr])
 epilogue = POPREGS (callerSave ++ [Frame.pc])
 callerSave = [4..12]
@@ -448,7 +448,7 @@ translateFuncAppF f@(Ann (FuncApp t id exprs) _) = do
 
 
 translateBuiltInFuncAppF :: FuncAppF () -> State TranslateState IExp
-translateBuiltInFuncAppF (Ann (FuncApp t id exprs) _) = do
+translateBuiltInFuncAppF (Ann (FuncApp t id exprs) (pos, expT)) = do
   exps <- mapM translateExprF exprs
   exps' <- mapM unEx exps
   let { Ann (Ident symbol) _ = id }
