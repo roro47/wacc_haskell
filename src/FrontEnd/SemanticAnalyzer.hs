@@ -336,5 +336,6 @@ analyzeAST :: ProgramF () -> IO (ProgramF ())
 analyzeAST ast = do
   case evalStateT (analyzeProgramF ast) (([], HashMap.empty), Main) of
     Left e -> putStrLn "#semantic_error#" >>
+              putStrLn e >>
               exitWith (ExitFailure 200)
     Right p' -> return p'
