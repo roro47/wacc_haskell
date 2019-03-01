@@ -236,7 +236,7 @@ stripParam (Ann (Param t (Ann (Ident s) _)) _) = (t,s)
 
 translateFuncF :: FuncF () -> State TranslateState ()
 translateFuncF (Ann (Func t id ps stm) _) = do
-  let params = reverse $ map stripParam ps
+  let params = map stripParam ps
   level <- newLevel
   pushLevel level
   foldM addParam 4 params
